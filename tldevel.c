@@ -38,7 +38,6 @@ static void echo_build_config_log (void);
 static void print_program_description(const char **argv,const char* description);
 static void print_program_description_log(const char **argv,const char* description);
 
-
 int print_program_header(const char **argv,const char* description)
 {
 	tlog.echo_build_config();
