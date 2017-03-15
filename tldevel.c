@@ -41,23 +41,22 @@ static void print_program_description_log(const char **argv,const char* descript
 int print_program_header(const char **argv,const char* description)
 {
 	tlog.echo_build_config();
-	tlog.print_program_description(argv,description);
+	tlog.print_program_description(argv,description); 
 	return OK;
 }
 
-void print_program_description_log(const char **argv,const char* description)
-{
+void print_program_description_log(const char **argv,const char* description){
 	int i;
 	int newline = 0;
-	FILE *file;
-	
+	FILE* file;
+		
 	if(!my_file_exists(logfile)){
 		file = fopen(logfile, "w");
 	}else{
 		file = fopen(logfile, "a");
 	}
+  
 	fprintf(file,"%-*s: %s\n" ,MESSAGE_MARGIN,"Running program", basename(argv[0]));
-
 	if(description){
 		newline = 1;
 		fprintf(file,"%-*s: ",MESSAGE_MARGIN,"Description");
@@ -80,13 +79,13 @@ void print_program_description_log(const char **argv,const char* description)
 	}
 	fflush(file);
 	
-	
 	if(file){
 		fclose(file);
-	}
+	} 
 	// print param here? ....
-	
 }
+
+
 void print_program_description(const char **argv,const char* description)
 {
 	int i;
@@ -154,8 +153,7 @@ int set_logfile(char* logfilename)
 		
 		memset( logfile, 0, BUFFER_LEN );
 		strcpy( logfile, logfilename );
-	
-	
+
 		tlog.log_message = log_message_tee;
 		tlog.warning = warning_tee;
 		tlog.message = message_tee;
@@ -182,7 +180,7 @@ ERROR:
 }
 
 int set_checkpoint_file(struct checkpoint* chk,char* function,char* location)
-{
+{ 
 	char buffer[BUFFER_LEN];
 	FILE* f_ptr = NULL;
 	
@@ -397,11 +395,11 @@ void log_message_tee( const char *format, ...)
 	//if(fprintf(stdout,"%s%s",time_string,new_message ) < 0) KSLIB_XEXCEPTION(kslEWRT, "write failed");
 	/*fprintf(stdout,"%*s: ",MESSAGE_MARGIN, time_string);
 	
-	va_start(argp, format);
-	vfprintf(stdout, format, argp);
-	va_end(argp);
-	fprintf(stdout,"\n");
-	fflush(stdout);*/
+	  va_start(argp, format);
+	  vfprintf(stdout, format, argp);
+	  va_end(argp);
+	  fprintf(stdout,"\n");
+	  fflush(stdout);*/
 	va_start(argp, format);
 	vlog(stdout,format, argp);
 	va_end(argp);
@@ -556,11 +554,11 @@ void message(const char *location, const char *format, ...)
 	va_start(argp, format);
 	
 	vmessage(stdout,location,format,argp);
-//	vfprintf(stdout, format, argp);
+	//	vfprintf(stdout, format, argp);
 	va_end(argp);
-//	fprintf(stdout," (%s)\n",location);
+	//	fprintf(stdout," (%s)\n",location);
 	//fprintf(stdout,"\n");
-//	fflush(stdout);
+	//	fflush(stdout);
 	
 }
 
@@ -614,7 +612,7 @@ void warning_tee(const char *location, const char *format, ...)
 	va_start(argp, format);
 	vwarning(stdout,location, format, argp);
 	va_end(argp);
-	
+  
 	FILE *file;
 	if(!my_file_exists(logfile)){
 		file = fopen(logfile, "w");
@@ -624,12 +622,12 @@ void warning_tee(const char *location, const char *format, ...)
 	va_start(argp, format);
 	vwarning(file,location, format, argp);
 	va_end(argp);
-
+  
 	
 	if(file){
 		fclose(file);
 	}
-	
+ 
 }
 
 
@@ -1289,7 +1287,7 @@ double** malloc_2d_double(double**m,int newdim1, int newdim2, double fill_value)
 		
 		olddim1 = *(int_ptr+1);
 		olddim2 = *(int_ptr+2);
-	//	DPRINTF3("%d-%d new: %d-%d", olddim1,olddim2, newdim1,newdim2 );
+		//	DPRINTF3("%d-%d new: %d-%d", olddim1,olddim2, newdim1,newdim2 );
 		
 		
 		

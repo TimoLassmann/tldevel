@@ -18,7 +18,7 @@
 
 
 #define OK              0
-#define FAIL            1  
+#define FAIL            1
 
 #define BUFFER_LEN 500
 #define LINE_LEN 10000
@@ -27,95 +27,95 @@
 #define TOSTRING(x) STRINGIFY(x)
 #define AT __FILE__ " line " TOSTRING(__LINE__) 
 
-#define MCALLOC(p,count,type) do {\
-if (p != NULL){\
-ERROR_MSG( "calloc on a nun-null pointer");\
-goto ERROR;\
-}\
-if (((p) = calloc(count, sizeof(type))) == NULL) {	\
-ERROR_MSG("calloc of n=%d of type %s failed", count, #type); \
-goto ERROR;\
-}\
-} while (0)
+#define MCALLOC(p,count,type) do {					\
+		if (p != NULL){						\
+			ERROR_MSG( "calloc on a nun-null pointer");	\
+			goto ERROR;					\
+		}							\
+		if (((p) = calloc(count, sizeof(type))) == NULL) {	\
+			ERROR_MSG("calloc of n=%d of type %s failed", count, #type); \
+			goto ERROR;					\
+		}							\
+	} while (0)
 
-#define MMALLOC(p,size) do {\
-if (p != NULL){\
-ERROR_MSG( "malloc on a nun-null pointer");\
-goto ERROR;\
-}\
-if (((p) = malloc(size)) == NULL && (size)) {	\
-ERROR_MSG("malloc of size %d failed", size); \
-goto ERROR;\
-}\
-} while (0)
+#define MMALLOC(p,size) do {						\
+		if (p != NULL){						\
+			ERROR_MSG( "malloc on a nun-null pointer");	\
+			goto ERROR;					\
+		}							\
+		if (((p) = malloc(size)) == NULL && (size)) {		\
+			ERROR_MSG("malloc of size %d failed", size);	\
+			goto ERROR;					\
+		}							\
+	} while (0)
 
-#define MREALLOC(p, newsize) do {\
-void *tmpp;\
-if ((p) == NULL) {\
-tmpp = malloc(newsize);\
-}else {\
-tmpp = realloc((p), (newsize));\
-}\
-if (tmpp != NULL){\
-p = tmpp;\
-}else {\
-ERROR_MSG("realloc for size %d failed", newsize); \
-goto ERROR;\
-}} while (0)
+#define MREALLOC(p, newsize) do {					\
+		void *tmpp;						\
+		if ((p) == NULL) {					\
+			tmpp = malloc(newsize);				\
+		}else {							\
+			tmpp = realloc((p), (newsize));			\
+		}							\
+		if (tmpp != NULL){					\
+			p = tmpp;					\
+		}else {							\
+			ERROR_MSG("realloc for size %d failed", newsize); \
+			goto ERROR;					\
+		}} while (0)
 
 #define ADDFAILED(x)  "Function \"" TOSTRING(x) "\" failed."
 
-#define RUN(EXP) do { \
-if((EXP) != OK){\
-ERROR_MSG(ADDFAILED(EXP));\
-}\
-}while (0)
+#define RUN(EXP) do {					\
+		if((EXP) != OK){			\
+			ERROR_MSG(ADDFAILED(EXP));	\
+		}					\
+	}while (0)
 
-#define RUNP(EXP) do { \
-if((EXP) == NULL){\
-ERROR_MSG(ADDFAILED(EXP));\
-}\
-}while (0)
+#define RUNP(EXP) do {					\
+		if((EXP) == NULL){			\
+			ERROR_MSG(ADDFAILED(EXP));	\
+		}					\
+	}while (0)
 
-#define ERROR_MSG(...) do {	\
-tlog.error(AT, __VA_ARGS__ );\
-goto ERROR;\
-}while (0)
+#define ERROR_MSG(...) do {			\
+		tlog.error(AT, __VA_ARGS__ );	\
+		goto ERROR;			\
+	}while (0)
 
-#define WARNING_MSG(...) do {	\
-tlog.warning(AT, __VA_ARGS__ );\
-}while (0)
+#define WARNING_MSG(...) do {			\
+		tlog.warning(AT, __VA_ARGS__ );	\
+	}while (0)
 
 
-#define LOG_MSG(...) do {	\
-tlog.log_message( __VA_ARGS__ );\
-}while (0)
+#define LOG_MSG(...) do {				\
+		tlog.log_message( __VA_ARGS__ );	\
+	}while (0)
 
-#define UNFORMAT_MSG(...) do {	\
-tlog.unformatted( __VA_ARGS__ );\
-}while (0)
+#define UNFORMAT_MSG(...) do {				\
+		tlog.unformatted( __VA_ARGS__ );	\
+	}while (0)
 
 #if (DEBUGLEVEL >= 1)
 #define DPRINTF1(...)  tlog.message(AT,##__VA_ARGS__);
 #define DCHECK1(TEST,...) if(!(TEST)) {tlog.error(AT,#TEST );tlog.error(AT,##__VA_ARGS__);goto ERROR;}
 
-#define MFREE(p) do {\
-if(p){\
-free(p);\
-p = NULL;\
-}else{\
-WARNING_MSG("free on a null pointer");\
-}\
-} while (0)
+#define MFREE(p) do {						\
+		if(p){						\
+			free(p);				\
+			p = NULL;				\
+		}else{						\
+			WARNING_MSG("free on a null pointer");	\
+		}						\
+	} while (0)
 
 #else
 #define DPRINTF1(...)
 #define DCHECK1(A,...)
 
-#define MFREE(p) do {\
-free(p);\
-p = NULL;\
-} while (0)
+#define MFREE(p) do {				\
+		free(p);			\
+		p = NULL;			\
+	} while (0)
 #endif
 
 #if (DEBUGLEVEL >= 2)
@@ -154,15 +154,15 @@ p = NULL;\
 
 #define DECLARE_CHK(n,dir) struct checkpoint* chk_##n = NULL;  RUNP( chk_##n =  init_checkpoint(TOSTRING(n),dir));
 
-#define RUN_CHECKPOINT(n,EXP,...) do { \
-if(test_for_checkpoint_file(chk_##n) ==0 ){\
-RUN(EXP);\
-RUN(set_checkpoint_file(chk_##n,TOSTRING(EXP),AT));\
-}else{\
-tlog.log_message("Skipping over: %s (%s)",TOSTRING(EXP),AT);\
-}\
-chk_##n->test_num += 1;\
-}while (0)
+#define RUN_CHECKPOINT(n,EXP,...) do {					\
+		if(test_for_checkpoint_file(chk_##n) ==0 ){		\
+			RUN(EXP);					\
+			RUN(set_checkpoint_file(chk_##n,TOSTRING(EXP),AT)); \
+		}else{							\
+			tlog.log_message("Skipping over: %s (%s)",TOSTRING(EXP),AT); \
+		}							\
+		chk_##n->test_num += 1;					\
+	}while (0)
 
 #ifndef MAXMEM
 #define MAXMEM 4
