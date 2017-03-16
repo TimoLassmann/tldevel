@@ -33,8 +33,6 @@ AC_CHECK_FUNCS([memset])
 
 # non-standard stuff
 
-CLEANFILES = build_config.c 
-
 AC_ARG_ENABLE(debugging,
 [AS_HELP_STRING([--enable-debugging],[include debugging code])
 AS_HELP_STRING([--enable-debugging=x],[also set diagnostics verbosity level to <x> (1-3)])],
