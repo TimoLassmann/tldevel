@@ -17,6 +17,13 @@
 #define ID_MODE_MIN 2
 #define ID_MODE_NOTMERGE 3
 
+struct rbtree_node{
+	struct rbtree_node* right;
+	struct rbtree_node* left;
+	void* data_node;
+	int color;
+	unsigned int num;
+};
 
 
 
@@ -25,6 +32,16 @@ struct rbtree_node* search_node(struct rbtree_root* root, struct rbtree_node* n,
 struct rbtree_node* insert_val_start(struct rbtree_root* root, struct rbtree_node* n,void* datanode);
 struct rbtree_node* delete_val_start(struct rbtree_root* root, struct rbtree_node* n,void* datanode);
 struct rbtree_node* insert_val(struct rbtree_root* root, struct rbtree_node* n,void* datanode);
+
+void free_tree( struct rbtree_root* root);
+int tree_insert(struct rbtree_root* root, void* datanode);
+int tree_delete(struct rbtree_root* root, void* datanode);
+void print_tree(struct rbtree_root* root,FILE* out_ptr);
+int flatten_tree(struct rbtree_root* root);
+void* tree_get_data(struct rbtree_root* root, void* key);
+struct rbtree_node* tree_get_node(struct rbtree_root* root, void* key);
+
+
 
 int rank(struct rbtree_node* n);
 struct rbtree_node* set_num(struct rbtree_node* n);
@@ -133,6 +150,13 @@ struct rbtree_root* init_tree(void* (*key_function_pointer)(void* ptr), long int
 	root->resolve_same = resolve_same_pointer;
 	root->fp_print = fp_print;
 	root->fp_free = fp_free;
+	root->tree_insert = tree_insert;
+	root->tree_delete = tree_delete;
+	root->free_tree = free_tree;
+	root->print_tree = print_tree;
+	root->flatten_tree = flatten_tree; 
+	root->tree_get_data = tree_get_data;
+	root->tree_get_node = tree_get_node;
 	return root;
 	
 ERROR:
@@ -211,6 +235,7 @@ struct rbtree_node* search_node(struct rbtree_root* root, struct rbtree_node* n,
 	return n;
 }
 
+
 struct rbtree_node* insert_val_start(struct rbtree_root* root, struct rbtree_node* n,void* datanode)
 {
 	RUNP(n = insert_val(root,n,datanode));
@@ -272,8 +297,8 @@ struct rbtree_node* delete(struct rbtree_root* root, struct rbtree_node* n, void
 			n->right = deleteMin(n->right);
 			//h .key = min(h.right);
 			//h.value = get(h.right, h.key);
-		//	h.right = deleteMin(h.right);
-		//	else h.right = delete(h.right, key);
+			//	h.right = deleteMin(h.right);
+			//	else h.right = delete(h.right, key);
 		}else{
 			n->right = delete(root, n->right, datanode);
 		}
@@ -353,11 +378,11 @@ struct rbtree_node* fixUp(struct rbtree_node* n)
 }
 /*	flipColors(<#struct rbtree_node *n#>)
 	if (isRed(h.right))
-		h = rotateLeft(h);
+	h = rotateLeft(h);
 	if (isRed(h.left) && isRed(h.left.left))
-		h = rotateRight(h);
+	h = rotateRight(h);
 	if (isRed(h.left) && isRed(h.right))
-		colorFlip(h);
+	colorFlip(h);
 	return h; }
 */
 
@@ -673,13 +698,14 @@ int main (int argc,char * argv[])
 	fp_free = &free_test_struct;
 	
 	root = init_tree(fp_get,fp_cmp,fp_cmp_same,fp_print,fp_free);
-	tree_insert(root, sample1);
+	root->tree_insert(root,sample1);
+//	tree_insert(root, sample1);
 	sample1 = NULL;
 
-	tree_insert(root, sample2);
+	root->tree_insert(root, sample2);
 	sample2 = NULL;
 
-	tree_insert(root, sample3);
+	root->tree_insert(root, sample3);
 	sample3 = NULL;
 
 	
@@ -688,30 +714,31 @@ int main (int argc,char * argv[])
 	
 	fprintf(stdout,"Sorted by names: (%d entries)\n", root->node->num);
 	
-	print_tree(root,NULL);
+	root->print_tree(root,NULL);
 	
 	MMALLOC(sample1, sizeof(struct test_struct));
 	sample1->name = NULL;
 	MMALLOC(sample1->name,sizeof(char) * 10);
-	snprintf(sample1->name , 10,"CCC");
+	snprintf(sample1->name , 10,"ZAAA");
 	sample1->number = 23;
 	sample1->flt_num = 2.1;
 
+	
+	root->tree_delete(root, sample1);
 	fprintf(stdout,"DELETED CCC (%d entries)\n", root->node->num);
 
-	tree_delete(root, sample1);
-	print_tree(root,NULL);
-
+	root->print_tree(root,NULL);
+	
 	
 	fprintf(stdout,"Search for CCC:\n");
-	tmp_ptr= tree_get_data(root,"CCC");
+	tmp_ptr = tree_get_data(root,"CCC");
 	if(tmp_ptr){
 		print_test_struct(tmp_ptr,stdout);
 	}
 	
 	fprintf(stdout,"\n");
 	
-	free_tree(root);
+	root->free_tree(root);
 	
 	
 	sample1 = NULL;
@@ -750,11 +777,11 @@ int main (int argc,char * argv[])
 	fp_free = &free_test_struct;
 	
 	root = init_tree(fp_get,fp_cmp,fp_cmp_same,fp_print,fp_free);
-	tree_insert(root, sample1);
-	tree_insert(root, sample2);
-	tree_insert(root, sample3);
+	root->tree_insert(root, sample1);
+	root->tree_insert(root, sample2);
+	root->tree_insert(root, sample3);
 	fprintf(stdout,"Sorted by numbers: (%d entries)\n",root->num_entries);
-	print_tree(root,NULL);
+	root->print_tree(root,NULL);
 	
 	
 	fprintf(stdout,"Search for 6032:\n");
@@ -765,7 +792,7 @@ int main (int argc,char * argv[])
 	}
 	fprintf(stdout,"\n");
 	
-	free_tree(root);
+	root->free_tree(root);
 	sample1 = NULL;
 	sample2 = NULL;
 	sample3 = NULL;
@@ -798,18 +825,18 @@ int main (int argc,char * argv[])
 	fp_free = &free_test_struct;
 	
 	root = init_tree(fp_get,fp_cmp,fp_cmp_same,fp_print,fp_free);
-	tree_insert(root, sample1);
-	tree_insert(root, sample2);
-	tree_insert(root, sample3);
+	root->tree_insert(root, sample1);
+	root->tree_insert(root, sample2);
+	root->tree_insert(root, sample3);
 	fprintf(stdout,"Sorted by floats:\n");
-	print_tree(root,NULL);
+	root->print_tree(root,NULL);
 	fprintf(stdout,"Search for 2.1:\n");
 	y = 2.1f;
 	tmp_ptr= tree_get_data(root,&y);
 	if(tmp_ptr){
 		print_test_struct(tmp_ptr,stdout);
 	}
-	flatten_tree(root);
+	root->flatten_tree(root);
 	fprintf(stdout,"After Flatten:\n");
 	ASSERT((root->cur_data_nodes == root->num_entries),"fail");
 	
@@ -817,7 +844,7 @@ int main (int argc,char * argv[])
 		print_test_struct(root->data_nodes[i],stdout);
 	}
 	
-	free_tree(root);
+	root->free_tree(root);
 
 	//MFREE(sample3);
 	

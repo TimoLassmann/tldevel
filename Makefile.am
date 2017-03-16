@@ -22,10 +22,10 @@ build_config.c: ./helper/refset env_settings
 	./helper/refset  env_settings > build_config.c
 
 
-CLEANFILES = build_config.c testlog.txt
+CLEAN = build_config.c testlog.txt
 
 TESTS= libtldevel_ITEST rb_ITEST
 
-rb_ITEST_SOURCES = $(libtldevel_a_SOURCES)
+rb_ITEST_SOURCES = $(libtldevel_a_SOURCES) 
 rb_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DRB_TEST
 rb_ITEST_LDADD =  $(LIBTLDEVEL)
