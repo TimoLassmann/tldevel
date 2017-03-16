@@ -1,5 +1,5 @@
 
-noinst_LIBRARIES = libtldevel.a
+noinst_LIBRARIES = libtldevel.a librtree.a
 
 AUTOMAKE_OPTIONS = subdir-objects
 
@@ -12,11 +12,29 @@ rbtree.h \
 rbtree.c \
 build_config.c
 
-check_PROGRAMS =  libtldevel_ITEST rb_ITEST
+librtree_a_SOURCES = libtldevel.a \
+rtr.c \
+rtr.h
+
+
+
+TESTS= libtldevel_ITEST rb_ITEST librtree_ITEST
+
+check_PROGRAMS =  libtldevel_ITEST   rb_ITEST librtree_ITEST
 
 libtldevel_ITEST_SOURCES = $(libtldevel_a_SOURCES)
 libtldevel_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DITEST
 libtldevel_ITEST_LDADD =    -lm
+
+librtree_ITEST_SOURCES = $(librtree_a_SOURCES)
+librtree_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DITEST 
+librtree_ITEST_LDADD =    $(LIBTLDEVEL) -ltldevel -L.
+
+rb_ITEST_SOURCES = $(libtldevel_a_SOURCES) 
+rb_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DRB_TEST
+rb_ITEST_LDADD =  $(LIBTLDEVEL)
+
+
 
 build_config.c: ./helper/refset env_settings
 	./helper/refset  env_settings > build_config.c
@@ -24,8 +42,4 @@ build_config.c: ./helper/refset env_settings
 
 CLEANFILES = build_config.c testlog.txt
 
-TESTS= libtldevel_ITEST rb_ITEST
 
-rb_ITEST_SOURCES = $(libtldevel_a_SOURCES) 
-rb_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DRB_TEST
-rb_ITEST_LDADD =  $(LIBTLDEVEL)

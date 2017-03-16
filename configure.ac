@@ -20,8 +20,11 @@ AC_CHECK_LIB([m], [log])
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
-AC_TYPE_INT8_T
 AC_TYPE_SIZE_T
+AC_TYPE_INT8_T
+AC_TYPE_INT32_T
+AC_TYPE_INT64_T
+AC_TYPE_UINT8_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 
@@ -29,7 +32,7 @@ AC_TYPE_UINT32_T
 AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
-AC_CHECK_FUNCS([memset])
+AC_CHECK_FUNCS([memset pow sqrt])
 
 # non-standard stuff
 
