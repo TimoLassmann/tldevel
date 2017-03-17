@@ -1,0 +1,1634 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "tldevel.h"
+#include "rbtree.h"
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#include "htslib/cram.h"
+
+#include "htslib/sam.h"
+#include "htslib/faidx.h"
+#include "htslib/khash.h"
+
+
+#include "htsglue.h"
+
+
+
+
+typedef struct {
+	int32_t line_len, line_blen;
+	int64_t len;
+	int64_t offset;
+} faidx1_t;
+KHASH_MAP_INIT_STR(s, faidx1_t)
+
+struct __faidx_t {
+	BGZF *bgzf;
+	int n, m;
+	char **name;
+	khash_t(s) *hash;
+};
+
+static int get_alignment_length(char*p,bam_hdr_t *h, int* len);
+
+static int rev_cmp(char* p,int len);
+
+static int compare_headers(struct sam_bam_file* sb1_file,struct sam_bam_file* sb2_file);
+
+static int make_si_info_in_sam_bam_file(struct sam_bam_file* sb_file);
+
+
+int compare_multiple_SAM_BAM_headers(char** filenames, int num_files)
+{
+	int i,j;
+	
+	struct sam_bam_file* sb1_file = NULL;
+	struct sam_bam_file* sb2_file = NULL;
+	
+	for(i = 0; i < num_files;i++){
+		
+		RUNP(sb1_file= open_SAMBAMfile(filenames[i],0,-1,-1));
+		for(j = i+1; j <  num_files;j++){
+			RUNP(sb2_file= open_SAMBAMfile(filenames[j],0,-1,-1));
+			
+			RUN(compare_headers(sb1_file,sb2_file));
+			
+			RUN(close_SAMBAMfile(sb2_file));
+		}
+		
+		RUN(close_SAMBAMfile(sb1_file));
+	}
+	
+	
+	return OK;
+ERROR:
+	if(sb1_file){
+		RUN(close_SAMBAMfile(sb1_file));
+	}
+	if(sb2_file){
+		RUN(close_SAMBAMfile(sb2_file));
+	}
+	
+	return FAIL;
+}
+
+int compare_headers(struct sam_bam_file* sb1_file,struct sam_bam_file* sb2_file)
+{
+	int i;
+	if(sb1_file->header->n_targets != sb2_file->header->n_targets){
+		ERROR_MSG("Different number of reference sequences.");
+	}
+	if(sb1_file->total_length != sb2_file->total_length){
+		ERROR_MSG("Different length of references.");
+	}
+	
+	
+	for(i = 0; i < sb1_file->header->n_targets;i++){
+		if(strcmp(sb1_file->header->target_name[i], sb2_file->header->target_name[i])){
+			ERROR_MSG("Different  reference sequence %d: %s %s \n",i,sb1_file->header->target_name[i],sb2_file->header->target_name[i]);
+		}
+	}
+	return OK;
+ERROR:
+	ERROR_MSG("in files:%s vs %s.",sb1_file->file_name ,sb2_file->file_name );
+	return FAIL;
+}
+
+
+faidx_t* get_faidx(const char* fasta_name)
+{
+	char* index_name = NULL;
+	faidx_t* index = NULL;
+	
+	MMALLOC(index_name, sizeof(char) *( strlen(fasta_name)+1));
+	
+	snprintf(index_name,  strlen(fasta_name)+1,"%s.fai",fasta_name );
+	
+	if(my_file_exists(index_name)){
+		index = fai_load(fasta_name);
+	}else{
+		if(fai_build(fasta_name)){
+			ERROR_MSG("building faidx for file:%s  failed",fasta_name);
+		}
+		index = fai_load(fasta_name);
+	}
+	MFREE(index_name);
+	return index;
+ERROR:
+	if(index_name){
+		MFREE(index_name);
+	}
+	if(index){
+		fai_destroy(index);
+	}
+	return NULL;
+}
+
+char* get_sequence(faidx_t* index, struct genome_interval* g_int)//   char* chr, int start, int stop,int strand)
+{
+	char* sequence = NULL;
+	int len = 0;
+	static int warning_number = 10;
+	
+	khiter_t iter;
+	faidx1_t val;
+	//char *seq=NULL;
+	
+	// Adjust position
+	iter = kh_get(s, index->hash, g_int->chromosome);
+	if (iter == kh_end(index->hash))
+	{
+		ERROR_MSG("get_sequence failed - chr:%s not found in index.",g_int->chromosome);
+	}
+	val = kh_value(index->hash, iter);
+	
+	
+	ASSERT(g_int->stop >= g_int->start,"Start coordinate bigger than end: %d -> %d.",g_int->start ,g_int->stop);
+	
+	if( g_int->start < 0){
+		 g_int->start = 0;
+	}else if(val.len <=  g_int->start){
+		 g_int->start = val.len - 1;
+	}
+	if(g_int->stop < 0){
+		g_int->stop = 0;
+	}else if(val.len <= g_int->stop){
+		g_int->stop = val.len ;
+	}
+	
+
+	
+	
+	sequence = faidx_fetch_seq(index, g_int->chromosome , g_int->start,  g_int->stop-1, &len);
+	
+	if(len == -2){
+		if(warning_number){
+			WARNING_MSG("Your faidx index does not contain sequence: %s",g_int->chromosome);
+			warning_number--;
+		}
+		
+	}
+	if(len == -1){
+		ERROR_MSG("faidx_fetch_seq failed");
+	}
+	
+	if(g_int->strand){
+		rev_cmp(sequence, len);
+	}
+	
+	return sequence;
+ERROR:
+	MFREE(sequence);
+	return NULL;
+}
+
+int free_faidx(faidx_t*  index)
+{
+	if(index){
+		fai_destroy(index);
+	}
+	return OK;
+}
+
+
+
+int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
+{
+	
+	char chr[FIELD_BUFFER_LEN];// = NULL;
+	char pos_str[FIELD_BUFFER_LEN];// = NULL;
+	char cigar[FIELD_BUFFER_LEN];//= NULL;
+	
+	int i;
+	int r = 0;
+	int num_read = 0;
+	
+	int best_hits = 0;
+	
+	sb_file->num_read = 0;
+	sb_file->total_entries_in_file = 0;
+	bam1_t *b = sb_file->b;
+	bam_hdr_t *h =sb_file->header;
+	
+	while ((r = sam_read1(sb_file->in, h, b)) >= 0){
+		sb_file->total_entries_in_file++;
+		if(!(BAM_FUNMAP & b->core.flag)){
+			if(b->core.qual >= sb_file->read_Q_threshold){
+				best_hits = 0;
+				struct sam_bam_entry* sb_ptr = sb_file->buffer[sb_file->num_read];
+				//char *name  = bam_get_qname(b);
+				//char *qual  = bam1_qual(b);
+				snprintf(sb_ptr->name, MAX_SEQ_NAME_LEN,"%s",bam_get_qname(b));
+				
+				uint8_t * seq =    bam_get_seq(b);
+				int id = b->core.tid;
+				//b->core.qual
+				//int len =b->core.l_qseq;
+				uint8_t * s =  bam_get_aux(b);
+				
+				//DPRINTF1("%d",id);
+				
+				
+				DPRINTF3("%d %s %d %d-%d (%lld) chr len: %d cumlen: %ld ",b->core.qual, h->target_name[id], h->target_len[id]  ,b->core.pos, bam_endpos(b) ,sb_file->cum_chr_len[id],sb_file->si->len[id],sb_file->cum_chr_len[id]);
+				
+#if (DEBUGLEVEL >= 3)
+				
+				for (i = 0; i < b->core.l_qseq; ++i) fprintf(stdout,"%c","=ACMGRSVTWYHKDBN"[bam_seqi(seq, i)]);
+				fprintf(stdout,"\n");
+#endif
+				/* add first hit... */
+				
+				sb_ptr->num_hits = 0;
+				sb_ptr->qual = b->core.qual;
+				
+				
+				//sb_ptr->stop[sb_ptr->num_hits] = labs(bam_endpos(b)) +sb_file->cum_chr_len[id];
+				
+				
+				if(labs(b->core.pos)- window < 1){
+					sb_ptr->start[sb_ptr->num_hits]  = 0;
+					
+					sb_ptr->start[sb_ptr->num_hits]  = sb_file->cum_chr_len[id];
+					
+					//fprintf(stdout,"%d %s %d %d-%d (%lld) chr len: %d cumlen: %ld\n",b->core.qual, h->target_name[id], h->target_len[id]  ,b->core.pos, bam_endpos(b) ,sb_file->cum_chr_len[id],sb_file->si->len[id],sb_file->cum_chr_len[id]);
+					
+					
+					//0 chr1_gl000191_random 106433 0-31 (3095693983) chr len: 106433 cumlen: 3095693983
+					
+				}else{
+					sb_ptr->start[sb_ptr->num_hits] = labs(b->core.pos)+sb_file->cum_chr_len[id]-window;//stored 0... but sam/bam/ucsc output is 1 based...
+				}
+				
+				if(labs(bam_endpos(b))+window > sb_file->si->len[id]){
+					sb_ptr->stop[sb_ptr->num_hits] = sb_file->si->len[id];
+				}else{
+					sb_ptr->stop[sb_ptr->num_hits] = labs(bam_endpos(b)) +sb_file->cum_chr_len[id]+window;
+				}
+				/*if(labs(bam_endpos(b))+10 > sb_file->si->len[id]){
+					ERROR_MSG("%s %d-%d + 10 is longer than chromosome lengeth..", h->target_name[id],labs(b->core.pos),labs(bam_endpos(b)),sb_file->si->len[id]);
+					exit(0);
+				}
+				
+				if( labs(b->core.pos) - 10 < 0){
+					ERROR_MSG("%s %d-%d + 10 is longer than chromosome lengeth..", h->target_name[id],labs(b->core.pos),labs(bam_endpos(b)),sb_file->si->len[id]);
+					exit(0);
+				}*/
+				/* read in len of sequence */
+				
+				sb_ptr->len =b->core.l_qseq;
+				
+				/* read in the sequence... */
+				
+				if(sb_ptr->len+1  >= sb_ptr->max_len){
+					while(sb_ptr->len+1 >=sb_ptr->max_len){
+						sb_ptr->max_len = sb_ptr->max_len + 10;
+					}
+					
+					MREALLOC(sb_ptr->sequence, sizeof(char) * sb_file->buffer[num_read]->max_len );
+					
+				}
+				for (i = 0; i < sb_ptr->len; ++i){
+					sb_ptr->sequence[i] ="=ACMGRSVTWYHKDBN"[bam_seqi(seq, i)];
+				}
+				sb_ptr->sequence[sb_ptr->len ] = 0;
+				
+				
+				DPRINTF3("%s",sb_ptr->sequence);
+				if(bam_is_rev(b)){
+					
+					sb_ptr->start[sb_ptr->num_hits]  += sb_file->total_length + STRAND_BUFFER;
+					sb_ptr->stop[sb_ptr->num_hits]  += sb_file->total_length + STRAND_BUFFER;
+					
+					RUN(rev_cmp(sb_ptr->sequence,sb_ptr->len));
+					
+					DPRINTF3("%s",sb_file->buffer[num_read]->sequence);
+					
+				}
+				sb_ptr->num_hits++;
+				if(b->core.qual <= sb_file->multimap_Q_threshold ){
+					
+					while (s+4 <= b->data + b->l_data) {
+						DPRINTF3("HERE:%s",s);
+						uint8_t type, key[2];
+						key[0] = s[0]; key[1] = s[1];
+						s += 2; type = *s++;
+						
+						//fprintf(stdout,"\n");
+						//fprintf(stdout,"%c%c",key[0] ,key[1]);
+						//fprintf(stdout,":");
+						/*if(key[0]  == 'X' && key[1] == '0'){
+							
+							
+							
+							fprintf(stdout,"Number of hits: %d	%c\n", atoi( (char*)(s)),type);
+							fprintf(stdout,"%c%c%c\n",   *((char*)s), *((char*)s+1), *((char*)s+2) );
+						}*/
+						
+						if(key[0]  == 'X' && key[1] == 'A'){
+							//fprintf(stdout,"FOUND XA\n");
+							
+							
+							int errors;
+							int pos;
+							int n;
+							int aln_len = 0;
+							n = 0;
+							while(s[n]){
+								
+								if(s[n] == ',' || s[n] == ';'){
+									s[n] = ' ';
+								}
+								//	fprintf(stdout,"%c",s[n]);
+								n++;
+							}
+							//fprintf(stdout,"\n\n");
+							
+							while (s < b->data + b->l_data && *s){
+								DPRINTF3("HERE2:%s",s);
+								n = 0;
+								chr[0] = 0;
+								
+								sscanf((char*)s, "%"xstr(FIELD_BUFFER_LEN)"s %"xstr(FIELD_BUFFER_LEN)"s %"xstr(FIELD_BUFFER_LEN)"s %d %n",chr,pos_str,cigar,&errors,&n);
+								//fprintf(stdout,"%s %s %s %d %d\n",chr,pos_str,cigar,errors,n);
+								RUN(get_alignment_length(cigar, h, &aln_len));
+								//   fprintf(stdout,"%d alnlen  pos :%d  \n",aln_len,atoi(pos_str));
+								
+								pos = atoi(pos_str);
+								id = bam_name2id(h, chr);
+								DPRINTF3("CHRID:%d length = %lld\n",id,sb_file->cum_chr_len[id]);
+								if(pos < 0){
+									if(labs(pos)- window < 1){
+										sb_ptr->start[sb_ptr->num_hits]  = 0 + sb_file->cum_chr_len[id] + sb_file->total_length + STRAND_BUFFER;
+									}else{
+										sb_ptr->start[sb_ptr->num_hits] = labs(pos) -window + sb_file->cum_chr_len[id] + sb_file->total_length + STRAND_BUFFER;//stored 0... but sam/bam/ucsc output is 1 based...
+									}
+									
+									//sb_ptr->start[sb_ptr->num_hits] = labs(pos) + sb_file->cum_chr_len[id] + sb_file->total_length;
+									if(labs(pos) + aln_len + window > sb_file->si->len[id]){
+										sb_ptr->stop[sb_ptr->num_hits] = sb_file->si->len[id] +sb_file->cum_chr_len[id]+ sb_file->total_length+ STRAND_BUFFER;
+									}else{
+										sb_ptr->stop[sb_ptr->num_hits] = labs(pos) + aln_len  + window+sb_file->cum_chr_len[id]+ sb_file->total_length +STRAND_BUFFER;
+									}
+									//sb_ptr->stop[sb_ptr->num_hits] = labs(pos) + aln_len  +sb_file->cum_chr_len[id]+ sb_file->total_length;
+								}else{
+									if(labs(pos)- window < 1){
+										sb_ptr->start[sb_ptr->num_hits]  = 0 + sb_file->cum_chr_len[id] ;
+									}else{
+										sb_ptr->start[sb_ptr->num_hits] = labs(pos) -window + sb_file->cum_chr_len[id];//stored 0... but sam/bam/ucsc output is 1 based...
+									}
+									//sb_ptr->start[sb_ptr->num_hits] = labs(pos) + sb_file->cum_chr_len[id];
+									if(labs(pos) + aln_len + window > sb_file->si->len[id]){
+										sb_ptr->stop[sb_ptr->num_hits] = sb_file->si->len[id] +sb_file->cum_chr_len[id];
+									}else{
+										sb_ptr->stop[sb_ptr->num_hits] = labs(pos) + aln_len  + window+sb_file->cum_chr_len[id];
+									}
+									//sb_ptr->stop[sb_ptr->num_hits] = labs(pos) + aln_len  +sb_file->cum_chr_len[id];
+									
+									
+									
+								}
+								sb_ptr->num_hits++;
+								
+								
+								
+								s += n;
+								if(best_hits && sb_ptr->num_hits == best_hits ){
+									break;
+								}
+								
+								if(sb_ptr->num_hits >= sb_ptr->max_num_hits){
+									break;
+								}
+								//s+=n;
+								//fprintf(stdout,"%c",*s++);
+								//	kputc(*s++, str);
+							}
+							//MFREE(pos);
+							//MFREE(chr);
+							//MFREE(cigar);
+							if (s >= b->data + b->l_data)
+								return -1;
+							++s;
+						}else if (type == 'A') {
+							//	fprintf(stdout,"A:");
+							//	fprintf(stdout,"%c",*s);
+							//kputsn("A:", 2, str);
+							//kputc(*s, str);
+							++s;
+						} else if (type == 'C') {
+							if( key[0] == 'X' && key[1] == '0'){
+							/*	fprintf(stdout,"%s ",sb_ptr->name );
+								fprintf(stdout,"%c%c:", key[0],key[1]);
+								fprintf(stdout,"i:");
+								fprintf(stdout,"%d\n",(int)*s);*/
+								best_hits =(int)*s;
+								
+							}
+							//kputsn("i:", 2, s);
+							
+							//kputw(*s, str);
+							++s;
+						} else if (type == 'c') {
+							// fprintf(stdout,"i:");
+							//fprintf(stdout,"%d",*(int8_t*)s);
+							//kputsn("i:", 2, str);
+							//kputw(*(int8_t*)s, str);
+							++s;
+						} else if (type == 'S') {
+							if (s+2 <= b->data + b->l_data) {
+								//		fprintf(stdout,"i:");
+								//fprintf(stdout,"%d",*(uint16_t*)s);
+								///kputsn("i:", 2, str);
+								//kputw(*(uint16_t*)s, str);
+								s += 2;
+							} else return -1;
+						} else if (type == 's') {
+							if (s+2 <= b->data + b->l_data) {
+								//		fprintf(stdout,"i:");
+								//fprintf(stdout,"%d",*(int16_t*)s);
+								//kputsn("i:", 2, str);
+								//kputw(*(int16_t*)s, str);
+								s += 2;
+							} else return -1;
+						} else if (type == 'I') {
+							if (s+4 <= b->data + b->l_data) {
+								//kputsn("i:", 2, str);
+								//kputuw(*(uint32_t*)s, str);
+								s += 4;
+							} else return -1;
+						} else if (type == 'i') {
+							if (s+4 <= b->data + b->l_data) {
+								//kputsn("i:", 2, str);
+								//kputw(*(int32_t*)s, str);
+								s += 4;
+							} else return -1;
+						} else if (type == 'f') {
+							if (s+4 <= b->data + b->l_data) {
+								//ksprintf(str, "f:%g", *(float*)s);
+								s += 4;
+							} else return -1;
+							
+						} else if (type == 'd') {
+							if (s+8 <= b->data + b->l_data) {
+								//ksprintf(str, "d:%g", *(double*)s);
+								s += 8;
+							} else return -1;
+						} else if (type == 'Z' || type == 'H') {
+							//	fprintf(stdout,"%c:",type);
+							
+							
+							//kputc(type, str); kputc(':', str);
+							while (s < b->data + b->l_data && *s){
+								//		fprintf(stdout,"%c",*s++);
+								//	kputc(*s++, str);
+								s++;
+							}
+							if (s >= b->data + b->l_data)
+								return -1;
+							++s;
+						} else if (type == 'B') {
+							uint8_t sub_type = *(s++);
+							int32_t n;
+							memcpy(&n, s, 4);
+							s += 4; // no point to the start of the array
+							if (s + n >= b->data + b->l_data)
+								return -1;
+							//kputsn("B:", 2, str); kputc(sub_type, str); // write the typing
+							for (i = 0; i < n; ++i) { // FIXME: for better performance, put the loop after "if"
+								//kputc(',', str);
+								if ('c' == sub_type)      { ++s; }
+								else if ('C' == sub_type) { ++s; }
+								else if ('s' == sub_type) { s += 2; }
+								else if ('S' == sub_type) {  s += 2; }
+								else if ('i' == sub_type) { s += 4; }
+								else if ('I' == sub_type) {  s += 4; }
+								else if ('f' == sub_type) {  s += 4; }
+							}
+						}
+					}
+				}
+				if(all){
+					sb_file->num_read++;
+					//num_read++;
+				}else{
+					if(sb_ptr->num_hits > 1){
+						//num_read++;
+						sb_file->num_read++;
+					}
+				}
+				
+				
+				if(sb_file->num_read == sb_file->buffer_size){
+					//*read = num_read;
+					return OK;
+				}
+			}
+		}
+	}
+	
+	//*read = num_read;
+	return OK;
+ERROR:
+	return FAIL;
+}
+
+struct sam_bam_file* open_SAMBAMfile(char* name,int buffer_size, int read_Q_threshold, int multimap_Q_threshold)
+{
+	struct sam_bam_file* sb_file = NULL;
+	
+	int max_len = 120;
+	int max_num_hits  =10;
+	int i;
+	
+	MMALLOC(sb_file,sizeof(struct sam_bam_file));
+	sb_file->buffer = NULL;
+	sb_file->cum_chr_len = NULL;
+	sb_file->header = NULL;
+	sb_file->in = NULL;
+	sb_file->b = NULL;
+	sb_file->multimap_Q_threshold = multimap_Q_threshold;
+	sb_file->read_Q_threshold = read_Q_threshold;
+	
+	sb_file->max_num_hits = max_num_hits;
+	sb_file->si = NULL;
+	sb_file->total_entries_in_file = 0;
+	
+	sb_file->buffer_size = buffer_size;
+	sb_file->file_name = strdup(name);
+	RUNP(sb_file->in = sam_open(name, "r"));
+	
+
+	
+	RUNP(sb_file->header = sam_hdr_read(sb_file->in));
+	
+	if (sb_file->header->cigar_tab == NULL) {
+		DPRINTF3("need to make header cigartab\n");
+		MMALLOC(sb_file->header->cigar_tab , sizeof(int8_t) * 128);
+		
+		for (i = 0; i < 128; ++i){
+			sb_file->header->cigar_tab[i] = -1;
+		}
+		for (i = 0; BAM_CIGAR_STR[i]; ++i){
+			sb_file->header->cigar_tab[(int)BAM_CIGAR_STR[i]] = i;
+		}
+	}
+	
+	sb_file->header->ignore_sam_err = 0;
+	
+	MMALLOC(sb_file->cum_chr_len, sizeof(int64_t) *sb_file->header->n_targets );
+	sb_file->total_length = (int64_t) sb_file->header->target_len[0];
+	sb_file->cum_chr_len[0] = 0;
+	for(i = 1; i <sb_file->header->n_targets;i++){
+		sb_file->cum_chr_len[i]  = sb_file->cum_chr_len[i-1]  + (int64_t) sb_file->header->target_len[i-1];
+		sb_file->total_length +=(int64_t) sb_file->header->target_len[i];
+	}
+	
+	if(buffer_size){
+		MCALLOC(sb_file->buffer, buffer_size,struct sam_bam_entry*);
+		for(i = 0; i < buffer_size;i++ ){
+		
+			MCALLOC(sb_file->buffer[i],1, struct sam_bam_entry);
+		
+		
+			MMALLOC(sb_file->buffer[i]->sequence, sizeof(char)* max_len);
+			MMALLOC(sb_file->buffer[i]->start, sizeof(int64_t) * max_num_hits);
+			MMALLOC(sb_file->buffer[i]->stop, sizeof(int64_t) * max_num_hits);
+			MMALLOC(sb_file->buffer[i]->name, sizeof(char) * MAX_SEQ_NAME_LEN);
+			sb_file->buffer[i]->max_len = max_len;
+			sb_file->buffer[i]->max_num_hits = max_num_hits;
+			sb_file->buffer[i]->num_hits = 0;
+			sb_file->buffer[i]->len = 0;
+			sb_file->buffer[i]->qual = 0;
+		}
+
+	}
+	
+	RUN(make_si_info_in_sam_bam_file(sb_file));
+	
+	sb_file->b = bam_init1();
+	
+	
+	return sb_file;
+ERROR:
+
+	if(sb_file){
+		if(sb_file->si){
+			free_sequence_info(sb_file->si);
+		}
+		if(sb_file->b){
+			bam_destroy1(sb_file->b);
+		}
+		if(sb_file->header){
+			bam_hdr_destroy(sb_file->header);
+		}
+		if(sb_file->in){
+			i = sam_close(sb_file->in);
+			if(i < 0) WARNING_MSG("Error closing input: %s.\n",sb_file->file_name);
+		}
+		
+		if(sb_file->buffer){
+			for(i = 0; i < buffer_size;i++ ){
+				if(sb_file->buffer[i]){
+					MFREE(sb_file->buffer[i]->sequence);
+					MFREE(sb_file->buffer[i]->start);
+					MFREE(sb_file->buffer[i]->stop);
+				}
+				MFREE(sb_file->buffer[i]);
+			}
+			MFREE(sb_file->buffer);
+		}
+		
+		MFREE(sb_file->cum_chr_len);
+		MFREE(sb_file->file_name);
+		MFREE(sb_file);
+	}
+	
+	return NULL;
+}
+
+int make_si_info_in_sam_bam_file(struct sam_bam_file* sb_file)
+{
+	struct seq_info* si = NULL;
+	int i;
+
+	ASSERT(sb_file->si == NULL,"si is no NULL.");
+	
+	MMALLOC(si, sizeof(struct seq_info));
+	
+	si->cum_chr_len = NULL;
+	si->len = NULL;
+	si->names = NULL;
+	si->sn_len = NULL;
+	si->total_len = sb_file->total_length;
+	si->num_seq = sb_file->header->n_targets;
+	
+	MMALLOC(si->cum_chr_len , sizeof(int64_t) *si->num_seq  );
+	MMALLOC(si->len , sizeof(unsigned int) *si->num_seq  );
+	MMALLOC(si->names , sizeof(char*) *si->num_seq  );
+	MMALLOC(si->sn_len, sizeof(int) * si->num_seq );
+	
+	for(i = 0; i < si->num_seq ;i++){
+		si->cum_chr_len[i] = sb_file->cum_chr_len[i];
+		si->names[i] = NULL;
+		si->sn_len[i] = (int)strlen(sb_file->header->target_name[i]) +1;
+		MMALLOC(si->names[i], sizeof(char) *si->sn_len[i] );
+		snprintf(si->names[i], si->sn_len[i] , "%s",sb_file->header->target_name[i] );
+		si->len[i] = sb_file->header->target_len[i];
+	}
+	sb_file->si  = si;
+	return OK;
+ERROR:
+	if(si){
+		free_sequence_info(si);
+	}
+	return FAIL;
+}
+
+struct seq_info* make_si_info_from_fai(const faidx_t *fai)
+{
+	
+	struct seq_info* si = NULL;
+	
+	
+	khint_t k;
+	int i;
+	
+	int64_t prev = 0;
+	
+	ASSERT(fai != NULL,"no faidx index passed to make_si_info_from_fai.");
+	
+	MMALLOC(si, sizeof(struct seq_info));
+	
+	si->cum_chr_len = NULL;
+	si->len = NULL;
+	si->names = NULL;
+	si->sn_len = NULL;
+	si->total_len = 0;
+	si->num_seq = fai->n;
+	
+	MMALLOC(si->cum_chr_len , sizeof(int64_t) *si->num_seq  );
+	MMALLOC(si->len , sizeof(unsigned int) *si->num_seq  );
+	MMALLOC(si->names , sizeof(char*) *si->num_seq  );
+	MMALLOC(si->sn_len, sizeof(int) * si->num_seq );
+	
+	for(i = 0; i < si->num_seq ;i++){
+		faidx1_t x;
+		k = kh_get(s, fai->hash, fai->name[i]);
+		x = kh_value(fai->hash, k);
+		
+		si->names[i] = NULL;
+		si->sn_len[i] = (int)strlen(fai->name[i]) +1;
+		MMALLOC(si->names[i], sizeof(char) *si->sn_len[i] );
+		snprintf(si->names[i], si->sn_len[i] , "%s",fai->name[i] );
+		si->len[i] = x.len;
+		
+		si->cum_chr_len[i] = prev;
+		
+		si->total_len += si->len[i];
+		prev += si->len[i] ;
+		
+	}
+	
+	return si;
+ERROR:
+	free_sequence_info(si);
+	return NULL;
+}
+
+
+int compare_sequence_info(struct seq_info* sa,struct seq_info* sb)
+{
+	ASSERT(sa->num_seq == sb->num_seq,"different number of chromosomes!");
+	
+	int i;
+	int c;
+	
+	for(i = 0; i < sa->num_seq;i++){
+		
+		c = strcmp(sa->names[i], sb->names[i]);
+		if(c){
+			ERROR_MSG("Name of chromosome %d is different: %s %s.",i, sa->names[i], sb->names[i]);
+		}
+		if(sa->len[i] !=sb->len[i]){
+			ERROR_MSG("Length of chromosome %d is different: %d %d.",i, sa->len[i], sb->len[i]);
+		}
+		if(sa->cum_chr_len[i] !=sb->cum_chr_len[i]){
+			ERROR_MSG("Cumulative length is different at chromosome %d : %lu %lu.",i, sa->cum_chr_len[i], sb->cum_chr_len[i]);
+		}
+		
+		fprintf(stdout,"%s %d %lld\n", sa->names[i], sa->len[i],sa->cum_chr_len[i]);
+		fprintf(stdout,"%s %d %lld\n", sb->names[i], sb->len[i],sb->cum_chr_len[i]);
+		
+	}
+	
+	return OK;
+ERROR:
+	return FAIL;
+}
+
+int write_seq_info(struct seq_info* si, char* filename)
+{
+	FILE* file = NULL;
+	int i;
+	if(filename){
+		RUNP(file = fopen(filename, "w" ));
+	}else{
+		file = stdout;
+	}
+	
+	fprintf(file,"%d\tNumber of chromosomes\n",si->num_seq);
+	fprintf(file,"%lld\tTotal length\n",si->total_len);
+	
+	for(i = 0;i < si->num_seq;i++){
+		fprintf(file,"%s\t%d\t%lld\n", si->names[i], si->len[i],si->cum_chr_len[i]);
+	}
+	if(filename){
+		fclose(file);
+	}
+	return OK;
+ERROR:
+	if(filename){
+		fclose(file);
+	}
+	return FAIL;
+}
+
+struct seq_info* read_seq_info(char* filename)
+{
+	struct seq_info* si = NULL;
+	FILE* file = NULL;
+	int numseq = 0;
+	int i;
+	
+	ASSERT(filename != NULL,"No filename.");
+	
+	if(filename){
+		RUNP(file = fopen(filename, "r" ));
+	}
+	
+	fscanf(file,"%d\tNumber of chromosomes\n",&numseq);
+	ASSERT(numseq != 0,"No sequences found");
+	
+	MMALLOC(si, sizeof(struct seq_info));
+	si->cum_chr_len = NULL;
+	si->len = NULL;
+	si->names = NULL;
+	si->sn_len = NULL;
+	si->total_len = 0;
+	si->num_seq = numseq;
+	
+	
+	fscanf(file,"%lld\tTotal length\n",&si->total_len);
+
+	
+	MMALLOC(si->cum_chr_len , sizeof(int64_t) *si->num_seq  );
+	MMALLOC(si->len , sizeof(unsigned int) *si->num_seq  );
+	MMALLOC(si->names , sizeof(char*) *si->num_seq  );
+	MMALLOC(si->sn_len, sizeof(int) * si->num_seq );
+	for(i = 0;i < numseq;i++){
+		si->names[i] = NULL;
+		MMALLOC(si->names[i],sizeof(char) *FIELD_BUFFER_LEN );
+		fscanf(file,"%"xstr(FIELD_BUFFER_LEN)"s\t%d\t%lld\n",si->names[i],&si->len[i],&si->cum_chr_len[i]);
+	}
+	
+	fclose(file);
+	return si;
+ERROR:
+	if(file){
+		fclose(file);
+	}
+	free_sequence_info(si);
+	return NULL;
+	
+}
+
+
+
+
+
+void free_sequence_info(struct seq_info* si)
+{
+	int i;
+	if(si){
+		for(i = 0; i < si->num_seq ;i++){
+			MFREE(si->names[i]);
+		}
+		MFREE(si->cum_chr_len);// , sizeof(uint64_t) *si->num_seq  );
+		MFREE(si->len);// , sizeof(unsigned int) *si->num_seq  );
+		MFREE(si->names);// , sizeof(char*) *si->num_seq  );
+		MFREE(si->sn_len);//, sizeof(int) * si->num_seq );
+
+		MFREE(si);
+	}
+}
+
+
+int close_SAMBAMfile(struct sam_bam_file* sb_file)
+{
+	int status;
+	int i;
+	bam_destroy1(sb_file->b);
+	bam_hdr_destroy(sb_file->header);
+	
+	
+	status = sam_close(sb_file->in);
+	if (status < 0) {
+		ERROR_MSG("Error closing input: %s.\n",sb_file->file_name);
+	}
+	if(sb_file->si){
+		free_sequence_info(sb_file->si);
+	}
+	if(sb_file->buffer_size){
+		for(i = 0; i < sb_file->buffer_size;i++ ){
+			if(sb_file->buffer[i]){
+				MFREE(sb_file->buffer[i]->sequence);
+				MFREE(sb_file->buffer[i]->name);
+				MFREE(sb_file->buffer[i]->start);
+				MFREE(sb_file->buffer[i]->stop);
+			}
+			MFREE(sb_file->buffer[i]);
+		}
+		MFREE(sb_file->buffer);
+	}
+	MFREE(sb_file->file_name);
+	MFREE(sb_file->cum_chr_len);
+	MFREE(sb_file);
+	
+	return OK;
+ERROR:
+	if(sb_file){
+		if(sb_file->buffer_size){
+			for(i = 0; i < sb_file->buffer_size;i++ ){
+				if(sb_file->buffer[i]){
+					MFREE(sb_file->buffer[i]->sequence);
+					MFREE(sb_file->buffer[i]->name);
+					MFREE(sb_file->buffer[i]->start);
+					MFREE(sb_file->buffer[i]->stop);
+				}
+				MFREE(sb_file->buffer[i]);
+			}
+			MFREE(sb_file->buffer);
+		}
+		MFREE(sb_file->cum_chr_len);
+		MFREE(sb_file->file_name);
+		MFREE(sb_file);
+	}
+	return FAIL;
+}
+
+int rev_cmp(char* p,int len)
+{
+	char c;
+	int i,j;
+	for (i = 0, j = len - 1; i < j; i++, j--)
+	{
+		c = p[i];
+		p[i] = p[j];
+		p[j] = c;
+	}
+	for (i = 0; i <  len ; i++){
+		switch (p[i]) {
+			case 'A':
+			case 'a':
+				p[i] = 'T';
+				break;
+			case 'C':
+			case 'c':
+				p[i] = 'G';
+				break;
+			case 'G':
+			case 'g':
+				p[i] = 'C';
+				break;
+			case 'T':
+			case 't':
+				p[i] = 'A';
+				break;
+			default:
+				break;
+		}
+	}
+	return OK;
+}
+
+
+int echo_header(struct sam_bam_file* sb_file)
+{
+	int i;
+	fprintf(stdout,"%d sequences	(%lld total length)\n",sb_file->header->n_targets,sb_file->total_length);
+	for(i = 0; i < sb_file->header->n_targets;i++){
+		fprintf(stdout,"%s %d %lld\n", sb_file->header->target_name[i],(int)sb_file->header->target_len[i], sb_file->cum_chr_len[i]  );
+	}
+	fflush(stdout);
+	return OK;
+}
+
+int get_alignment_length(char*p,bam_hdr_t *h, int* len)
+{
+	char  *q;
+	int i;
+	
+	uint32_t *cigar = NULL;
+	size_t n_cigar = 0;
+	for (q = p; *p && *p != 0; ++p){
+		if (!isdigit(*p)) ++n_cigar;
+	}
+	if (*p++ != 0) {
+		if(n_cigar == 0){
+			ERROR_MSG("no CIGAR operations");
+		}
+		if(n_cigar >= 65536){
+			ERROR_MSG("too many CIGAR operations");
+		}
+		ERROR_MSG("Something went wrong");
+	}
+	//DPRINTF3("len of operations: %d %s\n",n_cigar,q );
+	
+	MMALLOC(cigar, sizeof(uint32_t) *n_cigar);
+	for (i = 0; i < n_cigar; ++i, ++q) {
+		int op;
+		cigar[i] = strtol(q, &q, 10)<<BAM_CIGAR_SHIFT;
+		op = (uint8_t)*q >= 128? -1 : h->cigar_tab[(int)*q];
+		ASSERT(op>=0,"unrecognized CIGAR operator:%d",op);
+		cigar[i] |= op;
+	}
+	*len = bam_cigar2rlen(n_cigar, cigar);
+	MFREE(cigar);
+	
+	return OK;
+ERROR:
+	
+	MFREE(cigar);
+	return FAIL;
+}
+
+int internal_to_chr_start_stop_strand(struct seq_info* si,struct genome_interval* g_int)
+{
+	int c;
+	int found = 0;
+	int64_t tmp_start, tmp_stop;
+	ASSERT(g_int != NULL,"genome_interval not allocated!");
+	g_int->strand = 0;
+	tmp_start = g_int->g_start;
+	tmp_stop = g_int->g_stop;
+	if(g_int->g_start >=  si->total_len){
+		//*strand = 1;
+		g_int->strand = 1;
+		tmp_start -= (si->total_len + STRAND_BUFFER);
+		tmp_stop -= (si->total_len + STRAND_BUFFER);
+	}
+	//DPRINTF2("%ld %d",tmp_start,g_int->strand);
+	for(c = 0;c < si->num_seq;c++){
+		
+		if(tmp_start < si->cum_chr_len[c]){
+			snprintf( g_int->chromosome, FIELD_BUFFER_LEN,"%s",si->names[c-1]);//   sb_file->header->target_name[c-1]);
+			
+			
+			//fprintf(stdout,"FOUND: %s\n",sb_file->header->target_name[c-1]);
+			tmp_start -= si->cum_chr_len[c-1];  //sb_file->cum_chr_len[c-1];
+			tmp_stop -= si->cum_chr_len[c-1]; //sb_file->cum_chr_len[c-1];
+			found = 1;
+			
+			break;
+		}
+	}
+	if(found == 0){
+		//ERROR_MSG("not found: %ld %ld(total len)",tmp_start, si->total_len);
+		//DPRINTF2("not found: %ld %ld(total len)",tmp_start, si->total_len );
+		if(tmp_start < si->total_len){
+			snprintf( g_int->chromosome, FIELD_BUFFER_LEN,"%s",si->names[c-1]);//   sb_file->header->target_name[c-1]);
+			
+			
+			//fprintf(stdout,"FOUND: %s\n",sb_file->header->target_name[c-1]);
+			tmp_start -= si->cum_chr_len[c-1];  //sb_file->cum_chr_len[c-1];
+			tmp_stop -= si->cum_chr_len[c-1]; //sb_file->cum_chr_len[c-1];
+			found = 1;
+			
+		}
+	}
+	
+	//DPRINTF2("%d ",c);
+	//DPRINTF2("%s ",si->names[c-1]);
+	//DPRINTF2("%p ",g_int);
+	//DPRINTF2("%p ",g_int->chromosome);
+
+	
+
+	//DPRINTF2("%s ",g_int->chromosome);
+	
+	ASSERT(found == 1,"Chromosome not found.");
+	
+	
+	g_int->start = (int)tmp_start;
+	g_int->stop = (int)tmp_stop;
+	return OK;
+ERROR:
+	return FAIL;
+}
+
+int chr_start_stop_strand_to_internal_tome(struct seq_info* si,struct genome_interval* g_int)
+{
+	int c;
+	ASSERT(g_int != NULL,"genome_interval not allocated!");
+	ASSERT(g_int->chromosome != NULL,"chromosome not defined.");
+	
+	int64_t offset = 0;
+	int found = 0;
+	for(c = 0;c < si->num_seq;c++){
+		if(!strcmp(    g_int->chromosome  ,si->names[c])){
+			offset = si->cum_chr_len[c];
+			found = 1;
+			break;
+		}
+	}
+	
+	ASSERT(found == 1,"Chromosome name: %s not found in index", g_int->chromosome );
+	
+	g_int->g_start = offset;
+	if(!g_int->strand){
+		g_int->g_start += g_int->start;
+	}else{
+		g_int->g_start += g_int->stop -1;
+	}
+	
+	return OK;
+ERROR:
+	return FAIL;
+}
+
+int chr_start_stop_strand_to_internal(struct seq_info* si,struct genome_interval* g_int)
+{
+	int c;
+	ASSERT(g_int != NULL,"genome_interval not allocated!");
+	ASSERT(g_int->chromosome != NULL,"chromosome not defined.");
+
+	int64_t offset = 0;
+	int found = 0;
+	for(c = 0;c < si->num_seq;c++){
+		if(!strcmp(    g_int->chromosome  ,si->names[c])){
+			offset = si->cum_chr_len[c];
+			found = 1;
+			break;
+		}
+	}
+	ASSERT(found == 1,"Chromosome name: %s not found in index", g_int->chromosome );
+	
+	if(g_int->strand){
+		g_int->g_start = si->total_len + STRAND_BUFFER;
+		g_int->g_stop = si->total_len + STRAND_BUFFER;
+	}
+	g_int->g_start += offset;
+	g_int->g_stop += offset;
+	
+	g_int->g_start += g_int->start;
+	g_int->g_stop += g_int->stop;
+	
+	return OK;
+ERROR:
+	return FAIL;
+}
+
+
+
+
+
+
+
+
+int get_chr_start_stop(struct seq_info* si,struct genome_interval* g_int, int64_t start, int64_t stop)
+{
+	int c;
+	
+	int64_t tmp_start, tmp_stop;
+	ASSERT(g_int != NULL,"genome_interval not allocated!");
+	g_int->strand = 0;
+	
+	//chr[0] = 0;
+	//*strand = 0;
+	g_int->g_start = start ;
+	g_int->g_stop = stop;
+	
+	tmp_start = start;
+	tmp_stop = stop;
+	if(start >=  si->total_len){
+		//*strand = 1;
+		g_int->strand = 1;
+		tmp_start -= (si->total_len + STRAND_BUFFER);
+		tmp_stop -= (si->total_len + STRAND_BUFFER);
+	}
+	for(c = 0;c < si->num_seq;c++){
+		
+		if(tmp_start < si->cum_chr_len[c]){
+			
+			snprintf( g_int->chromosome   ,FIELD_BUFFER_LEN,"%s",si->names[c-1]);//   sb_file->header->target_name[c-1]);
+			
+			
+			//fprintf(stdout,"FOUND: %s\n",sb_file->header->target_name[c-1]);
+			tmp_start -= si->cum_chr_len[c-1];  //sb_file->cum_chr_len[c-1];
+			tmp_stop -= si->cum_chr_len[c-1]; //sb_file->cum_chr_len[c-1];
+			
+			
+			break;
+		}
+	}
+	
+	g_int->start = (int)tmp_start-1;
+	g_int->stop = (int)tmp_stop-2;
+	
+	//*start = (int)tmp_start;
+	//*stop = (int)tmp_stop;
+	
+	return OK;
+ERROR:
+	return FAIL;
+}
+
+
+
+/*
+int get_chr_start_stop(struct sam_bam_file* sb_file,int read,int hit, struct genome_interval* g_int)//   char* chr,int* start,int*stop,int* strand)
+{
+	struct sam_bam_entry* sb_ptr = sb_file->buffer[read];
+	int c;
+	
+	long long int tmp_start, tmp_stop;
+	g_int->strand = 0;
+	
+	//chr[0] = 0;
+	
+	g_int->g_start = sb_ptr->start[hit];
+	g_int->g_stop = sb_ptr->stop[hit];
+	
+	tmp_start = sb_ptr->start[hit];
+	tmp_stop = sb_ptr->stop[hit];
+	if(sb_ptr->start[hit] >=sb_file->total_length){
+ 
+		g_int->strand = 1;
+		tmp_start -= sb_file->total_length;
+		tmp_stop -= sb_file->total_length;
+	}
+	for(c = 0;c < sb_file->header->n_targets;c++){
+		
+		if(tmp_start < sb_file->cum_chr_len[c]){
+			
+			snprintf( g_int->chromosome   ,FIELD_BUFFER_LEN,"%s",sb_file->header->target_name[c-1]);
+			
+			
+			//fprintf(stdout,"FOUND: %s\n",sb_file->header->target_name[c-1]);
+			tmp_start -=sb_file->cum_chr_len[c-1];
+			tmp_stop -=sb_file->cum_chr_len[c-1];
+			
+			
+			break;
+		}
+	}
+	
+	g_int->start = (int)tmp_start-1;
+	g_int->stop = (int)tmp_stop-2;
+	
+
+	
+	return OK;
+}
+*/
+
+struct genome_interval* init_genome_interval(void*(*init_data)(void) ,int (*data_resize) (void * data, va_list args),void (*data_free)(void* ptr))
+{
+	struct genome_interval* g_int = NULL;
+	MMALLOC(g_int, sizeof(struct genome_interval));
+	g_int->chromosome = NULL;
+	
+	MMALLOC(g_int->chromosome,sizeof(char) * FIELD_BUFFER_LEN);
+	g_int->g_start = 0;
+	g_int->g_stop = 0;
+	g_int->start = 0;
+	g_int->stop = 0;
+	g_int->strand = 0;
+	g_int->data = NULL;
+	g_int->data_free = data_free;
+	g_int->data_resize =data_resize;
+	
+	if(init_data){
+		RUNP(g_int->data  = init_data());
+	}
+	//g_int->annotation = NULL;
+	//g_int->value = 0.0;
+	return g_int;
+ERROR:
+	free_genome_interval(g_int);
+	return NULL;
+}
+int resize_genome_interval(struct genome_interval* g_int,...)
+{
+	va_list args;
+	va_start(args, g_int);
+	RUN(g_int->data_resize(g_int->data,args ));
+	va_end(args);
+	return OK;
+ERROR:
+	return FAIL;
+}
+
+void* init_gi_bed_data(void)
+{
+	struct gi_bed_data* tmp = NULL;
+	MMALLOC(tmp, sizeof(struct gi_bed_data));
+	tmp->annotation = NULL;
+	MMALLOC(tmp->annotation, sizeof(char) *FIELD_BUFFER_LEN);
+	tmp->value = 0.0;
+	return tmp;
+ERROR:
+	free_gi_bed_data(tmp);
+	return NULL;
+}
+
+int resize_gi_bed_data(void* ptr,va_list args)
+{
+	struct gi_bed_data* tmp = (struct gi_bed_data*)  ptr;
+	//va_list ap;
+	//va_start (ap, num_param);
+	
+	int new_size = va_arg (args, int);
+	//DPRINTF3("Allocating %d to annotation...",new_size);
+	MREALLOC(tmp->annotation, sizeof(char) * new_size);
+	//va_end (ap);                  /* Clean up. */
+	return OK;
+ERROR:
+	return FAIL;
+}
+
+void free_gi_bed_data(void* ptr)
+{
+	struct gi_bed_data* tmp = (struct gi_bed_data*)  ptr;
+
+	if(tmp){
+		if(tmp->annotation){
+			MFREE(tmp->annotation);
+		}
+		MFREE(tmp);
+	}
+}
+
+
+
+void free_genome_interval(struct genome_interval*  g_int)
+{
+	if(g_int){
+		if(g_int->data_free){
+			g_int->data_free(g_int->data);
+		}
+		//if(g_int->annotation){
+		//	MFREE(g_int->annotation);
+		//}
+		if(g_int->chromosome){
+			MFREE(g_int->chromosome);
+		}
+		MFREE(g_int);
+	}
+}
+
+
+
+
+struct rbtree_root*  init_rb_tree_for_bed_file( struct rbtree_root* root)
+{
+	
+	void*  (*fp_get)(void* ptr) = NULL;
+	long int (*fp_cmp)(void* keyA, void* keyB)= NULL;
+	int (*fp_cmp_same)(void* ptr_a,void* ptr_b);
+	void (*fp_print)(void* ptr,FILE* out_ptr) = NULL;
+	void (*fp_free)(void* ptr) = NULL;
+	
+	
+	
+	fp_get = &get_genome_interval_id;
+	fp_cmp_same = &resolve_same_genome_interval_ID;
+	
+	
+	fp_cmp = &compare_genome_interval_ID;
+	fp_print = &print_genome_interval_tree_entry;
+	fp_free = &free_genome_interval_tree_entry;
+	
+	root = init_tree(fp_get,fp_cmp,fp_cmp_same,fp_print,fp_free);
+	return root;
+	
+}
+
+void* get_genome_interval_id(void* ptr)
+{
+	struct genome_interval* tmp = (struct genome_interval*)  ptr;
+	return tmp;
+}
+
+int resolve_same_genome_interval_ID(void* ptr_a,void* ptr_b)
+{
+	//struct genome_interval* tmp = (struct genome_interval*)  ptr_b;
+	//free_genome_interval(tmp);
+	return 1;
+}
+
+long int compare_genome_interval_ID(void* keyA, void* keyB)
+{
+	struct genome_interval* num1 = (struct genome_interval*)keyA;
+	struct genome_interval* num2 = (struct genome_interval*)keyB;
+	
+	int c;
+	
+	
+	//DPRINTF3("Comparing: %s %d      %s %d",num1->chromosome,num1->start ,num2->chromosome, num2->start);
+	
+	c = num1->strand - num2->strand;
+	
+	if(c < 0){
+		return 1;
+	}
+	if(c > 0){
+		return -1;
+	}
+	
+	c = strcmp(num1->chromosome, num2->chromosome);
+	
+	if(c > 0){
+	//	DPRINTF3("-1");
+		return -1;
+		
+	}
+	if(c < 0){
+	//	DPRINTF3("1");
+		return 1;
+	}
+	if(c == 0){
+		if(num1->start > num2->start){
+	//		DPRINTF3("-1");
+			return -1;
+		}
+		if(num1->start < num2->start){
+	//		DPRINTF3("1");
+			return 1;
+		}
+		
+		if(num1->start == num2->start){
+	//		DPRINTF3("0");
+			return 0;
+		}
+	}
+	return 0;
+}
+
+
+void print_genome_interval_tree_entry(void* ptr,FILE* out_ptr)
+{
+	//int i;
+	struct genome_interval* tmp = (struct genome_interval*)  ptr;
+	struct gi_bed_data* bed_data = NULL;
+	bed_data = (struct gi_bed_data*) tmp->data;
+	
+
+	
+	fprintf(out_ptr,"%s\t%d\t%d\t%s\t%0.2f\t%c\n", tmp->chromosome,tmp->start,tmp->stop,bed_data->annotation,bed_data->value,"+-"[tmp->strand]);
+}
+
+void free_genome_interval_tree_entry(void* ptr)
+{
+	struct genome_interval* tmp = (struct genome_interval*)  ptr;
+	
+	free_genome_interval(tmp);
+}
+
+
+
+
+
+#ifdef ITEST
+
+
+
+
+int main (int argc,char * argv[])
+{
+	
+	struct sam_bam_file* sb_file = NULL;
+	int num_read = 0;
+	int i,j;
+	struct genome_interval* g_int = NULL;
+	
+	struct seq_info* si = NULL;
+	struct seq_info* si2 = NULL;
+	
+	RUNP(g_int =init_genome_interval(NULL,NULL,NULL));
+	char chr[FIELD_BUFFER_LEN];
+
+	faidx_t*  index = NULL;
+	
+	char* genomic_sequence = NULL;
+	
+	if(!argv[1]){
+		fprintf(stdout,"run:  ./test <sam/bam/cram file> <corresponding genome file>\n");
+		return EXIT_SUCCESS;
+	}
+	if(argv[2]){
+		
+		RUNP(index = get_faidx(argv[2]));
+		DPRINTF3("fai: %p\n",index);
+	}
+	
+	if(argv[1]){
+		RUNP(sb_file= open_SAMBAMfile(argv[1],100,-1,-1));
+		//echo_header(sb_file);
+		
+		//test seq retrieval;
+		
+		j = 0;
+		
+		snprintf(g_int->chromosome ,FIELD_BUFFER_LEN ,sb_file->header->target_name[j]  );
+		g_int->start = 0;
+		g_int->stop = 6;
+		g_int->strand = 0;
+		
+		genomic_sequence = get_sequence(index, g_int);
+		if(genomic_sequence){
+			
+			fprintf(stdout,"%s:%d-%d\n", sb_file->header->target_name[j], 0, 6);
+			
+			fprintf(stdout,"%s\n",genomic_sequence);
+			
+			MFREE(genomic_sequence);
+		}
+		
+		snprintf(g_int->chromosome ,FIELD_BUFFER_LEN ,sb_file->header->target_name[j] );
+		g_int->start = sb_file->header->target_len[j]+1-5;
+		g_int->stop =  sb_file->header->target_len[j]+5;
+		g_int->strand = 0;
+		
+		genomic_sequence = get_sequence(index, g_int);
+		if(genomic_sequence){
+			fprintf(stdout,"%s:%d-%d\n", sb_file->header->target_name[j], sb_file->header->target_len[j]+1-5, sb_file->header->target_len[j]+5);
+
+			fprintf(stdout,"%s\n",genomic_sequence);
+			
+			MFREE(genomic_sequence);
+		}
+		exit;
+		while(1){
+			RUN(read_SAMBAM_chunk(sb_file,1.0,0));
+			DPRINTF3("read %d entries\n",sb_file->num_read);
+			for(i =0; i < sb_file->num_read;i++){
+				struct sam_bam_entry* sb_ptr = sb_file->buffer[i];
+				fprintf(stdout,"%s (%d)  hits:\n", sb_ptr->sequence ,sb_ptr->len);
+				for(j = 0; j < sb_ptr->num_hits;j++){
+					
+					//get_chr_start_stop(sb_file,i,j, g_int);
+					
+					g_int->g_start = sb_file->buffer[i]->start[j];
+					g_int->g_stop =  sb_file->buffer[i]->stop[j];
+					RUN(internal_to_chr_start_stop_strand(sb_file->si ,g_int));
+					//get_chr_start_stop(sb_file->si ,g_int,sb_file->buffer[i]->start[j], sb_file->buffer[i]->stop[j]);
+					
+					RUNP(genomic_sequence = get_sequence(index, g_int));
+					fprintf(stdout,"%s\n",genomic_sequence);
+					if(!g_int->strand){
+						fprintf(stdout,"   + %s:%d-%d\n",g_int->chromosome,g_int->start,g_int->stop);
+					}else{
+						fprintf(stdout,"   - %s:%d-%d\n",g_int->chromosome,g_int->start,g_int->stop);
+					}
+					
+					MFREE(genomic_sequence);
+					
+				}
+				fprintf(stdout,"\n");
+			}
+			
+			if(!num_read){
+				break;
+			}
+		}
+		
+		
+		RUNP(si=	make_si_info_from_fai(index));
+		
+		
+		
+		
+		
+		//fprintf(stdout,"Number of chromosomes: %d %d\n",sb_file->si->num_seq, si->num_seq );
+		RUN(compare_sequence_info(sb_file->si,si));
+		
+		
+		RUN(write_seq_info(sb_file->si, "testA.si"));
+		RUN(write_seq_info(si, "testB.si"));
+
+		
+		
+		
+		
+		free_sequence_info(si);
+
+		
+		RUN(close_SAMBAMfile(sb_file));
+		sb_file = NULL;
+		
+	}
+	
+	
+	if(argv[2]){
+		DPRINTF3("fai: %p\n",index);
+		free_faidx(index);
+		index = NULL;
+	}
+	
+	
+	free_genome_interval(g_int);
+	g_int = NULL;
+	RUNP(g_int =init_genome_interval(init_gi_bed_data,resize_gi_bed_data, free_gi_bed_data));
+	
+	RUN(resize_genome_interval(g_int, 1000));
+	
+	free_genome_interval(g_int);
+	g_int = NULL;
+	//RUN(run_bed_sort_test(),"run bed sort test failed.");
+	
+	
+	
+	si = NULL;
+	si2 = NULL;
+
+	RUNP(si = read_seq_info("testB.si"));
+	RUNP(si2 = read_seq_info("testA.si"));
+	
+	RUN(compare_sequence_info(si,si2));
+	
+
+
+	RUNP(g_int =init_genome_interval(NULL,NULL, NULL));
+	g_int->g_start = 2000000000;
+	g_int->g_stop = 2000000100;
+	fprintf(stdout,"%ld %ld\n",g_int->g_start,g_int->g_stop);
+	RUN(internal_to_chr_start_stop_strand(si,g_int));
+	
+	
+	g_int->g_start = 0;
+	g_int->g_stop = 0;
+	RUN(chr_start_stop_strand_to_internal(si,g_int));
+	fprintf(stdout,"%ld %ld\n",g_int->g_start,g_int->g_stop);
+	free_sequence_info(si);
+	free_sequence_info(si2);
+	free_genome_interval(g_int);
+	return EXIT_SUCCESS;
+ERROR:
+	if(sb_file){
+		close_SAMBAMfile(sb_file);//,"close SAM/BAM failed.");
+	}
+	free_faidx(index);
+	free_genome_interval(g_int);
+	return EXIT_FAILURE;
+}
+
+#endif
+

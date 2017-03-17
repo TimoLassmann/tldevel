@@ -16,14 +16,32 @@ AC_PROG_RANLIB
 # FIXME: Replace `main' with a function in `-lm':
 AC_CHECK_LIB([m], [log])
 
+htslib_support=ok
+AC_CHECK_LIB([hts], [main],[], [htslib_support=missing])
+
+
+if test $htslib_support != ok; then
+  AC_MSG_ERROR([htslib not found
+
+This packages uses the htslib library. Please install and try again!
+
+
+https://github.com/samtools/htslib
+
+
+FAILED.  This error must be resolved in order to build this package successfully.])
+fi
+
 # Checks for header files.
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
 AC_TYPE_INT8_T
+AC_TYPE_INT16_T
 AC_TYPE_INT32_T
 AC_TYPE_INT64_T
+
 AC_TYPE_UINT8_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
@@ -60,7 +78,6 @@ else
         CFLAGS="-O2 -funroll-loops -Wall -std=gnu99 $MEM $SIGNAL32"
         DEBUG=0
 fi
-
 
 
 

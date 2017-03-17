@@ -1,5 +1,5 @@
 
-noinst_LIBRARIES = libtldevel.a librtree.a
+noinst_LIBRARIES = libtldevel.a librtree.a libhtsglue.a
 
 AUTOMAKE_OPTIONS = subdir-objects
 
@@ -15,6 +15,17 @@ build_config.c
 librtree_a_SOURCES = libtldevel.a \
 rtr.c \
 rtr.h
+
+
+AM_CPPFLAGS = \
+-I$(top_builddir)/libinc/htslib-1.2.1 \
+-I$top_srcdir/libinc/htslib-1.2.1 
+
+
+libhtsglue_a_SOURCES = libtldevel.a librtree.a  \
+htsglue.h \
+htsglue.c
+
 
 
 
