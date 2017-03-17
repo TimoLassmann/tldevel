@@ -9,7 +9,7 @@
 struct rtree_interval
 {
 	int32_t* coordinates;//[NUMSIDES]; /* xmin,ymin,...,xmax,ymax,... */
-	uint32_t count;
+	int32_t count;
 //	void* data;
 };
 
@@ -32,23 +32,29 @@ struct rtree_node{
 //search STUFF
 int search_data_rtree(struct rtr_data* rtrd , struct rtree_interval* new,int* found);
 int do_search_data(struct rtr_data* rtrd, struct rtree_node* node);
+
+int check_and_update_counts(struct rtr_data* rtrd , struct rtree_interval* query,int* identifier);
 int do_check_and_update_counts(struct rtr_data* rtrd, struct rtree_node* node, int* identifier);
 
 int get_overlapping_intervals(struct rtr_data** rtrd, struct rtree_search_results* sr, int num_tree);
 
 //int do_get_overlapping(struct rtr_data* rtrd,struct rtree_node* node, struct rtree_search_results* sr);
-int do_get_interval_id(struct rtr_data* rtrd, struct rtree_node* node,struct rtree_interval* query, int* identifier);
+int do_get_interval_id(struct rtr_data* rtrd, struct rtree_node* node,struct rtree_interval* query,int* count, int* identifier);
 //INSERT STUFF
-
+int make_rtree_coordinates(int64_t* in_coordinates, int32_t dim, int64_t shift);
+int insert_data_rtree(struct rtr_data* rtrd , struct rtree_interval* new,int identifier);
 int do_insert_data(struct rtr_data* rtrd, struct rtree_node* node);
 int do_add_branch(struct rtr_data* rtrd, struct rtree_node* node);
+
+int node_identical(struct rtr_data* rtrd,struct rtree_interval *a, struct rtree_interval *b, double cutoff);
+
 
 int pick_branch( struct rtr_data* rtrd, struct rtree_node *n);
 int classify_nodes(struct rtr_data* rtrd, int target, int group);
 int node_cover(struct rtr_data* rtrd, struct rtree_node *n,struct rtree_interval* r );
 
 int node_overlap(struct rtr_data* rtrd,struct rtree_interval *a, struct rtree_interval *b);
-
+int combine_interval(struct rtr_data* rtr_data, struct rtree_interval* target,struct rtree_interval* sourceA,struct rtree_interval* sourceB);
 
 int copy_branch(struct rtr_data* rtr_data,struct rtree_branch* target, struct rtree_branch* source);
 
@@ -59,13 +65,16 @@ double intervalSphericalVolume(struct rtree_interval *r , int dim);
 double sphere_volume(double dimension);
 
 int collect_entries(struct rtr_data* rtr_data, struct rtree_node* n,int* count);
-
+int re_label_tree_nodes(struct rtr_data* rtr_data, struct rtree_node* n,int* identifier);
 int sort_interval_based_on_count(const void * a, const void * b);
-
+int count_leaf_entries(struct rtr_data* rtr_data, struct rtree_node* n,int* count);
 void q_sort_coordinates(int32_t* c, int32_t left, int32_t right, int dim);
-
+int extend_num_nodes_in_rtr_data(struct rtr_data* rtrd, int num_add_elements);
 // print stuff
 struct rtree_interval*  random_interval(int dim);
+
+int print_rtree_node(struct rtr_data* rtr_data, struct rtree_node* rtr_node);
+int print_rtree_interval(struct rtr_data* rtr_data,struct rtree_interval* rtri);
 
 int print_tikz_image(struct rtr_data* rtr_data, struct rtree_node* rtr_node, int maxlevel);
 
@@ -86,39 +95,89 @@ void free_rtr_branch(struct rtree_branch* rtrb);
 //RTREE INTERVAL
 int reset_rtree_interval(struct rtr_data* rtr_data,struct rtree_interval* rtri);
 
-int insert(struct rtr_data* rtrd , int64_t* val,int32_t identifier);
+int insert(struct rtr_data* rtrd , int64_t* val,int32_t identifier,int32_t count, uint8_t keep_rep);
+int query(struct rtr_data* rtrd , int64_t* val,int32_t* identifier,int32_t* count);
 
-int insert(struct rtr_data* rtrd , int64_t* val,int32_t identifier)
+void free_rtr_data(struct rtr_data* rtrd);
+void free_rtree_interval(struct rtree_interval* rtri);
+int flatten_rtree(struct rtr_data* rtrd);
+
+
+
+int insert(struct rtr_data* rtrd , int64_t* val,int32_t identifier,int32_t count, uint8_t keep_rep)
 {
 	struct rtree_interval* tmp = NULL;
 	int i;
-
-	fprintf(stdout,"Got here\n");
+	int exists =0;
 	int dim = rtrd->dim;
 
 	RUNP(tmp = init_rtree_interval(rtrd));
 	
-	
 	/* change dimensions if necessary..  */
-	fprintf(stdout,"Got here\n");
+
+	if(rtrd->shift){
+		RUN(make_rtree_coordinates(val, rtrd->dim, rtrd->shift));
+	}
+
+	
 	/* copy values and insert...  */
+
+
+	
 	for(i = 0; i < rtrd->dim;i++){
-		fprintf(stdout,"%d %d\m",tmp->coordinates[i],val[i]);
 		tmp->coordinates[i] = val[i];
 		tmp->coordinates[dim+i] = val[dim+i];
 	}
-	RUN(insert_data_rtree(rtrd , tmp,identifier ));
-
+	tmp->count = count;
+	if(keep_rep){
+		RUN(check_and_update_counts(rtrd,tmp,&exists));
+	}
+	if(exists == 0){
+		RUN(insert_data_rtree(rtrd , tmp,identifier ));
+	}
 	free_rtree_interval(tmp);
-	
 	return OK;
 ERROR:
+	if(tmp){
+		free_rtree_interval(tmp);	
+	}
 	return FAIL;
 }
 
+int query(struct rtr_data* rtrd , int64_t* val,int32_t* identifier,int32_t* count)
+{
+	struct rtree_interval* tmp = NULL;
+	int i;
+	
+	int dim = rtrd->dim;
+
+	RUNP(tmp = init_rtree_interval(rtrd));
+	
+	/* change dimensions if necessary..  */
+
+	if(rtrd->shift){
+		RUN(make_rtree_coordinates(val, rtrd->dim, rtrd->shift));
+	}
+
+	
+	/* copy values and insert...  */
 
 
-
+	
+	for(i = 0; i < rtrd->dim;i++){
+		tmp->coordinates[i] = val[i];
+		tmp->coordinates[dim+i] = val[dim+i];
+	}
+	tmp->count = 0;
+	RUN(do_get_interval_id(rtrd, rtrd->root, tmp,count,identifier));
+	free_rtree_interval(tmp);
+	return OK;
+ERROR:
+	if(tmp){
+		free_rtree_interval(tmp);	
+	}
+	return FAIL;
+}
 
 #ifdef ITEST
 int main (int argc,char * argv[])
@@ -138,79 +197,85 @@ int main (int argc,char * argv[])
 	START_TIMER(t);
 	for(i = 0; i < num_tree;i++){
 		LOG_MSG("Doing tree %d.",i);
-		RUNP(tree_list[i] = init_rtr_data(NULL,&node_identical,2, 5,num_intervals_for_testing));
+		RUNP(tree_list[i] = init_rtr_data(2, 5,num_intervals_for_testing));
+		tree_list[i]->compare_function = &node_identical;
 		tree_list[i]->mode = MODE_RTREE_MERGE_IDENTICAL;
 		rtrd =tree_list[i];
 		j = 0;
 		tmp = init_rtree_interval(rtrd);
-		
+		tmp->count = 1;
 		tmp->coordinates[0] = 86164185;
 		tmp->coordinates[1] = 202465983;
 		tmp->coordinates[2] = 86164188;
 		tmp->coordinates[3] = 202465986;
 		
-		RUN(insert_data_rtree(rtrd , tmp,j+1));
+		RUN(insert_data_rtree(rtrd , tmp,77));
 		free_rtree_interval(tmp);
 
-
-		test_val[0] = 86164185;
-		test_val[1] = 202465983;
-	        test_val[2] = 86164188;
-		test_val[3] = 202465986;
-		fprintf(stdout,"Got here\n");
-		rtrd->insert(rtrd,test_val,77);
-		  fprintf(stdout,"Got here\n");
-		
+		for(j = 0; j < 10000;j++){
+			test_val[0] = 86164185;
+			test_val[1] = 202465983;
+			test_val[2] = 86164188;
+			test_val[3] = 202465986;
+			//fprintf(stdout,"Got here\n");
+			rtrd->insert(rtrd,test_val,87,13,1);
+			//fprintf(stdout,"Got here\n");
+		}
 		tmp = init_rtree_interval(rtrd);
+		tmp->count = 1;
 		
 		tmp->coordinates[0] = 86704840;
 		tmp->coordinates[1] = 202779757;
 		tmp->coordinates[2] = 86704842;
 		tmp->coordinates[3] = 202779759;
 		
-		RUN(insert_data_rtree(rtrd , tmp,j+1));
+		RUN(insert_data_rtree(rtrd , tmp,2));
 		free_rtree_interval(tmp);
 		
 		tmp = init_rtree_interval(rtrd);
+		tmp->count = 1;
 		
 		tmp->coordinates[0] = 86856210  ;
 		tmp->coordinates[1] = 202908320   ;
 		tmp->coordinates[2] = 86856213  ;
 		tmp->coordinates[3] = 202908322;
 		
-		RUN(insert_data_rtree(rtrd , tmp,j+1));
+		RUN(insert_data_rtree(rtrd , tmp,3));
 		free_rtree_interval(tmp);
 		
 		tmp = init_rtree_interval(rtrd);
+		tmp->count = 1;
 		
 		tmp->coordinates[0] = 86649879   ;
 		tmp->coordinates[1] = 202954384     ;
 		tmp->coordinates[2] = 86649882     ;
 		tmp->coordinates[3] = 202954386 ;
 		
-		RUN(insert_data_rtree(rtrd , tmp,j+1));
+		RUN(insert_data_rtree(rtrd , tmp,4));
 		free_rtree_interval(tmp);
 		
 		tmp = init_rtree_interval(rtrd);
+		tmp->count = 1;
 		
 		tmp->coordinates[0] = 87169264     ;
 		tmp->coordinates[1] = 202957295       ;
 		tmp->coordinates[2] = 87169266      ;
 		tmp->coordinates[3] = 202957297   ;
 		
-		RUN(insert_data_rtree(rtrd , tmp,j+1));
+		RUN(insert_data_rtree(rtrd , tmp,5));
 		free_rtree_interval(tmp);
 
 
 		
 		tmp = init_rtree_interval(rtrd);
+		tmp->count = 1;
 		
 		tmp->coordinates[0] = 86419825            ;
 		tmp->coordinates[1] = 203349347       ;
 		tmp->coordinates[2] = 86419827      ;
 		tmp->coordinates[3] = 203349350   ;
 		
-		RUN(insert_data_rtree(rtrd , tmp,j+1));
+		RUN(insert_data_rtree(rtrd , tmp,6));
 		free_rtree_interval(tmp);
 
 		
@@ -221,16 +286,28 @@ int main (int argc,char * argv[])
 	}
 	STOP_TIMER(t);
 	LOG_MSG("Processing %d intervals took: %f seconds.",num_intervals_for_testing,GET_TIMING(t));
-	
-	print_rtree_node(tree_list[0], tree_list[0]->root);
+	test_val[0] = 86164185;
+	test_val[1] = 202465983;
+	test_val[2] = 86164188;
+	test_val[3] = 202465986;
+	int id, count;
+	tree_list[0]->query(tree_list[0], test_val,&id,&count);
 
+	fprintf(stdout,"Found: %d %d\n",id,count);
+	
+	for(i = 0; i < num_tree;i++){
+		tree_list[i]->print_rtree(tree_list[i], tree_list[i]->root);
+//		print_rtree_node(tree_list[i], tree_list[i]->root);
+		tree_list[i]->free(tree_list[i]); 
+	}
+	
 	exit(0);
 	//MMALLOC(tree_list, sizeof(struct rtr_data*) * num_tree);
 	//DECLARE_TIMER(t);
 	START_TIMER(t);
 	for(i = 0; i < num_tree;i++){
 		LOG_MSG("Doing tree %d.",i);
-		RUNP(tree_list[i] = init_rtr_data(NULL,&node_identical,1, 10,num_intervals_for_testing));
+		RUNP(tree_list[i] = init_rtr_data(1, 10,num_intervals_for_testing));
 		tree_list[i]->mode = MODE_RTREE_MERGE_IDENTICAL;
 		rtrd =tree_list[i];
 		for(j	= 0 ;j < num_intervals_for_testing;j++){
@@ -248,7 +325,7 @@ int main (int argc,char * argv[])
 	//log_message("Identical: %d.",rtrd->stats_duplicated);
 	//rtrd->stats_num_interval = 0;
 	
-	RUNP(overlaptree = init_rtr_data(NULL,&node_identical,1, 10,num_intervals_for_testing*num_tree ));
+	RUNP(overlaptree = init_rtr_data(1, 10,num_intervals_for_testing*num_tree ));
 	
 	
 	START_TIMER(t);
@@ -258,10 +335,11 @@ int main (int argc,char * argv[])
 	STOP_TIMER(t);
 	LOG_MSG("Combine tree in: %f seconds.",GET_TIMING(t));
 	int identifier = 0;
+//	int count = 0;
 	for(i = 0; i < num_tree;i++){
 		for(j	= 0;j < 10;j++){
 			identifier = -1;
-			RUN(get_interval_id(overlaptree, tree_list[i]->flat_interval[j], &identifier ) );
+//			RUN(get_interval_id(overlaptree, tree_list[i]->flat_interval[j],&count, &identifier ) );
 			print_rtree_interval(overlaptree, tree_list[i]->flat_interval[j]);
 			fprintf(stdout,"ID:%d\n", identifier);
 			print_rtree_interval(tree_list[i], tree_list[i]->flat_interval[j]);
@@ -581,7 +659,7 @@ struct rtree_interval*  random_interval(int dim)
 		//r->coordinates[i + dim] = r->coordinates[i] + width; /* high side */
 		
 	}
-	RUN(make_rtree_coordinates(r, tmp_coordinated, dim,4));
+	RUN(make_rtree_coordinates(tmp_coordinated, dim,4));
 	
 	sort_coordinates(r->coordinates, dim);
 	
@@ -704,7 +782,7 @@ ERROR:
 
 
 
-int get_interval_id(struct rtr_data* rtrd , struct rtree_interval* query,int* identifier)
+int get_interval_id(struct rtr_data* rtrd , struct rtree_interval* query,int* count,int* identifier)
 {
 	//struct rtree_interval* interval_ptr = NULL;
 	/**identifier = 0;
@@ -714,20 +792,20 @@ int get_interval_id(struct rtr_data* rtrd , struct rtree_interval* query,int* id
 	
 	RUN(copy_interval(rtrd,interval_ptr, query), "copy_interval failed.");
 	*/
-	RUN(do_get_interval_id(rtrd, rtrd->root, query,identifier));
+	RUN(do_get_interval_id(rtrd, rtrd->root, query,count,identifier));
 	
 	return OK;
 ERROR:
 	return FAIL;
 }
 
-int do_get_interval_id(struct rtr_data* rtrd, struct rtree_node* node,struct rtree_interval* query, int* identifier)
+int do_get_interval_id(struct rtr_data* rtrd, struct rtree_node* node,struct rtree_interval* query,int* count, int* identifier)
 {
 	int i;
 	if(node->level > 0){
 		for(i = 0 ;i < node->count;i++){
 			if(node->branch[i]->child &&  node_overlap(rtrd, query,node->branch[i]->interval )){
-				RUN(do_get_interval_id(rtrd, node->branch[i]->child,query,identifier));
+				RUN(do_get_interval_id(rtrd, node->branch[i]->child,query,count,identifier));
 			}
 		}
 	}else{
@@ -735,6 +813,7 @@ int do_get_interval_id(struct rtr_data* rtrd, struct rtree_node* node,struct rtr
 			if(node->branch[i]->identifier &&   rtrd->compare_function(rtrd, query,node->branch[i]->interval , rtrd->compare_cutoff)){
 			//if(node->branch[i]->identifier &&  node_identical(rtrd, query,node->branch[i]->interval , rtrd->compare_cutoff)){
 				*identifier = node->branch[i]->identifier;
+				*count = node->branch[i]->interval->count;
 //				/node->branch[i]->interval->count++; // increment counter...
 				return OK;
 			}
@@ -1194,9 +1273,6 @@ int merge_interval(struct rtr_data* rtrd, struct rtree_branch* a, struct rtree_b
 	RUN(combine_interval(rtrd, b->interval,a->interval,b->interval));
 	
 	a->interval->count = a->interval->count + b->interval->count;
-	if(rtrd->merge_action){
-	//	RUN(rtrd->merge_action(  a->interval->data,    b->interval->data ),"merge_action failed.");
-	}
 	return OK;
 ERROR:
 	return FAIL;
@@ -1372,7 +1448,7 @@ ERROR:
  
  
 */
-struct rtr_data* init_rtr_data(int (*merge_action_funtion_pointer)(void* dataA, void* dataB),int(* compare_function_pointer)(struct rtr_data* rtrd,struct rtree_interval *a, struct rtree_interval *b, double cutoff), int dim, int num_branches,int expected_num_items)
+struct rtr_data* init_rtr_data(int dim, int num_branches,int expected_num_items)
 {
 	struct rtr_data* rtrd = NULL;
 	int i;
@@ -1393,16 +1469,21 @@ struct rtr_data* init_rtr_data(int (*merge_action_funtion_pointer)(void* dataA, 
 	rtrd->split_interval = NULL;
 	rtrd->new_node = NULL;
 	rtrd->new_branch = NULL;
-	rtrd->merge_action = merge_action_funtion_pointer;
-	rtrd->compare_function = compare_function_pointer;
+	rtrd->compare_function = node_identical;
 	
 	rtrd->stats_duplicated = 0;
 	rtrd->stats_overlapping = 0;
 	rtrd->stats_num_interval = 0;
 	rtrd->r = 0.5;
+	rtrd->shift = 20;
 	rtrd->compare_cutoff = 0.0;
 	rtrd->mode = MODE_RTREE_MERGE_NOPE;
-	rtrd->insert = insert; 
+	rtrd->insert = insert;
+	rtrd->query = query;
+	rtrd->free = free_rtr_data;
+	rtrd->flatten_rtree = flatten_rtree;
+	rtrd->re_label_tree_nodes = re_label_tree_nodes;
+	rtrd->print_rtree =  print_rtree_node; 
 	MMALLOC(rtrd->branch_buffer, sizeof(struct rtree_branch*) * (num_branches+1));
 	MMALLOC(rtrd->group, sizeof(uint8_t) * (num_branches+1));
 	MMALLOC(rtrd->taken, sizeof(uint8_t ) * (num_branches+1));
@@ -2073,37 +2154,24 @@ ERROR:
 
 // genome is 3234830000 nt long... times two is :
 // 6,469,660,000 - need to divide by 4 (ie. right shift by 2 AT LEAST!)
-int make_rtree_coordinates(struct rtree_interval *a, int64_t* in_coordinates, int32_t dim, int64_t shift)
+int make_rtree_coordinates(int64_t* in_coordinates, int32_t dim, int64_t shift)
 {
 	register int32_t i,j;
 	
-	ASSERT(shift >= 2,"warning: the smallest bucket size for coordinated in rtree is 4 nt... ");
-	if(!shift){
-		shift = 2;
-	}
 	for(i = 0; i < dim;i++){
-		a->coordinates[i] = (int32_t) (in_coordinates[i] >> shift);
-		
+		ASSERT((in_coordinates[i] >> shift) < INT32_MAX, "Coordinates are too large!"); 
+		in_coordinates[i] = (int32_t) (in_coordinates[i] >> shift);
+
+		ASSERT(((in_coordinates[j] >> shift)+1) < INT32_MAX, "Coordinates are too large!");
 		j = i + dim;
-		a->coordinates[j] = (int32_t) ((in_coordinates[j] >> shift) +1);
+		in_coordinates[j] = (int32_t) ((in_coordinates[j] >> shift) +1);
 	}
+
 	return OK;
 ERROR:
 	return FAIL;
 }
 
-int rescale_interval(struct rtr_data* rtrd,struct rtree_interval *a, int32_t dim)
-{
-	register int i,j;
-	for(i = 0; i < rtrd->dim;i++){
-		a->coordinates[i] = a->coordinates[i] >> dim;
-	
-		j = i + rtrd->dim;
-		a->coordinates[j] = (a->coordinates[j] >> dim) +1;
-	}
-	
-	return OK;
-}
 
 /**
  * Decide whether two rectangles overlap.
@@ -2299,56 +2367,6 @@ int sort_interval_based_on_count(const void * a, const void * b)
 		return 0;
 	}
 }
-
-
-int sort_interval_based_on_count_and_coordinates(const void * a, const void * b)
-{
-	int64_t c;
-	int i;
-	int dim = 0;
-	struct rtree_interval* const *one = a;
-	struct rtree_interval* const *two = b;
-	
-	
-	int64_t c_a, c_b;
-	
-	dim =(*one)->count >> 28;
-	
-	c_a = (int64_t)(((*one)->count) & 0xFFFFFFF);
-	c_b = (int64_t)(((*two)->count) & 0xFFFFFFF);
-	
-	c = c_a -  c_b;
-	
-	
-	if(c > 0){
-		return -1;
-	}else if(c < 0){
-		return 1;
-	}else{
-		for(i = 0; i < dim;i++){
-			c = (int64_t)((*one)->coordinates[i]) - (int64_t)((*two)->coordinates[i]);
-			if(c > 0){
-				return -1;
-			}else if(c < 0){
-				return 1;
-			}
-			
-			c = (int64_t)((*one)->coordinates[i+dim]) - (int64_t)((*two)->coordinates[i+dim]);
-			if(c > 0){
-				return -1;
-			}else if(c < 0){
-				return 1;
-			}
-
-			
-		}
-		
-		return 0;
-		
-	}
-}
-
-
 
 
 
