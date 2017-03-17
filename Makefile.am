@@ -1,5 +1,5 @@
 
-noinst_LIBRARIES = libtldevel.a librtree.a libhtsglue.a
+noinst_LIBRARIES = libtldevel.a librtree.a libhtsglue.a libthrpool.a
 
 AUTOMAKE_OPTIONS = subdir-objects
 
@@ -16,22 +16,18 @@ librtree_a_SOURCES = libtldevel.a \
 rtr.c \
 rtr.h
 
-
-AM_CPPFLAGS = \
--I$(top_builddir)/libinc/htslib-1.2.1 \
--I$top_srcdir/libinc/htslib-1.2.1 
-
-
 libhtsglue_a_SOURCES = libtldevel.a librtree.a  \
 htsglue.h \
 htsglue.c
 
+libthrpool_a_SOURCES = \
+thr_pool.h \
+thr_pool.c
 
 
+TESTS= libtldevel_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST
 
-TESTS= libtldevel_ITEST rb_ITEST librtree_ITEST
-
-check_PROGRAMS =  libtldevel_ITEST   rb_ITEST librtree_ITEST
+check_PROGRAMS =  libtldevel_ITEST   rb_ITEST librtree_ITEST libthrpool_ITEST
 
 libtldevel_ITEST_SOURCES = $(libtldevel_a_SOURCES)
 libtldevel_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DITEST
@@ -44,6 +40,12 @@ librtree_ITEST_LDADD =    $(LIBTLDEVEL) -ltldevel -L.
 rb_ITEST_SOURCES = $(libtldevel_a_SOURCES) 
 rb_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DRB_TEST
 rb_ITEST_LDADD =  $(LIBTLDEVEL)
+
+libthrpool_ITEST_SOURCES = $(libthrpool_a_SOURCES) 
+libthrpool_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DITEST
+libthrpool_ITEST_LDADD = 
+
+
 
 
 

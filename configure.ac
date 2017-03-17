@@ -15,7 +15,7 @@ AC_PROG_RANLIB
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-lm':
 AC_CHECK_LIB([m], [log])
-
+AC_CHECK_LIB([pthread], [pthread_create])
 htslib_support=ok
 AC_CHECK_LIB([hts], [main],[], [htslib_support=missing])
 
@@ -50,7 +50,8 @@ AC_TYPE_UINT32_T
 AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
-AC_CHECK_FUNCS([memset pow sqrt])
+AC_CHECK_FUNCS([clock_gettime memset pow sqrt])
+
 
 # non-standard stuff
 
