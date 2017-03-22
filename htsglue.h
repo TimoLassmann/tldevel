@@ -18,6 +18,8 @@
 
 #endif
 
+#include "rbtree.h"
+
 #include "htslib/cram.h"
 
 #include "htslib/sam.h"

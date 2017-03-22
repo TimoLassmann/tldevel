@@ -16,9 +16,11 @@ librtree_a_SOURCES = libtldevel.a \
 rtr.c \
 rtr.h
 
-libhtsglue_a_SOURCES = libtldevel.a librtree.a  \
+libhtsglue_a_SOURCES =  \
 htsglue.h \
 htsglue.c
+
+libhtsglue_a_LIBADD = libtldevel.a librtree.a
 
 libthrpool_a_SOURCES = \
 thr_pool.h \

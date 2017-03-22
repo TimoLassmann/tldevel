@@ -3,7 +3,7 @@
 #endif
 
 #include "tldevel.h"
-#include "rbtree.h"
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -544,7 +544,7 @@ struct sam_bam_file* open_SAMBAMfile(char* name,int buffer_size, int read_Q_thre
 	struct sam_bam_file* sb_file = NULL;
 	
 	int max_len = 120;
-	int max_num_hits  =10;
+	int max_num_hits  = 10;
 	int i;
 	
 	MMALLOC(sb_file,sizeof(struct sam_bam_file));
@@ -1200,7 +1200,7 @@ int get_chr_start_stop(struct sam_bam_file* sb_file,int read,int hit, struct gen
 	
 	long long int tmp_start, tmp_stop;
 	g_int->strand = 0;
-	
+       
 	//chr[0] = 0;
 	
 	g_int->g_start = sb_ptr->start[hit];
