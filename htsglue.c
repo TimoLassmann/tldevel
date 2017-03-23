@@ -1164,7 +1164,6 @@ int get_chr_start_stop(struct seq_info* si,struct genome_interval* g_int, int64_
 		tmp_stop -= (si->total_len + STRAND_BUFFER);
 	}
 	for(c = 0;c < si->num_seq;c++){
-		
 		if(tmp_start < si->cum_chr_len[c]){
 			
 			snprintf( g_int->chromosome   ,FIELD_BUFFER_LEN,"%s",si->names[c-1]);//   sb_file->header->target_name[c-1]);
@@ -1172,9 +1171,7 @@ int get_chr_start_stop(struct seq_info* si,struct genome_interval* g_int, int64_
 			
 			//fprintf(stdout,"FOUND: %s\n",sb_file->header->target_name[c-1]);
 			tmp_start -= si->cum_chr_len[c-1];  //sb_file->cum_chr_len[c-1];
-			tmp_stop -= si->cum_chr_len[c-1]; //sb_file->cum_chr_len[c-1];
-			
-			
+			tmp_stop -= si->cum_chr_len[c-1]; //sb_file->cum_chr_len[c-1];		
 			break;
 		}
 	}
