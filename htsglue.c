@@ -1101,6 +1101,8 @@ int chr_start_stop_strand_to_internal(struct seq_info* si,struct genome_interval
 
 	int64_t offset = 0;
 	int found = 0;
+	g_int->g_start = 0;
+	g_int->g_stop = 0;
 	for(c = 0;c < si->num_seq;c++){
 		if(!strcmp(    g_int->chromosome  ,si->names[c])){
 			offset = si->cum_chr_len[c];
@@ -1436,6 +1438,123 @@ void free_genome_interval_tree_entry(void* ptr)
 #ifdef ITEST
 
 
+int get_seq_test(void);
+
+int get_seq_test(void)
+{
+	struct genome_interval* g_int = NULL;
+	struct seq_info* si = NULL;
+	faidx_t*  index = NULL;
+
+	char fasta_name[] = "libhts_test.fa";
+	char chr_name[] = "dummy_chr";
+	char* seq = NULL;
+	FILE* f_ptr = NULL;
+	int i = 0;
+	
+	RUNP(f_ptr = fopen(fasta_name, "w"));
+	fprintf(f_ptr,">%s\n", chr_name);
+	for (i = 0; i < 10; i++) {
+		fprintf(f_ptr,"A");
+	
+	}
+	for (i = 0; i < 10; i++) {
+		fprintf(f_ptr,"C");
+	}
+	for (i = 0; i < 10; i++) {
+		fprintf(f_ptr,"G");
+	}
+	for (i = 0; i < 10; i++) {
+		fprintf(f_ptr,"T");
+	}
+	fprintf(f_ptr,"\n");
+		
+	fclose(f_ptr);
+
+	/* build index  */
+
+	RUNP(index = get_faidx(fasta_name));
+	RUNP(si =make_si_info_from_fai(index));
+
+	
+	RUNP(g_int =init_genome_interval(NULL,NULL,NULL));
+
+	strncpy(g_int->chromosome,chr_name,strlen(chr_name));
+
+	
+	g_int->strand = 0;
+	/* test 1: simple retrieve  */
+	
+	LOG_MSG("Retrieve seq 0-10.");
+	g_int->start = 0;
+	g_int->stop = 10;
+	RUNP(seq = get_sequence(index,g_int));
+	LOG_MSG("%s:%d-%d;%c;\n%s\n",g_int->chromosome,g_int->start,g_int->stop,"+-"[g_int->strand],seq);
+	MFREE(seq);
+	
+
+	LOG_MSG("Retrieve seq 5-15.");
+	g_int->start = 5;
+	g_int->stop = 15;
+	RUNP(seq = get_sequence(index,g_int));
+	LOG_MSG("%s:%d-%d;%c;\n%s\n",g_int->chromosome,g_int->start,g_int->stop,"+-"[g_int->strand],seq);
+	MFREE(seq);
+
+	LOG_MSG("Retrieve seq 5-15 (using internal coordinates first; then internal to chr... ");
+	g_int->g_start = 5;
+	g_int->g_stop = 15;
+	RUN(internal_to_chr_start_stop_strand(si,g_int));
+	RUNP(seq = get_sequence(index,g_int));
+	LOG_MSG("%s:%d-%d;%c;\n%s\n",g_int->chromosome,g_int->start,g_int->stop,"+-"[g_int->strand],seq);
+	MFREE(seq);
+
+	LOG_MSG("Retrieve seq 5-15, negative strand.");
+	g_int->start = 5;
+	g_int->stop = 15;
+	g_int->strand = 1;
+	RUNP(seq = get_sequence(index,g_int));
+	LOG_MSG("%s:%d-%d;%c;\n%s\n",g_int->chromosome,g_int->start,g_int->stop,"+-"[g_int->strand],seq);
+	MFREE(seq);
+
+	LOG_MSG("Retrieve seq 5-15.(to internal, back then retrieve");
+	g_int->start = 5;
+	g_int->stop = 15;
+	g_int->strand = 0;
+	RUN(chr_start_stop_strand_to_internal(si,g_int));
+	RUN(internal_to_chr_start_stop_strand(si,g_int));
+	RUNP(seq = get_sequence(index,g_int));
+	LOG_MSG("%s:%d-%d;%c;\n%s\n",g_int->chromosome,g_int->start,g_int->stop,"+-"[g_int->strand],seq);
+	MFREE(seq);
+
+	LOG_MSG("Retrieve seq 5-15. negative strand(to internal, back then retrieve");
+	g_int->start = 5;
+	g_int->stop = 15;
+	g_int->strand = 1;
+	RUN(chr_start_stop_strand_to_internal(si,g_int));
+	RUN(internal_to_chr_start_stop_strand(si,g_int));
+	RUNP(seq = get_sequence(index,g_int));
+	LOG_MSG("%s:%d-%d;%c;\n%s\n",g_int->chromosome,g_int->start,g_int->stop,"+-"[g_int->strand],seq);
+	MFREE(seq);
+
+
+	free_faidx(index);
+	free_genome_interval(g_int);
+	free_sequence_info(si);
+
+	return OK;
+ERROR:
+	if(si){
+		free_sequence_info(si);
+	}
+	if(index){
+		free_faidx(index);
+	}
+	if(g_int){
+		free_genome_interval(g_int);
+	}
+	return FAIL;
+}
+
 
 
 int main (int argc,char * argv[])
@@ -1448,6 +1567,8 @@ int main (int argc,char * argv[])
 	
 	struct seq_info* si = NULL;
 	struct seq_info* si2 = NULL;
+
+	RUN(get_seq_test());
 	
 	RUNP(g_int =init_genome_interval(NULL,NULL,NULL));
 	char chr[FIELD_BUFFER_LEN];

@@ -27,9 +27,9 @@ thr_pool.h \
 thr_pool.c
 
 
-TESTS= libtldevel_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST
+TESTS= libtldevel_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST libhtsglue_ITEST
 
-check_PROGRAMS =  libtldevel_ITEST   rb_ITEST librtree_ITEST libthrpool_ITEST
+check_PROGRAMS =  libtldevel_ITEST   rb_ITEST librtree_ITEST libthrpool_ITEST libhtsglue_ITEST
 
 libtldevel_ITEST_SOURCES = $(libtldevel_a_SOURCES)
 libtldevel_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DITEST
@@ -49,12 +49,23 @@ libthrpool_ITEST_LDADD =
 
 
 
+libhtsglue_ITEST_SOURCES = $(libhtsglue_a_SOURCES) 
+libhtsglue_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DITEST
+libhtsglue_ITEST_LDADD = libtldevel.a librtree.a
+
+
+
+
 
 
 build_config.c: ./helper/refset env_settings
 	./helper/refset  env_settings > build_config.c
 
 
-CLEANFILES = build_config.c testlog.txt
+CLEANFILES = \
+	build_config.c \
+	libhts_test.fa \
+	libhts_test.fa.fai \
+	testlog.txt
 
 
