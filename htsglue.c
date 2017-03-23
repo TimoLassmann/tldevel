@@ -669,7 +669,7 @@ int make_si_info_in_sam_bam_file(struct sam_bam_file* sb_file)
 	si->total_len = sb_file->total_length;
 	si->num_seq = sb_file->header->n_targets;
 	
-	MMALLOC(si->cum_chr_len , sizeof(int64_t) *si->num_seq  );
+	MMALLOC(si->cum_chr_len , sizeof(int64_t) *(si->num_seq+1)  );
 	MMALLOC(si->len , sizeof(unsigned int) *si->num_seq  );
 	MMALLOC(si->names , sizeof(char*) *si->num_seq  );
 	MMALLOC(si->sn_len, sizeof(int) * si->num_seq );
@@ -682,6 +682,8 @@ int make_si_info_in_sam_bam_file(struct sam_bam_file* sb_file)
 		snprintf(si->names[i], si->sn_len[i] , "%s",sb_file->header->target_name[i] );
 		si->len[i] = sb_file->header->target_len[i];
 	}
+	si->cum_chr_len[si->num_seq] = si->total_len;
+	
 	sb_file->si  = si;
 	return OK;
 ERROR:
@@ -713,7 +715,7 @@ struct seq_info* make_si_info_from_fai(const faidx_t *fai)
 	si->total_len = 0;
 	si->num_seq = fai->n;
 	
-	MMALLOC(si->cum_chr_len , sizeof(int64_t) *si->num_seq  );
+	MMALLOC(si->cum_chr_len , sizeof(int64_t) * (si->num_seq+1)  );
 	MMALLOC(si->len , sizeof(unsigned int) *si->num_seq  );
 	MMALLOC(si->names , sizeof(char*) *si->num_seq  );
 	MMALLOC(si->sn_len, sizeof(int) * si->num_seq );
@@ -735,7 +737,8 @@ struct seq_info* make_si_info_from_fai(const faidx_t *fai)
 		prev += si->len[i] ;
 		
 	}
-	
+
+	si->cum_chr_len[si->num_seq] = si->total_len;
 	return si;
 ERROR:
 	free_sequence_info(si);
@@ -828,7 +831,7 @@ struct seq_info* read_seq_info(char* filename)
 	fscanf(file,"%lld\tTotal length\n",&si->total_len);
 
 	
-	MMALLOC(si->cum_chr_len , sizeof(int64_t) *si->num_seq  );
+	MMALLOC(si->cum_chr_len , sizeof(int64_t) * (si->num_seq +1) );
 	MMALLOC(si->len , sizeof(unsigned int) *si->num_seq  );
 	MMALLOC(si->names , sizeof(char*) *si->num_seq  );
 	MMALLOC(si->sn_len, sizeof(int) * si->num_seq );
@@ -837,6 +840,7 @@ struct seq_info* read_seq_info(char* filename)
 		MMALLOC(si->names[i],sizeof(char) *FIELD_BUFFER_LEN );
 		fscanf(file,"%"xstr(FIELD_BUFFER_LEN)"s\t%d\t%lld\n",si->names[i],&si->len[i],&si->cum_chr_len[i]);
 	}
+	si->cum_chr_len[si->num_seq] = si->total_len;
 	
 	fclose(file);
 	return si;
@@ -1025,7 +1029,7 @@ int internal_to_chr_start_stop_strand(struct seq_info* si,struct genome_interval
 		tmp_stop -= (si->total_len + STRAND_BUFFER);
 	}
 	//DPRINTF2("%ld %d",tmp_start,g_int->strand);
-	for(c = 0;c < si->num_seq;c++){
+	for(c = 0;c <= si->num_seq;c++){
 		
 		if(tmp_start < si->cum_chr_len[c]){
 			snprintf( g_int->chromosome, FIELD_BUFFER_LEN,"%s",si->names[c-1]);//   sb_file->header->target_name[c-1]);
@@ -1037,20 +1041,6 @@ int internal_to_chr_start_stop_strand(struct seq_info* si,struct genome_interval
 			found = 1;
 			
 			break;
-		}
-	}
-	if(found == 0){
-		//ERROR_MSG("not found: %ld %ld(total len)",tmp_start, si->total_len);
-		//DPRINTF2("not found: %ld %ld(total len)",tmp_start, si->total_len );
-		if(tmp_start < si->total_len){
-			snprintf( g_int->chromosome, FIELD_BUFFER_LEN,"%s",si->names[c-1]);//   sb_file->header->target_name[c-1]);
-			
-			
-			//fprintf(stdout,"FOUND: %s\n",sb_file->header->target_name[c-1]);
-			tmp_start -= si->cum_chr_len[c-1];  //sb_file->cum_chr_len[c-1];
-			tmp_stop -= si->cum_chr_len[c-1]; //sb_file->cum_chr_len[c-1];
-			found = 1;
-			
 		}
 	}
 	
@@ -1145,7 +1135,7 @@ ERROR:
 int get_chr_start_stop(struct seq_info* si,struct genome_interval* g_int, int64_t start, int64_t stop)
 {
 	int c;
-	
+	int found = 0;
 	int64_t tmp_start, tmp_stop;
 	ASSERT(g_int != NULL,"genome_interval not allocated!");
 	g_int->strand = 0;
@@ -1163,19 +1153,21 @@ int get_chr_start_stop(struct seq_info* si,struct genome_interval* g_int, int64_
 		tmp_start -= (si->total_len + STRAND_BUFFER);
 		tmp_stop -= (si->total_len + STRAND_BUFFER);
 	}
-	for(c = 0;c < si->num_seq;c++){
+	for(c = 0;c <= si->num_seq;c++){
 		if(tmp_start < si->cum_chr_len[c]){
 			
 			snprintf( g_int->chromosome   ,FIELD_BUFFER_LEN,"%s",si->names[c-1]);//   sb_file->header->target_name[c-1]);
         		//fprintf(stdout,"FOUND: %s\n",sb_file->header->target_name[c-1]);
 			tmp_start -= si->cum_chr_len[c-1];  //sb_file->cum_chr_len[c-1];
-			tmp_stop -= si->cum_chr_len[c-1]; //sb_file->cum_chr_len[c-1];		
+			tmp_stop -= si->cum_chr_len[c-1]; //sb_file->cum_chr_len[c-1];
+			found = 1;
 			break;
 		}
 	}
 	
 	g_int->start = (int)tmp_start-1;
 	g_int->stop = (int)tmp_stop-2;
+	ASSERT(found == 1,"Chromosome not found.");
 	
 	//*start = (int)tmp_start;
 	//*stop = (int)tmp_stop;
