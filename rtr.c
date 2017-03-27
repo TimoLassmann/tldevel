@@ -2156,9 +2156,8 @@ int make_rtree_coordinates(int64_t* in_coordinates, int32_t dim, int64_t shift)
 	for(i = 0; i < dim;i++){
 		ASSERT((in_coordinates[i] >> shift) < INT32_MAX, "Coordinates are too large!"); 
 		in_coordinates[i] = (int32_t) (in_coordinates[i] >> shift);
-
-		ASSERT(((in_coordinates[j] >> shift)+1) < INT32_MAX, "Coordinates are too large!");
 		j = i + dim;
+		ASSERT(((in_coordinates[j] >> shift)+1) < INT32_MAX, "Coordinates are too large!");
 		in_coordinates[j] = (int32_t) ((in_coordinates[j] >> shift) +1);
 	}
 

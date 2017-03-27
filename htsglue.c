@@ -822,7 +822,9 @@ struct seq_info* read_seq_info(char* filename)
 		RUNP(file = fopen(filename, "r" ));
 	}
 	
-	fscanf(file,"%d\tNumber of chromosomes\n",&numseq);
+	if(fscanf(file,"%d\tNumber of chromosomes\n",&numseq) != 1){
+		ERROR_MSG("Could not scan number of sequences...");
+	}
 	ASSERT(numseq != 0,"No sequences found");
 	
 	MMALLOC(si, sizeof(struct seq_info));
@@ -834,7 +836,9 @@ struct seq_info* read_seq_info(char* filename)
 	si->num_seq = numseq;
 	
 	
-	fscanf(file,"%" PRId64 "\tTotal length\n",&si->total_len);
+	if(fscanf(file,"%" PRId64 "\tTotal length\n",&si->total_len) != 1){
+		ERROR_MSG("Could not scan total length");
+	}
 
 	
 	MMALLOC(si->cum_chr_len , sizeof(int64_t) * (si->num_seq +1) );
@@ -844,7 +848,10 @@ struct seq_info* read_seq_info(char* filename)
 	for(i = 0;i < numseq;i++){
 		si->names[i] = NULL;
 		MMALLOC(si->names[i],sizeof(char) *FIELD_BUFFER_LEN );
-		fscanf(file,"%"xstr(FIELD_BUFFER_LEN)"s\t%d\t%" PRId64 "\n",si->names[i],&si->len[i],&si->cum_chr_len[i]);
+
+		if(fscanf(file,"%"xstr(FIELD_BUFFER_LEN)"s\t%d\t%" PRId64 "\n",si->names[i],&si->len[i],&si->cum_chr_len[i]) != 3){
+			ERROR_MSG("Could not scan info on chromosome number %d.",i);
+		}
 	}
 	si->cum_chr_len[si->num_seq] = si->total_len;
 	
@@ -1243,6 +1250,7 @@ struct genome_interval* init_genome_interval(void*(*init_data)(void) ,int (*data
 	g_int->chromosome = NULL;
 	
 	MMALLOC(g_int->chromosome,sizeof(char) * FIELD_BUFFER_LEN);
+	g_int->chromosome[0] = 0;
 	g_int->g_start = 0;
 	g_int->g_stop = 0;
 	g_int->start = 0;
@@ -1486,9 +1494,7 @@ int get_seq_test(void)
 
 	
 	RUNP(g_int =init_genome_interval(NULL,NULL,NULL));
-
-	strncpy(g_int->chromosome,chr_name,strlen(chr_name));
-
+	snprintf(g_int->chromosome ,FIELD_BUFFER_LEN ,"%s",chr_name);
 	
 	g_int->strand = 0;
 	/* test 1: simple retrieve  */
@@ -1496,6 +1502,7 @@ int get_seq_test(void)
 	LOG_MSG("Retrieve seq 0-10.");
 	g_int->start = 0;
 	g_int->stop = 10;
+	DPRINTF3("%s:%d-%d\n",g_int->chromosome,g_int->start,g_int->stop);
 	RUNP(seq = get_sequence(index,g_int));
 	LOG_MSG("%s:%d-%d;%c;\n%s\n",g_int->chromosome,g_int->start,g_int->stop,"+-"[g_int->strand],seq);
 	MFREE(seq);
@@ -1583,7 +1590,6 @@ int main (int argc,char * argv[])
 
 	RUN(get_seq_test());
 	
-	RUNP(g_int =init_genome_interval(NULL,NULL,NULL));
 
 
 	
@@ -1596,6 +1602,7 @@ int main (int argc,char * argv[])
 		RUNP(index = get_faidx(argv[2]));
 		DPRINTF3("fai: %p\n",index);
 	}
+	RUNP(g_int =init_genome_interval(NULL,NULL,NULL));
 	
 	if(argv[1]){
 		RUNP(sb_file= open_SAMBAMfile(argv[1],100,-1,-1));
