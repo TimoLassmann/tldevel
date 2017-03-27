@@ -8,7 +8,15 @@
 #define MODE_RTREE_MERGE_OVERLAPPING 2
 
 
-struct rtree_interval;
+/* Needs to be declares here so I can access elments vis flatten_tree...  */
+struct rtree_interval
+{
+	int32_t* coordinates;//[NUMSIDES]; /* xmin,ymin,...,xmax,ymax,... */
+	int32_t count;
+//	void* data;
+};
+
+
 struct rtree_branch;
 struct rtree_node;
 

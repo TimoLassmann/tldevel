@@ -7,12 +7,6 @@
 
 #include "rtr.h"
 
-struct rtree_interval
-{
-	int32_t* coordinates;//[NUMSIDES]; /* xmin,ymin,...,xmax,ymax,... */
-	int32_t count;
-//	void* data;
-};
 
 struct rtree_branch
 {
