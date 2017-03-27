@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #include "htslib/cram.h"
 #include "htslib/sam.h"
@@ -236,7 +237,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 				//DPRINTF1("%d",id);
 				
 				
-				DPRINTF3("%d %s %d %d-%d (%lld) chr len: %d cumlen: %ld ",b->core.qual, h->target_name[id], h->target_len[id]  ,b->core.pos, bam_endpos(b) ,sb_file->cum_chr_len[id],sb_file->si->len[id],sb_file->cum_chr_len[id]);
+				DPRINTF3("%d %s %d %d-%d (%" PRId64 ") chr len: %d cumlen: %ld ",b->core.qual, h->target_name[id], h->target_len[id]  ,b->core.pos, bam_endpos(b) ,sb_file->cum_chr_len[id],sb_file->si->len[id],sb_file->cum_chr_len[id]);
 				
 #if (DEBUGLEVEL >= 3)
 				
@@ -366,7 +367,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 								
 								pos = atoi(pos_str);
 								id = bam_name2id(h, chr);
-								DPRINTF3("CHRID:%d length = %lld\n",id,sb_file->cum_chr_len[id]);
+								DPRINTF3("CHRID:%d length = %" PRId64 "\n",id,sb_file->cum_chr_len[id]);
 								if(pos < 0){
 									if(labs(pos)- window < 1){
 										sb_ptr->start[sb_ptr->num_hits]  = 0 + sb_file->cum_chr_len[id] + sb_file->total_length + STRAND_BUFFER;
@@ -771,8 +772,8 @@ int compare_sequence_info(struct seq_info* sa,struct seq_info* sb)
 			ERROR_MSG("Cumulative length is different at chromosome %d : %lu %lu.",i, sa->cum_chr_len[i], sb->cum_chr_len[i]);
 		}
 		
-		fprintf(stdout,"%s %d %lld\n", sa->names[i], sa->len[i],sa->cum_chr_len[i]);
-		fprintf(stdout,"%s %d %lld\n", sb->names[i], sb->len[i],sb->cum_chr_len[i]);
+		fprintf(stdout,"%s %d %" PRId64 "\n", sa->names[i], sa->len[i],sa->cum_chr_len[i]);
+		fprintf(stdout,"%s %d %" PRId64 "\n", sb->names[i], sb->len[i],sb->cum_chr_len[i]);
 		
 	}
 	
@@ -792,10 +793,10 @@ int write_seq_info(struct seq_info* si, char* filename)
 	}
 	
 	fprintf(file,"%d\tNumber of chromosomes\n",si->num_seq);
-	fprintf(file,"%lld\tTotal length\n",si->total_len);
+	fprintf(file,"%" PRId64 "\tTotal length\n",si->total_len);
 	
 	for(i = 0;i < si->num_seq;i++){
-		fprintf(file,"%s\t%d\t%lld\n", si->names[i], si->len[i],si->cum_chr_len[i]);
+		fprintf(file,"%s\t%d\t%" PRId64 "\n", si->names[i], si->len[i],si->cum_chr_len[i]);
 	}
 	if(filename){
 		fclose(file);
@@ -833,7 +834,7 @@ struct seq_info* read_seq_info(char* filename)
 	si->num_seq = numseq;
 	
 	
-	fscanf(file,"%lld\tTotal length\n",&si->total_len);
+	fscanf(file,"%" PRId64 "\tTotal length\n",&si->total_len);
 
 	
 	MMALLOC(si->cum_chr_len , sizeof(int64_t) * (si->num_seq +1) );
@@ -843,7 +844,7 @@ struct seq_info* read_seq_info(char* filename)
 	for(i = 0;i < numseq;i++){
 		si->names[i] = NULL;
 		MMALLOC(si->names[i],sizeof(char) *FIELD_BUFFER_LEN );
-		fscanf(file,"%"xstr(FIELD_BUFFER_LEN)"s\t%d\t%lld\n",si->names[i],&si->len[i],&si->cum_chr_len[i]);
+		fscanf(file,"%"xstr(FIELD_BUFFER_LEN)"s\t%d\t%" PRId64 "\n",si->names[i],&si->len[i],&si->cum_chr_len[i]);
 	}
 	si->cum_chr_len[si->num_seq] = si->total_len;
 	
@@ -973,9 +974,9 @@ int rev_cmp(char* p,int len)
 int echo_header(struct sam_bam_file* sb_file)
 {
 	int i;
-	fprintf(stdout,"%d sequences	(%lld total length)\n",sb_file->header->n_targets,sb_file->total_length);
+	fprintf(stdout,"%d sequences	(%" PRId64 " total length)\n",sb_file->header->n_targets,sb_file->total_length);
 	for(i = 0; i < sb_file->header->n_targets;i++){
-		fprintf(stdout,"%s %d %lld\n", sb_file->header->target_name[i],(int)sb_file->header->target_len[i], sb_file->cum_chr_len[i]  );
+		fprintf(stdout,"%s %d %" PRId64 "\n", sb_file->header->target_name[i],(int)sb_file->header->target_len[i], sb_file->cum_chr_len[i]  );
 	}
 	fflush(stdout);
 	return OK;
@@ -1726,14 +1727,14 @@ int main (int argc,char * argv[])
 	RUNP(g_int =init_genome_interval(NULL,NULL, NULL));
 	g_int->g_start = 2000000000;
 	g_int->g_stop = 2000000100;
-	fprintf(stdout,"%lld %lld\n",g_int->g_start,g_int->g_stop);
+	fprintf(stdout,"%" PRId64 " %" PRId64 "\n",g_int->g_start,g_int->g_stop);
 	RUN(internal_to_chr_start_stop_strand(si,g_int));
 	
 	
 	g_int->g_start = 0;
 	g_int->g_stop = 0;
 	RUN(chr_start_stop_strand_to_internal(si,g_int));
-	fprintf(stdout,"%lld %lld\n",g_int->g_start,g_int->g_stop);
+	fprintf(stdout,"%" PRId64 " %" PRId64 "\n",g_int->g_start,g_int->g_stop);
 	free_sequence_info(si);
 	free_sequence_info(si2);
 	free_genome_interval(g_int);
