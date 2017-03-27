@@ -64,6 +64,7 @@ struct gi_bed_data{
 struct sam_bam_entry{
 	int64_t* start;
 	int64_t* stop;
+	uint8_t* base_qual;
 	char* sequence;
 	char* name;
 	int qual;

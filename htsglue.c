@@ -11,7 +11,6 @@
 #include <ctype.h>
 
 #include "htslib/cram.h"
-
 #include "htslib/sam.h"
 #include "htslib/faidx.h"
 #include "htslib/khash.h"
@@ -205,7 +204,6 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 	char chr[FIELD_BUFFER_LEN];// = NULL;
 	char pos_str[FIELD_BUFFER_LEN];// = NULL;
 	char cigar[FIELD_BUFFER_LEN];//= NULL;
-	
 	int i;
 	int r = 0;
 	int num_read = 0;
@@ -225,9 +223,11 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 				struct sam_bam_entry* sb_ptr = sb_file->buffer[sb_file->num_read];
 				//char *name  = bam_get_qname(b);
 				//char *qual  = bam1_qual(b);
+
 				snprintf(sb_ptr->name, MAX_SEQ_NAME_LEN,"%s",bam_get_qname(b));
 				
 				uint8_t * seq =    bam_get_seq(b);
+				uint8_t* qual_ptr = bam_get_qual(b);
 				int id = b->core.tid;
 				//b->core.qual
 				//int len =b->core.l_qseq;
@@ -292,15 +292,19 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 					}
 					
 					MREALLOC(sb_ptr->sequence, sizeof(char) * sb_file->buffer[num_read]->max_len );
+					MREALLOC(sb_ptr->base_qual,sizeof(uint8_t) * sb_file->buffer[num_read]->max_len );
 					
 				}
 				for (i = 0; i < sb_ptr->len; ++i){
 					sb_ptr->sequence[i] ="=ACMGRSVTWYHKDBN"[bam_seqi(seq, i)];
+					sb_ptr->base_qual[i] = qual_ptr[i] + 33;
 				}
 				sb_ptr->sequence[sb_ptr->len ] = 0;
+				sb_ptr->base_qual[sb_ptr->len ] = 0
 				
 				
 				DPRINTF3("%s",sb_ptr->sequence);
+				DPRINTF3("%s",sb_ptr->base_qual);
 				if(bam_is_rev(b)){
 					
 					sb_ptr->start[sb_ptr->num_hits]  += sb_file->total_length + STRAND_BUFFER;
@@ -598,6 +602,7 @@ struct sam_bam_file* open_SAMBAMfile(char* name,int buffer_size, int read_Q_thre
 		
 		
 			MMALLOC(sb_file->buffer[i]->sequence, sizeof(char)* max_len);
+			MMALLOC(sb_file->buffer[i]->base_qual,sizeof(uint8_t)* max_len);
 			MMALLOC(sb_file->buffer[i]->start, sizeof(int64_t) * max_num_hits);
 			MMALLOC(sb_file->buffer[i]->stop, sizeof(int64_t) * max_num_hits);
 			MMALLOC(sb_file->buffer[i]->name, sizeof(char) * MAX_SEQ_NAME_LEN);
@@ -893,6 +898,7 @@ int close_SAMBAMfile(struct sam_bam_file* sb_file)
 		for(i = 0; i < sb_file->buffer_size;i++ ){
 			if(sb_file->buffer[i]){
 				MFREE(sb_file->buffer[i]->sequence);
+				MFREE(sb_file->buffer[i]->base_qual);
 				MFREE(sb_file->buffer[i]->name);
 				MFREE(sb_file->buffer[i]->start);
 				MFREE(sb_file->buffer[i]->stop);
@@ -912,6 +918,7 @@ ERROR:
 			for(i = 0; i < sb_file->buffer_size;i++ ){
 				if(sb_file->buffer[i]){
 					MFREE(sb_file->buffer[i]->sequence);
+					MFREE(sb_file->buffer[i]->base_qual);
 					MFREE(sb_file->buffer[i]->name);
 					MFREE(sb_file->buffer[i]->start);
 					MFREE(sb_file->buffer[i]->stop);
@@ -1568,14 +1575,16 @@ int main (int argc,char * argv[])
 	struct seq_info* si = NULL;
 	struct seq_info* si2 = NULL;
 
-	RUN(get_seq_test());
 	
-	RUNP(g_int =init_genome_interval(NULL,NULL,NULL));
-	char chr[FIELD_BUFFER_LEN];
-
 	faidx_t*  index = NULL;
 	
 	char* genomic_sequence = NULL;
+
+	RUN(get_seq_test());
+	
+	RUNP(g_int =init_genome_interval(NULL,NULL,NULL));
+
+
 	
 	if(!argv[1]){
 		fprintf(stdout,"run:  ./test <sam/bam/cram file> <corresponding genome file>\n");
@@ -1595,7 +1604,7 @@ int main (int argc,char * argv[])
 		
 		j = 0;
 		
-		snprintf(g_int->chromosome ,FIELD_BUFFER_LEN ,sb_file->header->target_name[j]  );
+		snprintf(g_int->chromosome ,FIELD_BUFFER_LEN ,"%s",sb_file->header->target_name[j]  );
 		g_int->start = 0;
 		g_int->stop = 6;
 		g_int->strand = 0;
@@ -1610,7 +1619,7 @@ int main (int argc,char * argv[])
 			MFREE(genomic_sequence);
 		}
 		
-		snprintf(g_int->chromosome ,FIELD_BUFFER_LEN ,sb_file->header->target_name[j] );
+		snprintf(g_int->chromosome ,FIELD_BUFFER_LEN ,"%s",sb_file->header->target_name[j] );
 		g_int->start = sb_file->header->target_len[j]+1-5;
 		g_int->stop =  sb_file->header->target_len[j]+5;
 		g_int->strand = 0;
@@ -1623,7 +1632,7 @@ int main (int argc,char * argv[])
 			
 			MFREE(genomic_sequence);
 		}
-		exit;
+		
 		while(1){
 			RUN(read_SAMBAM_chunk(sb_file,1.0,0));
 			DPRINTF3("read %d entries\n",sb_file->num_read);
@@ -1717,14 +1726,14 @@ int main (int argc,char * argv[])
 	RUNP(g_int =init_genome_interval(NULL,NULL, NULL));
 	g_int->g_start = 2000000000;
 	g_int->g_stop = 2000000100;
-	fprintf(stdout,"%ld %ld\n",g_int->g_start,g_int->g_stop);
+	fprintf(stdout,"%lld %lld\n",g_int->g_start,g_int->g_stop);
 	RUN(internal_to_chr_start_stop_strand(si,g_int));
 	
 	
 	g_int->g_start = 0;
 	g_int->g_stop = 0;
 	RUN(chr_start_stop_strand_to_internal(si,g_int));
-	fprintf(stdout,"%ld %ld\n",g_int->g_start,g_int->g_stop);
+	fprintf(stdout,"%lld %lld\n",g_int->g_start,g_int->g_stop);
 	free_sequence_info(si);
 	free_sequence_info(si2);
 	free_genome_interval(g_int);
