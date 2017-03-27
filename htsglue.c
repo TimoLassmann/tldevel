@@ -300,7 +300,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 					sb_ptr->base_qual[i] = qual_ptr[i] + 33;
 				}
 				sb_ptr->sequence[sb_ptr->len ] = 0;
-				sb_ptr->base_qual[sb_ptr->len ] = 0
+				sb_ptr->base_qual[sb_ptr->len ] = 0;
 				
 				
 				DPRINTF3("%s",sb_ptr->sequence);
