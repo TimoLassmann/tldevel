@@ -54,9 +54,9 @@ int compare_multiple_SAM_BAM_headers(char** filenames, int num_files)
 	
 	for(i = 0; i < num_files;i++){
 		
-		RUNP(sb1_file= open_SAMBAMfile(filenames[i],0,-1,-1));
+		RUNP(sb1_file= open_SAMBAMfile(filenames[i],0,10,-1,-1));
 		for(j = i+1; j <  num_files;j++){
-			RUNP(sb2_file= open_SAMBAMfile(filenames[j],0,-1,-1));
+			RUNP(sb2_file= open_SAMBAMfile(filenames[j],0,10,-1,-1));
 			
 			RUN(compare_headers(sb1_file,sb2_file));
 			
@@ -544,12 +544,11 @@ ERROR:
 	return FAIL;
 }
 
-struct sam_bam_file* open_SAMBAMfile(char* name,int buffer_size, int read_Q_threshold, int multimap_Q_threshold)
+struct sam_bam_file* open_SAMBAMfile(char* name,int buffer_size,int max_num_hits, int read_Q_threshold, int multimap_Q_threshold)
 {
 	struct sam_bam_file* sb_file = NULL;
 	
 	int max_len = 120;
-	int max_num_hits  = 10;
 	int i;
 	
 	MMALLOC(sb_file,sizeof(struct sam_bam_file));
@@ -1605,7 +1604,7 @@ int main (int argc,char * argv[])
 	RUNP(g_int =init_genome_interval(NULL,NULL,NULL));
 	
 	if(argv[1]){
-		RUNP(sb_file= open_SAMBAMfile(argv[1],100,-1,-1));
+		RUNP(sb_file= open_SAMBAMfile(argv[1],100,10,-1,-1));
 		//echo_header(sb_file);
 		
 		//test seq retrieval;

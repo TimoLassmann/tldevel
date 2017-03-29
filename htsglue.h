@@ -97,7 +97,7 @@ struct sam_bam_file{
 
 extern int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all,int window);
 //extern struct sam_bam_file* open_SAMBAMfile(char* name,int build_buffer);
-extern struct sam_bam_file* open_SAMBAMfile(char* name,int buffer_size, int read_Q_threshold, int multimap_Q_threshold);
+extern struct sam_bam_file* open_SAMBAMfile(char* name,int buffer_size,int max_num_hits, int read_Q_threshold, int multimap_Q_threshold);
 extern int close_SAMBAMfile(struct sam_bam_file* sb_file);
 
 extern int echo_header(struct sam_bam_file* sb_file);
