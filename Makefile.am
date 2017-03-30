@@ -1,9 +1,11 @@
 
-noinst_LIBRARIES = libtldevel.a librtree.a libhtsglue.a libthrpool.a
+noinst_LIBRARIES = libtldevel.a librtree.a libhtsglue.a libthrpool.a libpwrite.a 
 
 AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS = helper
+
+
 
 libtldevel_a_SOURCES = \
 tldevel.h \
@@ -16,6 +18,8 @@ librtree_a_SOURCES = libtldevel.a \
 rtr.c \
 rtr.h
 
+librtree_a_LIBADD = libtldevel.a
+
 libhtsglue_a_SOURCES =  \
 htsglue.h \
 htsglue.c
@@ -26,10 +30,15 @@ libthrpool_a_SOURCES = \
 thr_pool.h \
 thr_pool.c
 
+libpwrite_a_SOURCES =\
+pwrite.h \
+pwrite.c
 
-TESTS= libtldevel_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST libhtsglue_ITEST
+libpwrite_a_LIBADD = libtldevel.a
 
-check_PROGRAMS =  libtldevel_ITEST   rb_ITEST librtree_ITEST libthrpool_ITEST libhtsglue_ITEST
+TESTS= libtldevel_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST libhtsglue_ITEST libpwrite_ITEST
+
+check_PROGRAMS =  libtldevel_ITEST   rb_ITEST librtree_ITEST libthrpool_ITEST libhtsglue_ITEST libpwrite_ITEST
 
 libtldevel_ITEST_SOURCES = $(libtldevel_a_SOURCES)
 libtldevel_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DITEST
@@ -54,6 +63,11 @@ libhtsglue_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DITEST
 libhtsglue_ITEST_LDADD = libtldevel.a librtree.a
 
 
+libpwrite_ITEST_SOURCES = $(libpwrite_a_SOURCES) 
+libpwrite_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DITEST
+libpwrite_ITEST_LDADD = libtldevel.a  -lpthread libthrpool.a
+
+
 
 
 
@@ -66,6 +80,7 @@ CLEANFILES = \
 	build_config.c \
 	libhts_test.fa \
 	libhts_test.fa.fai \
+	pw_write_test.txt \
 	testlog.txt
 
 
