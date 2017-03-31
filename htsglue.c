@@ -45,6 +45,28 @@ static int compare_headers(struct sam_bam_file* sb1_file,struct sam_bam_file* sb
 static int make_si_info_in_sam_bam_file(struct sam_bam_file* sb_file);
 
 
+int get_max_seq_len_from_sb_buffer(struct sam_bam_file* sb_file,int* max_len)
+{
+	int i;
+	ASSERT(sb_file != NULL,"file handler is NULL.");
+	ASSERT(sb_file->buffer != NULL,"sequence buffer is not allocated.");
+
+	*max_len = 0;
+
+	for (i = 0; i < sb_file->buffer_size; i++) {
+		if(sb_file->buffer[i]->max_len > *max_len){
+			*max_len = sb_file->buffer[i]->max_len;
+		}
+	}
+	
+
+	
+	return OK;
+ERROR:
+	return FAIL;
+}
+
+
 int compare_multiple_SAM_BAM_headers(char** filenames, int num_files)
 {
 	int i,j;

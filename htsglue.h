@@ -3,7 +3,6 @@
 
 #define hts_glue_header
 
-
 #define FIELD_BUFFER_LEN 128
 #define MAX_SEQ_NAME_LEN 128
 
@@ -100,8 +99,12 @@ extern int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all,int window);
 extern struct sam_bam_file* open_SAMBAMfile(char* name,int buffer_size,int max_num_hits, int read_Q_threshold, int multimap_Q_threshold);
 extern int close_SAMBAMfile(struct sam_bam_file* sb_file);
 
+extern int get_max_seq_len_from_sb_buffer(struct sam_bam_file* sb_file,int* max_len);
+
 extern int echo_header(struct sam_bam_file* sb_file);
 extern int compare_multiple_SAM_BAM_headers(char** filenames, int num_files);
+
+
 
 //extern int get_chr_start_stop(struct sam_bam_file* sb_file,int read, int hit,char* chr,int* start,int*stop,int* strand);
 //extern int get_chr_start_stop(struct sam_bam_file* sb_file,int read,int hit, struct genome_interval* g_int);
