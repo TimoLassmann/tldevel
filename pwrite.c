@@ -50,6 +50,7 @@ struct pwrite_main* init_pwrite_main(char* outname, int num_threads,int buffer_s
 {
 	struct pwrite_main* pw = NULL;
 
+	ASSERT(outname != NULL, "no filename give.");
 	ASSERT(num_threads < 256,"too many write threads (%d).",num_threads);
 	ASSERT(buffer_size > 999,"too little memory for each write buffer. (%d).",buffer_size);
 
