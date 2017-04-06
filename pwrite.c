@@ -21,7 +21,7 @@ struct thread_control_variables{
 	pthread_cond_t can_produce; // signaled when items are removed
 	pthread_cond_t can_consume; // signaled when items are added
 	uint8_t run;
-
+	uint8_t writer_ready;
 };
 
 
@@ -43,6 +43,8 @@ void free_pw_main(struct pwrite_main* pw);
 
 /* this functionwill write data to disk  */
 void* write_thread_function(void *threadarg);
+/* This function will block starting threads until the writer thread is ready...  */
+int wait_for_writer(struct pwrite_main* pw);
 
 
 
@@ -52,7 +54,7 @@ struct pwrite_main* init_pwrite_main(char* outname, int num_threads,int buffer_s
 
 	ASSERT(outname != NULL, "no filename give.");
 	ASSERT(num_threads < 256,"too many write threads (%d).",num_threads);
-	ASSERT(buffer_size > 999,"too little memory for each write buffer. (%d).",buffer_size);
+	ASSERT(buffer_size > 1,"too little memory for each write buffer. (%d).",buffer_size);
 
 	MMALLOC(pw, sizeof(struct pwrite_main));
 	/* initialization */
@@ -63,14 +65,16 @@ struct pwrite_main* init_pwrite_main(char* outname, int num_threads,int buffer_s
 	pw->out_ptr = NULL;
 
 	if(my_file_exists(outname)){
-		ERROR_MSG("File \"%s\" already exists.",outname);
+		WARNING_MSG("File \%s\" will be overwritten.",outname);
 	}
 
 	RUNP(pw->out_ptr = fopen(outname, "w"));
 	
 	pw->buffer_len = buffer_size;
 	pw->num_threads = num_threads;
+
 	pw->write_thread_function = write_thread_function;
+	pw->write_wait = wait_for_writer;
 	pw->free = free_pw_main;
 	pw->write = pwrite;
 	pw->flush = cleanup_p_write;
@@ -88,11 +92,15 @@ void*  write_thread_function(void *threadarg)
 {
 	struct pwrite_main* pw = NULL;
 	struct pwrite_buffer* tmp = NULL;
-
+	
 	int bytes_written = 0;
 	pw = (struct pwrite_main*)threadarg;
+	
 	while(1) {
 		pthread_mutex_lock(&pw->tcv->mutex);
+		pw->tcv->writer_ready = 1;
+		pthread_cond_signal(&pw->tcv->can_produce);
+	
 		while(pw->shared_buffer->pos == 0 && pw->tcv->run) { // empty			
 			pthread_cond_wait(&pw->tcv->can_consume, &pw->tcv->mutex);
 		}
@@ -101,17 +109,18 @@ void*  write_thread_function(void *threadarg)
 			break;
 		}
 		
-		tmp = pw->disk;
+	        tmp = pw->disk;
 		pw->disk = pw->shared_buffer;
 		pw->shared_buffer = tmp;
 
+		pw->shared_buffer->pos = 0;//pw->shared_buffer->len;
 		
 		/* maybe check if pw->shared is empty (i.e. contents were written)  */
 	        		
 		pthread_cond_signal(&pw->tcv->can_produce);
 		pthread_mutex_unlock(&pw->tcv->mutex);
 		/* the actual write.. */
-		bytes_written = 0;
+		bytes_written = 0;		
 		bytes_written = fwrite(pw->disk->buffer, sizeof(char), pw->disk->pos,pw->out_ptr);
 		if(bytes_written != (size_t)  pw->disk->pos){
 			ERROR_MSG("Write was unsuccessful,");
@@ -125,6 +134,20 @@ ERROR:
 	return NULL;//pthread_exit(0);
 
 }
+
+int wait_for_writer(struct pwrite_main* pw)
+{
+	pthread_mutex_lock(&pw->tcv->mutex);
+	LOG_MSG("Waiting for writer thread to enter loop...");
+	while(pw->tcv->writer_ready != 1 ) { //shared buffer is not empty...
+		pthread_cond_wait(&pw->tcv->can_produce, &pw->tcv->mutex);
+	}
+	LOG_MSG("Done waiting.");
+	//fprintf(stdout,"%'lld\tunlocking\n", (long long)threadID1);
+	pthread_mutex_unlock(&pw->tcv->mutex);
+	return OK;
+}
+
 
 int init_write_buffers(struct pwrite_main* pw)
 {
@@ -168,6 +191,7 @@ int init_thread_control_variables(struct pwrite_main* pw)
 
 	MMALLOC(tcv, sizeof(struct thread_control_variables));
 	tcv->run = pw->num_threads;
+	tcv->writer_ready = 0;
 	RUN(pthread_cond_init(&tcv->can_consume, NULL));
 	RUN(pthread_cond_init(&tcv->can_produce, NULL));
 	RUN(pthread_mutex_init(&tcv->mutex, NULL));
@@ -228,10 +252,14 @@ void free_pw_main(struct pwrite_main* pw)
 int cleanup_p_write(struct pwrite_main* pw,const int id)
 {
 	RUN(flush_pwrite(pw,id));
+
+	fprintf(stdout,"got lock cleanup write... %d\n",pw->shared_buffer->pos);
 	pthread_mutex_lock(&pw->tcv->mutex);
 
 	pw->tcv->run = pw->tcv->run -1;
+	fprintf(stdout,"got lock2 cleanup write... %d\n",pw->shared_buffer->pos);
 	pthread_cond_signal(&pw->tcv->can_consume);
+	
 	pthread_mutex_unlock(&pw->tcv->mutex);
 	return OK;
 ERROR:
@@ -243,12 +271,17 @@ int flush_pwrite(struct pwrite_main* pw,const int id)
 
 	struct pwrite_buffer* tmp = NULL;
 	pthread_mutex_lock(&pw->tcv->mutex);
+	//fprintf(stdout,"got lock flusd write %d\n",pw->shared_buffer->pos);
 	while(pw->shared_buffer->pos != 0 ) { //shared buffer is not empty...
 		pthread_cond_wait(&pw->tcv->can_produce, &pw->tcv->mutex);
 	}
+	//LOG_MSG("flipping in DATA threads");
+	//LOG_MSG("flipping memory %d to shared %d.",pw->memory[id]->pos,pw->shared_buffer->pos);
 	tmp = pw->shared_buffer;
 	pw->shared_buffer = pw->memory[id];
 	pw->memory[id] = tmp;
+	//pw->shared_buffer->pos = pw->shared_buffer->len;
+		
 	pthread_cond_signal(&pw->tcv->can_consume);
 	//fprintf(stdout,"%'lld\tunlocking\n", (long long)threadID1);
 	pthread_mutex_unlock(&pw->tcv->mutex);	
@@ -273,23 +306,11 @@ int pwrite(struct pwrite_main* pw,const int id,const char *format,...)
 	}	
 	if(w + pos  >= len){
 		buffer[pos] = 0;
-		/* switch buffers and write.  */
-		RUN(flush_pwrite(pw,id));
-		/*pthread_mutex_lock(&pw->tcv->mutex);
-		while(pw->shared_buffer->pos != 0 ) { //shared buffer is not empty...
-			pthread_cond_wait(&pw->tcv->can_produce, &pw->tcv->mutex);
-		}
-
-		tmp = pw->shared_buffer;
-		pw->shared_buffer = pw->memory[id];
-		pw->memory[id] = tmp;
-	        pthread_cond_signal(&pw->tcv->can_consume);
-		//fprintf(stdout,"%'lld\tunlocking\n", (long long)threadID1);
-		pthread_mutex_unlock(&pw->tcv->mutex);
-		*/
 		
-		/* try write again */
-		/* re-establish connection  */
+		/* switch buffers and write.  */
+	        RUN(flush_pwrite(pw,id));
+			
+	        /* re-establish connection  */
 		buffer = pw->memory[id]->buffer;
 		pos = pw->memory[id]->pos;
 		len = pw->memory[id]->len;
@@ -323,6 +344,7 @@ ERROR:
 
 struct thread_data{
 	struct pwrite_main* pw;
+	int num_threads;
 	int thread_id;
 };
 	
@@ -334,13 +356,15 @@ void*  test_write_stuff(void *threadarg)
 	struct thread_data* td = (struct thread_data*) threadarg;
 	struct pwrite_main* pw = NULL;
 	int i;
-	int c = td->thread_id*10000000;
+	//int c = td->thread_id*10000000;
 	LOG_MSG("thread %d says hello...",td->thread_id);
 
 
 	pw = td->pw;
-	for(i = 0+c; i < 20+c;i++){
-		RUN(pw->write(pw,td->thread_id,"%d\t%d\n",i, td->thread_id));
+	for(i = 0; i < 10000;i++){
+		if(i % td->num_threads == td->thread_id){
+			RUN(pw->write(pw,td->thread_id,"%d\n",i));
+		}
 	}
 
 
@@ -358,45 +382,64 @@ ERROR:
 int main (int argc,char * argv[])
 {
 	struct pwrite_main* pw = NULL;
-	char test_write_file[] = "pw_write_test.txt";
-	
+	char* filename = NULL;
 
 	struct thread_data** td = NULL;
 	struct thr_pool* pool = NULL;
-	
+
+	int num_threads = 10;
 	int t;
-	
+	int i;
 	int status;
 
-	RUNP(pool = thr_pool_create(NUMTHREADS+1,NUMTHREADS+1, 0, 0));
-
-	RUNP(pw = init_pwrite_main(test_write_file,NUMTHREADS,1000));
-
+	MMALLOC(filename,sizeof(char)*100);
 	
-	if((status = thr_pool_queue(pool,  pw->write_thread_function, pw)) == -1) fprintf(stderr,"Adding job to queue failed.");	
+	for (i = 1; i < 16; i++) {
+				
+		num_threads = i;
+		td = NULL;
+		pool = NULL;
+		pw = NULL;
+		filename[0] = 0;
 
-	MMALLOC(td, sizeof(struct thread_data*)* NUMTHREADS );
-
-	for(t = 0; t < NUMTHREADS;t++){
-		td[t] = NULL;
-		MMALLOC(td[t] , sizeof(struct thread_data));
-		td[t]->thread_id = t;
-		td[t]->pw = pw;
-		if((status = thr_pool_queue(pool, test_write_stuff, (void *)td[t])) == -1) fprintf(stderr,"Adding job to queue failed.");
+		snprintf(filename, 100,"pwtest_t%d.txt",i);
 		
-	}
+		RUNP(pool = thr_pool_create(num_threads+1,num_threads+1, 0, 0));
 
-	thr_pool_wait(pool);
-	thr_pool_destroy(pool);
-	for(t = 0; t < NUMTHREADS;t++){
-		MFREE(td[t]);
-	}
-	MFREE(td);
+		RUNP(pw = init_pwrite_main(filename,num_threads,1000));
 
-	pw->free(pw);
 	
+		if((status = thr_pool_queue(pool,  pw->write_thread_function, pw)) == -1) fprintf(stderr,"Adding job to queue failed.");	
+
+		RUN(wait_for_writer(pw));
+
+		MMALLOC(td, sizeof(struct thread_data*)* num_threads );
+
+		for(t = 0; t < num_threads;t++){
+			td[t] = NULL;
+			MMALLOC(td[t] , sizeof(struct thread_data));
+			td[t]->thread_id = t;
+			td[t]->num_threads = num_threads;
+			td[t]->pw = pw;
+			if((status = thr_pool_queue(pool, test_write_stuff, (void *)td[t])) == -1) fprintf(stderr,"Adding job to queue failed.");
+		
+		}
+
+		thr_pool_wait(pool);
+		thr_pool_destroy(pool);
+		for(t = 0; t < num_threads;t++){
+			MFREE(td[t]);
+		}
+		MFREE(td);
+
+		pw->free(pw);
+	}
+	MFREE(filename);
 	return EXIT_SUCCESS;
 ERROR:
+	if(filename){
+		MFREE(filename);
+	}
 	thr_pool_destroy(pool);
 	return EXIT_FAILURE;
 }

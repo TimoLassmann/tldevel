@@ -1,4 +1,6 @@
 
+EXTRA_DIST=pwrite_test.sh
+
 noinst_LIBRARIES = libtldevel.a librtree.a libhtsglue.a libthrpool.a libpwrite.a 
 
 AUTOMAKE_OPTIONS = subdir-objects
@@ -36,7 +38,7 @@ pwrite.c
 
 libpwrite_a_LIBADD = libtldevel.a
 
-TESTS= libtldevel_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST libhtsglue_ITEST libpwrite_ITEST
+TESTS= libtldevel_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST libhtsglue_ITEST libpwrite_ITEST pwrite_test.sh
 
 check_PROGRAMS =  libtldevel_ITEST   rb_ITEST librtree_ITEST libthrpool_ITEST libhtsglue_ITEST libpwrite_ITEST
 
@@ -81,6 +83,6 @@ CLEANFILES = \
 	libhts_test.fa \
 	libhts_test.fa.fai \
 	pw_write_test.txt \
-	testlog.txt
-
+	testlog.txt \
+	pwtest_t*
 
