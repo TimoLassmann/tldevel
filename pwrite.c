@@ -93,7 +93,6 @@ void*  write_thread_function(void *threadarg)
 	struct pwrite_main* pw = NULL;
 	struct pwrite_buffer* tmp = NULL;
 	
-	int bytes_written = 0;
 	pw = (struct pwrite_main*)threadarg;
 	
 	while(1) {
@@ -120,19 +119,11 @@ void*  write_thread_function(void *threadarg)
 		pthread_cond_signal(&pw->tcv->can_produce);
 		pthread_mutex_unlock(&pw->tcv->mutex);
 		/* the actual write.. */
-		bytes_written = 0;		
-		bytes_written = fwrite(pw->disk->buffer, sizeof(char), pw->disk->pos,pw->out_ptr);
-		if(bytes_written != (size_t)  pw->disk->pos){
-			ERROR_MSG("Write was unsuccessful,");
-		}
+		fprintf(pw->out_ptr,"%s",pw->disk->buffer);
 		pw->disk->pos = 0;
 		
 	}
 	return NULL;//	pthread_exit(0);
-ERROR:
-	tlog.error(AT, "Something went wrong when writing... ");
-	return NULL;//pthread_exit(0);
-
 }
 
 int wait_for_writer(struct pwrite_main* pw)
