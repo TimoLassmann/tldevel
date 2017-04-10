@@ -133,19 +133,19 @@
 #define DCHECK3(TEST,...)
 #endif
 
-#define ASSERT(TEST,...)  if(!(TEST)) {  tlog.error(AT,#TEST );tlog.error(AT,##__VA_ARGS__);goto ERROR;}
+#define ASSERT(TEST,...)  if(!(TEST)) {  tlog.error(AT,#TEST );tlog.error(AT, ##__VA_ARGS__);goto ERROR;}
+
+
+
 
 
 #define MACRO_MIN(a,b)          (((a)<(b))?(a):(b))
 #define MACRO_MAX(a,b)          (((a)>(b))?(a):(b))
 
-
 #define LOGSUM_SIZE 1600000
 
 
 #define SCALE 100000.0
-//#define SINT_SCALE 65535.0
-//#define UINT_SCALE 4294967295.0
 
 #define DECLARE_TIMER(n) clock_t _start_##n; clock_t _stop_##n;
 #define START_TIMER(n) _start_##n = clock();

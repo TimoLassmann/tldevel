@@ -1,12 +1,9 @@
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 #include "tldevel.h"
 
-
 #include "rtr.h"
-
 
 struct rtree_branch
 {
@@ -22,8 +19,6 @@ struct rtree_node{
 	
 };
 
-
-
 //search STUFF
 int search_data_rtree(struct rtr_data* rtrd , struct rtree_interval* new,int* found);
 int do_search_data(struct rtr_data* rtrd, struct rtree_node* node);
@@ -33,7 +28,11 @@ int do_check_and_update_counts(struct rtr_data* rtrd, struct rtree_node* node, i
 
 int get_overlapping_intervals(struct rtr_data** rtrd, struct rtree_search_results* sr, int num_tree);
 
+void* do_get_node_data(struct rtr_data* rtrd, struct rtree_node* node,struct rtree_interval* query);
+
 //int do_get_overlapping(struct rtr_data* rtrd,struct rtree_node* node, struct rtree_search_results* sr);
+
+
 int do_get_interval_id(struct rtr_data* rtrd, struct rtree_node* node,struct rtree_interval* query,int* count, int* identifier);
 //INSERT STUFF
 int make_rtree_coordinates(int64_t* in_coordinates, int32_t dim, int64_t shift);
@@ -90,8 +89,10 @@ void free_rtr_branch(struct rtree_branch* rtrb);
 //RTREE INTERVAL
 int reset_rtree_interval(struct rtr_data* rtr_data,struct rtree_interval* rtri);
 
-int insert(struct rtr_data* rtrd , int64_t* val,int32_t identifier,int32_t count, uint8_t keep_rep);
-int query(struct rtr_data* rtrd , int64_t* val,int32_t* identifier,int32_t* count);
+int insert(struct rtr_data* rtrd , int64_t* val,void* data,int32_t identifier,int32_t count, uint8_t keep_rep);
+int query2(struct rtr_data* rtrd , int64_t* val,int32_t* identifier,int32_t* count);
+void* query(struct rtr_data* rtrd , int64_t* val);
+
 
 void free_rtr_data(struct rtr_data* rtrd);
 void free_rtree_interval(struct rtree_interval* rtri);
@@ -99,7 +100,7 @@ int flatten_rtree(struct rtr_data* rtrd);
 
 
 
-int insert(struct rtr_data* rtrd , int64_t* val,int32_t identifier,int32_t count, uint8_t keep_rep)
+int insert(struct rtr_data* rtrd , int64_t* val,void* data,int32_t identifier,int32_t count, uint8_t keep_rep)
 {
 	struct rtree_interval* tmp = NULL;
 	int i;
@@ -107,23 +108,18 @@ int insert(struct rtr_data* rtrd , int64_t* val,int32_t identifier,int32_t count
 	int dim = rtrd->dim;
 
 	RUNP(tmp = init_rtree_interval(rtrd));
-	
 	/* change dimensions if necessary..  */
 
 	if(rtrd->shift){
 		RUN(make_rtree_coordinates(val, rtrd->dim, rtrd->shift));
 	}
-
-	
 	/* copy values and insert...  */
-
-
-	
 	for(i = 0; i < rtrd->dim;i++){
 		tmp->coordinates[i] = val[i];
 		tmp->coordinates[dim+i] = val[dim+i];
 	}
 	tmp->count = count;
+	tmp->data = data;
 	if(keep_rep){
 		RUN(check_and_update_counts(rtrd,tmp,&exists));
 	}
@@ -131,6 +127,7 @@ int insert(struct rtr_data* rtrd , int64_t* val,int32_t identifier,int32_t count
 		RUN(insert_data_rtree(rtrd , tmp,identifier ));
 	}
 	free_rtree_interval(tmp);
+	
 	return OK;
 ERROR:
 	if(tmp){
@@ -139,7 +136,40 @@ ERROR:
 	return FAIL;
 }
 
-int query(struct rtr_data* rtrd , int64_t* val,int32_t* identifier,int32_t* count)
+void* query(struct rtr_data* rtrd , int64_t* val)
+{
+	struct rtree_interval* tmp = NULL;
+	void* result = NULL;
+	int i;
+	
+	int dim = rtrd->dim;
+
+	RUNP(tmp = init_rtree_interval(rtrd));
+	
+	/* change dimensions if necessary..  */
+	if(rtrd->shift){
+		RUN(make_rtree_coordinates(val, rtrd->dim, rtrd->shift));
+	}	
+	/* copy values and insert...  */
+	
+	for(i = 0; i < rtrd->dim;i++){
+		tmp->coordinates[i] = val[i];
+		tmp->coordinates[dim+i] = val[dim+i];
+	}
+	tmp->count = 0;
+	RUNP(result = do_get_node_data(rtrd, rtrd->root, tmp));
+	
+	//RUN(do_get_interval_id(rtrd, rtrd->root, tmp,count,identifier));
+	free_rtree_interval(tmp);
+	return result;
+ERROR:
+	if(tmp){
+		free_rtree_interval(tmp);	
+	}
+	return NULL;
+}
+
+int query2(struct rtr_data* rtrd , int64_t* val,int32_t* identifier,int32_t* count)
 {
 	struct rtree_interval* tmp = NULL;
 	int i;
@@ -153,11 +183,8 @@ int query(struct rtr_data* rtrd , int64_t* val,int32_t* identifier,int32_t* coun
 	if(rtrd->shift){
 		RUN(make_rtree_coordinates(val, rtrd->dim, rtrd->shift));
 	}
-
 	
 	/* copy values and insert...  */
-
-
 	
 	for(i = 0; i < rtrd->dim;i++){
 		tmp->coordinates[i] = val[i];
@@ -175,6 +202,38 @@ ERROR:
 }
 
 #ifdef ITEST
+
+int resolve_test_tree_data(struct rtree_interval* a,struct rtree_interval* b);
+
+struct test_tree_data{
+	int count;
+	float prob;
+};
+
+int resolve_test_tree_data(struct rtree_interval* a,struct rtree_interval* b)
+{
+	struct test_tree_data* org = NULL;
+	struct test_tree_data* new = NULL;
+
+	ASSERT(a != NULL,"org interval is NULL");
+	
+	ASSERT(b != NULL,"new interval is NULL");
+
+
+	org = (struct test_tree_data*) a->data;
+	new = (struct test_tree_data*) b->data;
+
+	org->count = org->count + new->count;
+	org->prob = org->prob + new->prob;
+
+	a->data = (void*) org;	
+	return OK;
+ERROR:
+	return FAIL;
+}
+	
+
+	
 int main (int argc,char * argv[])
 {
 	struct rtr_data** tree_list = NULL;
@@ -186,6 +245,8 @@ int main (int argc,char * argv[])
 	int64_t test_val[4]; 
 	int i,j;
 	int num_tree = 1;
+
+	struct test_tree_data* test_data = NULL;
 	
 	MMALLOC(tree_list, sizeof(struct rtr_data*) * num_tree);
 	DECLARE_TIMER(t);
@@ -193,86 +254,38 @@ int main (int argc,char * argv[])
 	for(i = 0; i < num_tree;i++){
 		LOG_MSG("Doing tree %d.",i);
 		RUNP(tree_list[i] = init_rtr_data(2, 5,num_intervals_for_testing));
+		tree_list[i]->resolve_dup = resolve_test_tree_data;
+		
 		tree_list[i]->compare_function = &node_identical;
 		tree_list[i]->mode = MODE_RTREE_MERGE_IDENTICAL;
-		rtrd =tree_list[i];
+		rtrd = tree_list[i];
 		j = 0;
-		tmp = init_rtree_interval(rtrd);
-		tmp->count = 1;
-		tmp->coordinates[0] = 86164185;
-		tmp->coordinates[1] = 202465983;
-		tmp->coordinates[2] = 86164188;
-		tmp->coordinates[3] = 202465986;
-		
-		RUN(insert_data_rtree(rtrd , tmp,77));
-		free_rtree_interval(tmp);
+		test_val[0] = 86164185;
+		test_val[1] = 202465983;
+		test_val[2] = 86164188;
+		test_val[3] = 202465986;
 
-		for(j = 0; j < 10000;j++){
+	
+		MMALLOC(test_data,sizeof(struct test_tree_data));
+		test_data->count = 10;
+		test_data->prob = 0.99;
+
+		rtrd->insert(rtrd,test_val, test_data,77,1,1);
+		test_data = NULL;
+		
+		for(j = 0; j < 10;j++){
+			MMALLOC(test_data,sizeof(struct test_tree_data));
+			test_data->count = 10;
+			test_data->prob = 0.99;
 			test_val[0] = 86164185;
 			test_val[1] = 202465983;
 			test_val[2] = 86164188;
 			test_val[3] = 202465986;
 			//fprintf(stdout,"Got here\n");
-			rtrd->insert(rtrd,test_val,87,13,1);
+			rtrd->insert(rtrd,test_val,test_data,87,13,1);
 			//fprintf(stdout,"Got here\n");
+			test_data = NULL;
 		}
-		tmp = init_rtree_interval(rtrd);
-		tmp->count = 1;
-		
-		tmp->coordinates[0] = 86704840;
-		tmp->coordinates[1] = 202779757;
-		tmp->coordinates[2] = 86704842;
-		tmp->coordinates[3] = 202779759;
-		
-		RUN(insert_data_rtree(rtrd , tmp,2));
-		free_rtree_interval(tmp);
-		
-		tmp = init_rtree_interval(rtrd);
-		tmp->count = 1;
-		
-		tmp->coordinates[0] = 86856210  ;
-		tmp->coordinates[1] = 202908320   ;
-		tmp->coordinates[2] = 86856213  ;
-		tmp->coordinates[3] = 202908322;
-		
-		RUN(insert_data_rtree(rtrd , tmp,3));
-		free_rtree_interval(tmp);
-		
-		tmp = init_rtree_interval(rtrd);
-		tmp->count = 1;
-		
-		tmp->coordinates[0] = 86649879   ;
-		tmp->coordinates[1] = 202954384     ;
-		tmp->coordinates[2] = 86649882     ;
-		tmp->coordinates[3] = 202954386 ;
-		
-		RUN(insert_data_rtree(rtrd , tmp,4));
-		free_rtree_interval(tmp);
-		
-		tmp = init_rtree_interval(rtrd);
-		tmp->count = 1;
-		
-		tmp->coordinates[0] = 87169264     ;
-		tmp->coordinates[1] = 202957295       ;
-		tmp->coordinates[2] = 87169266      ;
-		tmp->coordinates[3] = 202957297   ;
-		
-		RUN(insert_data_rtree(rtrd , tmp,5));
-		free_rtree_interval(tmp);
-
-
-		
-		tmp = init_rtree_interval(rtrd);
-		tmp->count = 1;
-		
-		tmp->coordinates[0] = 86419825            ;
-		tmp->coordinates[1] = 203349347       ;
-		tmp->coordinates[2] = 86419827      ;
-		tmp->coordinates[3] = 203349350   ;
-		
-		RUN(insert_data_rtree(rtrd , tmp,6));
-		free_rtree_interval(tmp);
-
 		
 		
 		
@@ -286,16 +299,19 @@ int main (int argc,char * argv[])
 	test_val[2] = 86164188;
 	test_val[3] = 202465986;
 	int id, count;
-	tree_list[0]->query(tree_list[0], test_val,&id,&count);
 
-	fprintf(stdout,"Found: %d %d\n",id,count);
+	test_data = NULL;
+
+	RUNP(test_data = (struct test_tree_data*) tree_list[0]->query(tree_list[0],test_val));
+
+	fprintf(stdout,"Got data: %d %f\n", test_data->count,test_data->prob);
 	
 	for(i = 0; i < num_tree;i++){
 		tree_list[i]->print_rtree(tree_list[i], tree_list[i]->root);
 //		print_rtree_node(tree_list[i], tree_list[i]->root);
 		tree_list[i]->free(tree_list[i]); 
 	}
-	
+	MFREE(tree_list);
 	exit(0);
 	//MMALLOC(tree_list, sizeof(struct rtr_data*) * num_tree);
 	//DECLARE_TIMER(t);
@@ -728,6 +744,11 @@ int check_and_update_counts(struct rtr_data* rtrd , struct rtree_interval* query
 	RUN(copy_interval(rtrd,interval_ptr, query));
 	
 	RUN(do_check_and_update_counts(rtrd, rtrd->root, identifier));
+
+	if(*identifier){
+		interval_ptr->data = NULL;
+		
+	}
 	
 	return OK;
 ERROR:
@@ -766,6 +787,11 @@ int do_check_and_update_counts(struct rtr_data* rtrd, struct rtree_node* node, i
 				*identifier = node->branch[i]->identifier;
 			//	fprintf(stdout,"FOUND NODE!\n");
 				node->branch[i]->interval->count += rtrd->new_branch->interval->count;
+
+				if(rtrd->resolve_dup){
+					//int (*resolve_dup)(struct rtree_interval* org, struct rtree_interval* new); 
+					RUN(rtrd->resolve_dup(	node->branch[i]->interval,rtrd->new_branch->interval));
+				}
 				return OK;
 			}
 		}
@@ -792,6 +818,28 @@ int get_interval_id(struct rtr_data* rtrd , struct rtree_interval* query,int* co
 	return OK;
 ERROR:
 	return FAIL;
+}
+
+void* do_get_node_data(struct rtr_data* rtrd, struct rtree_node* node,struct rtree_interval* query)
+{
+	int i;
+	if(node->level > 0){
+		for(i = 0 ;i < node->count;i++){
+			if(node->branch[i]->child &&  node_overlap(rtrd, query,node->branch[i]->interval )){
+				RUN(do_get_node_data(rtrd, node->branch[i]->child,query));
+			}
+		}
+	}else{
+		for(i = 0 ;i <  node->count;i++){
+			if(node->branch[i]->identifier &&   rtrd->compare_function(rtrd, query,node->branch[i]->interval , rtrd->compare_cutoff)){
+			//if(node->branch[i]->identifier &&  node_identical(rtrd, query,node->branch[i]->interval , rtrd->compare_cutoff)){
+				return node->branch[i]->interval->data;
+			}
+		}
+	}
+	return NULL;
+ERROR:
+	return NULL;	
 }
 
 int do_get_interval_id(struct rtr_data* rtrd, struct rtree_node* node,struct rtree_interval* query,int* count, int* identifier)
@@ -937,12 +985,12 @@ int insert_data_rtree(struct rtr_data* rtrd , struct rtree_interval* new,int ide
 	
 	RUN(copy_interval(rtrd,interval_ptr, new));
 	interval_ptr->count = new->count;
+	interval_ptr->data = new->data;
+	new->data = NULL;
 	
 	RUN(do_insert_data(rtrd,rtrd->root));
 	if(rtrd->new_node){
-		//fprintf(stdout,"NEW ROOT??? for ID:%d\n",identifier  );
-		
-		new_root = rtrd->new_node_store[rtrd->new_node_index];
+        	new_root = rtrd->new_node_store[rtrd->new_node_index];
 		//rtrd->new_node_store[rtrd->new_node_index] = NULL;
 		rtrd->new_node_index++;
 		if(rtrd->new_node_index ==rtrd->num_new_node_malloc){
@@ -951,14 +999,13 @@ int insert_data_rtree(struct rtr_data* rtrd , struct rtree_interval* new,int ide
 		ASSERT(rtrd->new_node_index != rtrd->num_new_node_malloc,"Running out of nodes... ");
 		
 		//RUNP(new_root = init_rtr_node(rtrd),"init_rtr_node failed.");
-		new_root->level =rtrd->root->level + 1;
+		new_root->level = rtrd->root->level + 1;
 		
 		//RUNP(new_branch = init_rtr_branch(rtrd),"init_rtr_branch failed.");
 		RUN(node_cover(rtrd, rtrd->root,rtrd->new_branch->interval));
 		rtrd->new_branch->child =  rtrd->root;
 		RUN(do_add_branch(rtrd, new_root));
-		
-		
+	        
 		RUN(node_cover(rtrd, rtrd->new_node,rtrd->new_branch->interval));
 		rtrd->new_branch->child =  rtrd->new_node;
 		RUN(do_add_branch(rtrd, new_root));
@@ -966,10 +1013,6 @@ int insert_data_rtree(struct rtr_data* rtrd , struct rtree_interval* new,int ide
 		rtrd->root =new_root;
 		rtrd->new_node = NULL;
 	}
-	
-	
-	
-	
 	return OK;
 ERROR:
 	return FAIL;
@@ -1119,6 +1162,7 @@ int do_add_branch(struct rtr_data* rtrd, struct rtree_node* node)
 				
 				if(node->level == 0){
 					rtrd->stats_num_interval++;
+					node->branch[i]->interval->data = rtrd->new_branch->interval->data;
 					node->branch[i]->interval->count = rtrd->new_branch->interval->count;
 					node->branch[i]->identifier = rtrd->new_branch->identifier;
 				//	fprintf(stdout,"\t at level:%d	add id:%d \n",node->level,rtrd->new_branch->identifier );
@@ -1484,22 +1528,19 @@ struct rtr_data* init_rtr_data(int dim, int num_branches,int expected_num_items)
 	MMALLOC(rtrd->taken, sizeof(uint8_t ) * (num_branches+1));
 	MMALLOC(rtrd->area, sizeof(double ) * (num_branches+1));
 	
-	
-	// for optimization. .v
+       	// for optimization. .v
 	
 	rtrd->new_node_store = NULL;
 	rtrd->new_node_index = 0;
 	rtrd->num_new_node_malloc = expected_num_items  / (num_branches /2) + 1;
-	
-	
+		
 	rtrd->num_flat_interval_malloc = expected_num_items;
 	
 	MMALLOC(rtrd->flat_interval, sizeof(struct rtree_interval*) *rtrd->num_flat_interval_malloc );
 	for(i = 0 ;i < rtrd->num_flat_interval_malloc;i++){
 		rtrd->flat_interval[i] = NULL;
 	}
-	
-	
+        
 	MMALLOC(rtrd->new_node_store, sizeof(struct rtree_node*)  * rtrd->num_new_node_malloc );
 	
 	for(i = 0; i <  rtrd->num_new_node_malloc;i++){
@@ -1513,17 +1554,12 @@ struct rtr_data* init_rtr_data(int dim, int num_branches,int expected_num_items)
 	RUNP(rtrd->tmp_interval = init_rtree_interval(rtrd));
 	RUNP(rtrd->tmp_cover = init_rtree_interval(rtrd));
 	
-	
-	
 	MMALLOC(rtrd->split_interval,sizeof(struct rtree_interval*) * 2);
 	rtrd->split_interval[0] = NULL;
 	rtrd->split_interval[1] = NULL;
 	RUNP(rtrd->split_interval[0]  = init_rtree_interval(rtrd));
 	RUNP(rtrd->split_interval[1]  = init_rtree_interval(rtrd));
-	
-	
-	RUNP(rtrd->new_branch = init_rtr_branch(rtrd));
-
+        RUNP(rtrd->new_branch = init_rtr_branch(rtrd));
 	
 	for(i = 0; i < num_branches+1;i++){
 		rtrd->branch_buffer[i] = NULL;
@@ -1533,9 +1569,6 @@ struct rtr_data* init_rtr_data(int dim, int num_branches,int expected_num_items)
 	
 	rtrd->root = rtrd->new_node_store[0];
 	rtrd->new_node_index++;
-	
-	//RUNP(rtrd->root = init_rtr_node(rtrd)," init_rtr_node failed.");
-	
 	return rtrd;
 ERROR:
 	free_rtr_data(rtrd);
@@ -1760,7 +1793,7 @@ struct rtree_interval* init_rtree_interval(struct rtr_data* rtr_data)
 	struct rtree_interval* rtri = NULL;
 	MMALLOC(rtri, sizeof(struct rtree_interval));
 	rtri->coordinates = NULL;
-	//rtri->data = NULL;
+	rtri->data = NULL;
 	rtri->count = 0;
 	
 	
@@ -1793,6 +1826,9 @@ void free_rtree_interval(struct rtree_interval* rtri)
 	if(rtri){
 		if(rtri->coordinates){
 			MFREE(rtri->coordinates);
+		}
+		if(rtri->data){
+			MFREE(rtri->data);
 		}
 		MFREE(rtri);
 	}
@@ -2106,6 +2142,7 @@ int copy_interval(struct rtr_data* rtr_data, struct rtree_interval* target,struc
 	int dim = rtr_data->dim;
 	int i;
 	target->count = source->count;
+	target->data = source->data;
 	for(i = 0; i < dim;i++){
 		target->coordinates[i] = 	source->coordinates[i];
 		target->coordinates[i+dim] = 	source->coordinates[i+dim];
@@ -2120,6 +2157,7 @@ int copy_branch(struct rtr_data* rtr_data,struct rtree_branch* target, struct rt
 {
 	target->child = source->child;
 	target->identifier = source->identifier;
+	
 	RUN(copy_interval(rtr_data,  target->interval,source->interval));
 	return OK;
 ERROR:

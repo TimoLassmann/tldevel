@@ -13,7 +13,7 @@ struct rtree_interval
 {
 	int32_t* coordinates;//[NUMSIDES]; /* xmin,ymin,...,xmax,ymax,... */
 	int32_t count;
-//	void* data;
+	void* data;
 };
 
 
@@ -29,15 +29,10 @@ struct rtr_data{
 	struct rtree_node* root;
 	struct rtree_node* new_node;
 	struct rtree_branch* new_branch;
-	
-	
-	// optimization... - no mallocs...
-	
-	
-	
+        // optimization... - no mallocs...
 	struct rtree_node** new_node_store;
 	int num_new_node_malloc;
-	int new_node_index; 
+	int new_node_index;
 	
 	struct rtree_interval* tmp_interval;
 	struct rtree_interval* tmp_cover;
@@ -66,9 +61,10 @@ struct rtr_data{
 	int dim;
 	int num_branches;
 	int level;
-	int (*insert) (struct rtr_data* rtrd , int64_t* val,int32_t identifier,int32_t count, uint8_t keep_rep);
-	int (*query)(struct rtr_data* rtrd , int64_t* val,int32_t* identifier,int32_t* count);
-
+	int (*insert) (struct rtr_data* rtrd , int64_t* val,void* data,int32_t identifier,int32_t count, uint8_t keep_rep);
+	//int (*query)(struct rtr_data* rtrd , int64_t* val,int32_t* identifier,int32_t* count);
+	void* (*query)(struct rtr_data* rtrd , int64_t* val);
+	int (*resolve_dup)(struct rtree_interval* org, struct rtree_interval* new); 
 	void (*free) (struct rtr_data* rtrd);
 	int (*flatten_rtree)(struct rtr_data* rtrd);
 	int (*re_label_tree_nodes)(struct rtr_data* rtr_data, struct rtree_node* n,int* identifier);
