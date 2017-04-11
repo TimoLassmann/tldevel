@@ -823,10 +823,14 @@ ERROR:
 void* do_get_node_data(struct rtr_data* rtrd, struct rtree_node* node,struct rtree_interval* query)
 {
 	int i;
+	void* n = NULL;
 	if(node->level > 0){
 		for(i = 0 ;i < node->count;i++){
 			if(node->branch[i]->child &&  node_overlap(rtrd, query,node->branch[i]->interval )){
-				RUN(do_get_node_data(rtrd, node->branch[i]->child,query));
+				n =  do_get_node_data(rtrd, node->branch[i]->child,query);
+				if(n){
+					return n;
+				}
 			}
 		}
 	}else{
@@ -837,7 +841,7 @@ void* do_get_node_data(struct rtr_data* rtrd, struct rtree_node* node,struct rtr
 			}
 		}
 	}
-	return NULL;
+	return n;
 ERROR:
 	return NULL;	
 }
