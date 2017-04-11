@@ -842,8 +842,6 @@ void* do_get_node_data(struct rtr_data* rtrd, struct rtree_node* node,struct rtr
 		}
 	}
 	return n;
-ERROR:
-	return NULL;	
 }
 
 int do_get_interval_id(struct rtr_data* rtrd, struct rtree_node* node,struct rtree_interval* query,int* count, int* identifier)
