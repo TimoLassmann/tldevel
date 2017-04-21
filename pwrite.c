@@ -94,6 +94,10 @@ void*  write_thread_function(void *threadarg)
 	struct pwrite_buffer* tmp = NULL;
 	
 	pw = (struct pwrite_main*)threadarg;
+
+	pw->tcv->run = tcv->pw->num_threads;
+	pw->tcv->writer_ready = 0;
+
 	
 	while(1) {
 		pthread_mutex_lock(&pw->tcv->mutex);
@@ -186,7 +190,6 @@ int init_thread_control_variables(struct pwrite_main* pw)
 	RUN(pthread_cond_init(&tcv->can_consume, NULL));
 	RUN(pthread_cond_init(&tcv->can_produce, NULL));
 	RUN(pthread_mutex_init(&tcv->mutex, NULL));
-
 	pw->tcv = tcv;
 	
 	return OK;
