@@ -5,8 +5,7 @@
 
 #include "rtr.h"
 
-struct rtree_branch
-{
+struct rtree_branch{
 	struct rtree_interval* interval;
 	struct rtree_node *child;
 	int32_t identifier;
@@ -298,7 +297,7 @@ int main (int argc,char * argv[])
 	test_val[1] = 202465983;
 	test_val[2] = 86164188;
 	test_val[3] = 202465986;
-	int id, count;
+	//int id, count;
 
 	test_data = NULL;
 
@@ -2000,17 +1999,14 @@ int pick_branch( struct rtr_data* rtrd, struct rtree_node *n)
 	register int i, first_time=1;
 	
 	double increase,bestIncr,area, bestArea;
-	
-	bestIncr = -1.0;
-	
-	
 	int best = -1;
 	struct rtree_interval* tmp_interval;
 	
+	bestArea = 0.0f;
 	//RUNP(tmp_interval = init_rtree_interval(rtrd),"init_rtree_interval failed.");
 	
 	tmp_interval = rtrd->tmp_interval;
-	
+	bestIncr = -1.0;	
 	
 	for(i = 0; i < rtrd->num_branches;i++){
 		if(n->branch[i]->child){

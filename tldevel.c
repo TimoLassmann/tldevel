@@ -152,7 +152,7 @@ int set_logfile(char* logfilename)
 		ASSERT(strlen(logfilename)  > 3, "log file name: %s is too short. ",logfilename );
 		
 		memset( logfile, 0, BUFFER_LEN );
-		strcpy( logfile, logfilename );
+		strlcpy( logfile, logfilename ,BUFFER_LEN);
 
 		tlog.log_message = log_message_tee;
 		tlog.warning = warning_tee;

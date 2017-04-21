@@ -382,7 +382,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 								n = 0;
 								chr[0] = 0;
 								
-								sscanf((char*)s, "%"xstr(FIELD_BUFFER_LEN)"s %"xstr(FIELD_BUFFER_LEN)"s %"xstr(FIELD_BUFFER_LEN)"s %d %n",chr,pos_str,cigar,&errors,&n);
+								sscanf((char*)s, "%"xstr(127)"s %"xstr(127)"s %"xstr(127)"s %d %n",chr,pos_str,cigar,&errors,&n);
 								//fprintf(stdout,"%s %s %s %d %d\n",chr,pos_str,cigar,errors,n);
 								RUN(get_alignment_length(cigar, h, &aln_len));
 								//   fprintf(stdout,"%d alnlen  pos :%d  \n",aln_len,atoi(pos_str));

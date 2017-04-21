@@ -503,7 +503,7 @@ void* add(void *threadarg)
 	int work = -1;
 	
 	
-	work = (int) pthread_self();
+	//work = (int) pthread_self();
 	pthread_mutex_lock(&mtx);
 	
 	for(i = 0;i < data->num_thread;i++){
