@@ -9,14 +9,17 @@ AM_INIT_AUTOMAKE
 
 # Checks for programs.
 AC_PROG_CC
-AM_PROG_AR
+
+#AM_PROG_AR
 AC_PROG_RANLIB
 
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-lm':
 AC_CHECK_LIB([m], [log])
 AC_CHECK_LIB([pthread], [pthread_create])
-htslib_support=ok
+
+
+sdfhtslib_support=ok
 AC_CHECK_LIB([hts], [main],[], [htslib_support=missing])
 
 
@@ -80,8 +83,6 @@ else
         CFLAGS="-O2 -funroll-loops -Wall -std=gnu99 $MEM $SIGNAL32"
         DEBUG=0
 fi
-
-
 
 AC_CANONICAL_HOST
 

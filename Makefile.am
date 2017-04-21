@@ -3,7 +3,7 @@ EXTRA_DIST=pwrite_test.sh
 
 noinst_LIBRARIES = libtldevel.a librtree.a libhtsglue.a libthrpool.a libpwrite.a 
 
-AUTOMAKE_OPTIONS = subdir-objects
+# AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS = helper
 
