@@ -244,11 +244,11 @@ int cleanup_p_write(struct pwrite_main* pw,const int id)
 {
 	RUN(flush_pwrite(pw,id));
 
-	fprintf(stdout,"got lock cleanup write... %d\n",pw->shared_buffer->pos);
+	//fprintf(stdout,"got lock cleanup write... %d\n",pw->shared_buffer->pos);
 	pthread_mutex_lock(&pw->tcv->mutex);
 
 	pw->tcv->run = pw->tcv->run -1;
-	fprintf(stdout,"got lock2 cleanup write... %d\n",pw->shared_buffer->pos);
+	//fprintf(stdout,"got lock2 cleanup write... %d\n",pw->shared_buffer->pos);
 	pthread_cond_signal(&pw->tcv->can_consume);
 	
 	pthread_mutex_unlock(&pw->tcv->mutex);
