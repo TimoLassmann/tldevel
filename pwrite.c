@@ -95,7 +95,7 @@ void*  write_thread_function(void *threadarg)
 	
 	pw = (struct pwrite_main*)threadarg;
 
-	pw->tcv->run = tcv->pw->num_threads;
+	pw->tcv->run = pw->num_threads;
 	pw->tcv->writer_ready = 0;
 
 	
