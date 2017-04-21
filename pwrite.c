@@ -124,6 +124,8 @@ void*  write_thread_function(void *threadarg)
 		pthread_mutex_unlock(&pw->tcv->mutex);
 		/* the actual write.. */
 		fprintf(pw->out_ptr,"%s",pw->disk->buffer);
+
+		fflush(pw->out_ptr);
 		pw->disk->pos = 0;
 		
 	}
@@ -251,7 +253,7 @@ int cleanup_p_write(struct pwrite_main* pw,const int id)
 	pthread_mutex_lock(&pw->tcv->mutex);
 
 	pw->tcv->run = pw->tcv->run -1;
-	//fprintf(stdout,"got lock2 cleanup write... %d\n",pw->shared_buffer->pos);
+	fprintf(stdout,"got lock2 cleanup write... %d\n",pw->shared_buffer->pos);
 	pthread_cond_signal(&pw->tcv->can_consume);
 	
 	pthread_mutex_unlock(&pw->tcv->mutex);
