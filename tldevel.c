@@ -120,6 +120,7 @@ void print_program_description(const char **argv,const char* description)
 void echo_build_config (void)
 {
 	fprintf(stdout,"\n%s\n",build_config);
+	fflush(stdout);
 }
 
 void echo_build_config_log (void)
