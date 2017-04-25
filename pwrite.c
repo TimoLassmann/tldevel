@@ -135,11 +135,11 @@ void*  write_thread_function(void *threadarg)
 int wait_for_writer(struct pwrite_main* pw)
 {
 	pthread_mutex_lock(&pw->tcv->mutex);
-	LOG_MSG("Waiting for writer thread to enter loop...");
+	//LOG_MSG("Waiting for writer thread to enter loop...");
 	while(pw->tcv->writer_ready != 1 ) { //shared buffer is not empty...
 		pthread_cond_wait(&pw->tcv->can_produce, &pw->tcv->mutex);
 	}
-	LOG_MSG("Done waiting.");
+	//LOG_MSG("Done waiting.");
 	//fprintf(stdout,"%'lld\tunlocking\n", (long long)threadID1);
 	pthread_mutex_unlock(&pw->tcv->mutex);
 	return OK;
@@ -253,7 +253,7 @@ int cleanup_p_write(struct pwrite_main* pw,const int id)
 	pthread_mutex_lock(&pw->tcv->mutex);
 
 	pw->tcv->run = pw->tcv->run -1;
-	fprintf(stdout,"got lock2 cleanup write... %d\n",pw->shared_buffer->pos);
+	//fprintf(stdout,"got lock2 cleanup write... %d\n",pw->shared_buffer->pos);
 	pthread_cond_signal(&pw->tcv->can_consume);
 	
 	pthread_mutex_unlock(&pw->tcv->mutex);
@@ -271,7 +271,7 @@ int flush_pwrite(struct pwrite_main* pw,const int id)
 	while(pw->shared_buffer->pos != 0 ) { //shared buffer is not empty...
 		pthread_cond_wait(&pw->tcv->can_produce, &pw->tcv->mutex);
 	}
-	//LOG_MSG("flipping in DATA threads");
+	//LOG_SG("flipping in DATA threads");
 	//LOG_MSG("flipping memory %d to shared %d.",pw->memory[id]->pos,pw->shared_buffer->pos);
 	tmp = pw->shared_buffer;
 	pw->shared_buffer = pw->memory[id];
@@ -353,11 +353,11 @@ void*  test_write_stuff(void *threadarg)
 	struct pwrite_main* pw = NULL;
 	int i;
 	//int c = td->thread_id*10000000;
-	LOG_MSG("thread %d says hello...",td->thread_id);
+	//LOG_MSG("thread %d says hello...",td->thread_id);
 
 
 	pw = td->pw;
-	for(i = 0; i < 10000;i++){
+	for(i = 0; i < 1000;i++){
 		if(i % td->num_threads == td->thread_id){
 			RUN(pw->write(pw,td->thread_id,"%d\n",i));
 		}
@@ -390,7 +390,7 @@ int main (int argc,char * argv[])
 
 	MMALLOC(filename,sizeof(char)*100);
 	
-	for (i = 1; i < 16; i++) {
+	for (i = 1; i < 8; i++) {
 				
 		num_threads = i;
 		td = NULL;

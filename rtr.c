@@ -334,7 +334,7 @@ int main (int argc,char * argv[])
 			test_val[1] = 202465983;
 			test_val[2] = 86164188;
 			test_val[3] = 202465986;
-			LOG_MSG("Insert:%d\n",j+1);
+			//LOG_MSG("Insert:%d\n",j+1);
 			//fprintf(stdout,"Got here\n");
 			rtrd->insert(rtrd,test_val,test_data,j+1,1,1);
 			//fprintf(stdout,"Got here\n");
@@ -351,7 +351,7 @@ int main (int argc,char * argv[])
 			test_val[2] = 8616418+j*100;
 			test_val[3] = 20246598+j*100;
 			
-			LOG_MSG("Insert:%d\n",j+1);
+			//LOG_MSG("Insert:%d\n",j+1);
 			//fprintf(stdout,"Got here\n");
 			rtrd->insert(rtrd,test_val,test_data,j+100,1,1);
 			//fprintf(stdout,"Got here\n");
@@ -377,7 +377,7 @@ int main (int argc,char * argv[])
 	fprintf(stdout,"Got data: %d %f GAGAGA\n", test_data->count,test_data->prob);
 	
 	for(i = 0; i < num_tree;i++){
-		tree_list[i]->print_rtree(tree_list[i], tree_list[i]->root);
+//		tree_list[i]->print_rtree(tree_list[i], tree_list[i]->root);
 //		print_rtree_node(tree_list[i], tree_list[i]->root);
 		tree_list[i]->free(tree_list[i]); 
 	}
@@ -1248,7 +1248,7 @@ int do_add_branch(struct rtr_data* rtrd, struct rtree_node* node)
 				}
 				
 				RUN(copy_interval(rtrd,node->branch[i]->interval , rtrd->new_branch->interval));
-				print_rtree_interval(rtrd, node->branch[i]->interval);
+				//print_rtree_interval(rtrd, node->branch[i]->interval);
 				
 	
 				node->count++;
@@ -1905,8 +1905,6 @@ ERROR:
 void free_rtr_node(struct rtr_data* rtrd, struct rtree_node* rtrn)
 {
 	if(rtrn){
-		int num_branches = rtrd->num_branches;
-		int i;
 		if(rtrn->branch){
 //			for(i = 0; i < num_branches;i++){
 				

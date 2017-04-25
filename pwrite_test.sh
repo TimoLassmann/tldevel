@@ -11,7 +11,7 @@ do
 		if [ -f $file2 ]; then
 		    if [[ $file2 =~ pwtest* ]]; then
 			printname=cmp$counter;
-			printf "\t%s\n" $file2;
+			printf "\t%s\t" $file2;
 			if cmp -s <( sort $file  ) <(sort  $file2); then
 			    printf "%10s%10s%10s\n"  pwrite $printname SUCCESS;
 			else

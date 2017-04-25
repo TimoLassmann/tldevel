@@ -514,7 +514,7 @@ void* add(void *threadarg)
 		}
 	}
 	pthread_mutex_unlock(&mtx);
-	fprintf(stdout,"Thread %d\n", work);
+	//fprintf(stdout,"Thread %d\n", work);
 	//sleep(1);
 	data->sum[work]+= 1;
 	pthread_mutex_lock(&mtx);
