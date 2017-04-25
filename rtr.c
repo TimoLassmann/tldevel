@@ -51,6 +51,7 @@ int combine_interval(struct rtr_data* rtr_data, struct rtree_interval* target,st
 
 int copy_branch(struct rtr_data* rtr_data,struct rtree_branch* target, struct rtree_branch* source);
 
+
 int merge_interval(struct rtr_data* rtrd, struct rtree_branch* a, struct rtree_branch* b);
 
 int perform_a_split(struct rtr_data* rtrd);
@@ -63,6 +64,9 @@ int sort_interval_based_on_count(const void * a, const void * b);
 int count_leaf_entries(struct rtr_data* rtr_data, struct rtree_node* n,int* count);
 void q_sort_coordinates(int32_t* c, int32_t left, int32_t right, int dim);
 int extend_num_nodes_in_rtr_data(struct rtr_data* rtrd, int num_add_elements);
+int extend_num_branched_in_rtr_data( struct rtr_data* rtrd, int num_add_elements);
+int extend_data_storage(struct rtr_data* rtrd, int num_add_elements);
+
 // print stuff
 struct rtree_interval*  random_interval(int dim);
 
@@ -119,14 +123,29 @@ int insert(struct rtr_data* rtrd , int64_t* val,void* data,int32_t identifier,in
 	}
 	tmp->count = count;
 	tmp->data = data;
+
+	rtrd->data_store[rtrd->data_index] = data;
+	rtrd->data_index++;
+	if(rtrd->data_index == rtrd->num_data_malloc){
+		RUN(extend_data_storage(rtrd,rtrd->data_index << 1 ));
+	}
+	
+	
 	if(keep_rep){
 		RUN(check_and_update_counts(rtrd,tmp,&exists));
 	}
+	
 	if(exists == 0){
+		/* copy data pointer into rtrf data storage  */
 		RUN(insert_data_rtree(rtrd , tmp,identifier ));
+	}else{
+		rtrd->data_index--;
+		MFREE(rtrd->data_store[rtrd->data_index]);
+		rtrd->data_store[rtrd->data_index] = NULL;
+	
 	}
 	free_rtree_interval(tmp);
-	
+       	
 	return OK;
 ERROR:
 	if(tmp){
@@ -202,14 +221,48 @@ ERROR:
 
 #ifdef ITEST
 
-int resolve_test_tree_data(struct rtree_interval* a,struct rtree_interval* b);
+int resolve_test_tree_data(void* a,void* b);
+int my_print_rtree_node(struct rtr_data* rtr_data, struct rtree_node* rtr_node);
 
 struct test_tree_data{
 	int count;
 	float prob;
 };
 
-int resolve_test_tree_data(struct rtree_interval* a,struct rtree_interval* b)
+int my_print_rtree_node(struct rtr_data* rtr_data, struct rtree_node* rtr_node)
+{
+	int i;
+	struct rtree_interval* interval = NULL;
+	struct test_tree_data* tmp = NULL;
+	//if(!rtr_node->level){
+		fprintf(stdout,"LEVEL%d\n",rtr_node->level);
+		
+		for(i = 0; i < rtr_node->count;i++){
+			if(rtr_node->level){
+				fprintf(stdout,"node:%d\t(ID:%d)\n",i,rtr_node->branch[i]->identifier);
+			
+			}else{
+				tmp = rtr_node->branch[i]->interval->data;
+				fprintf(stdout,"node:%d\t(ID:%d)\tdata:%d %f  \n",i,rtr_node->branch[i]->identifier,tmp->count, tmp->prob);
+			}
+			interval = rtr_node->branch[i]->interval;
+			fprintf(stdout,"\t");
+			RUN(print_rtree_interval(rtr_data, interval));
+		}
+	//}
+	for(i = 0; i < rtr_node->count;i++){
+		if(rtr_node->branch[i]->child){
+			my_print_rtree_node(rtr_data,rtr_node->branch[i]->child);
+		}
+	}
+	return OK;
+ERROR:
+	return FAIL;
+}
+
+
+
+int resolve_test_tree_data(void* a,void* b)
 {
 	struct test_tree_data* org = NULL;
 	struct test_tree_data* new = NULL;
@@ -219,13 +272,13 @@ int resolve_test_tree_data(struct rtree_interval* a,struct rtree_interval* b)
 	ASSERT(b != NULL,"new interval is NULL");
 
 
-	org = (struct test_tree_data*) a->data;
-	new = (struct test_tree_data*) b->data;
+	org = (struct test_tree_data*) a;
+	new = (struct test_tree_data*) b;
 
 	org->count = org->count + new->count;
-	org->prob = org->prob + new->prob;
+	org->prob = org->prob;// + new->prob;
 
-	a->data = (void*) org;	
+//	a->data = (void*) org;	
 	return OK;
 ERROR:
 	return FAIL;
@@ -239,10 +292,10 @@ int main (int argc,char * argv[])
 	struct rtr_data* rtrd = NULL;
 	struct rtr_data* overlaptree = NULL;
 	
-	int num_intervals_for_testing = 100000;
+	int num_intervals_for_testing = 10;
 	struct rtree_interval* tmp = NULL;
 	int64_t test_val[4]; 
-	int i,j;
+	int i,j,c;
 	int num_tree = 1;
 
 	struct test_tree_data* test_data = NULL;
@@ -254,8 +307,9 @@ int main (int argc,char * argv[])
 		LOG_MSG("Doing tree %d.",i);
 		RUNP(tree_list[i] = init_rtr_data(2, 5,num_intervals_for_testing));
 		tree_list[i]->resolve_dup = resolve_test_tree_data;
-		
 		tree_list[i]->compare_function = &node_identical;
+		tree_list[i]->print_rtree = my_print_rtree_node;
+			
 		tree_list[i]->mode = MODE_RTREE_MERGE_IDENTICAL;
 		rtrd = tree_list[i];
 		j = 0;
@@ -266,29 +320,46 @@ int main (int argc,char * argv[])
 
 	
 		MMALLOC(test_data,sizeof(struct test_tree_data));
-		test_data->count = 10;
-		test_data->prob = 0.99;
-
-		rtrd->insert(rtrd,test_val, test_data,77,1,1);
-		test_data = NULL;
+		test_data->count = 1;
+		test_data->prob = 666;
 		
+		rtrd->insert(rtrd,test_val, test_data,1,1,1);
+		test_data = NULL;
+	
 		for(j = 0; j < 10;j++){
 			MMALLOC(test_data,sizeof(struct test_tree_data));
-			test_data->count = 10;
-			test_data->prob = 0.99;
+			test_data->count = 1;
+			test_data->prob = j;
 			test_val[0] = 86164185;
 			test_val[1] = 202465983;
 			test_val[2] = 86164188;
 			test_val[3] = 202465986;
+			LOG_MSG("Insert:%d\n",j+1);
 			//fprintf(stdout,"Got here\n");
-			rtrd->insert(rtrd,test_val,test_data,87,13,1);
+			rtrd->insert(rtrd,test_val,test_data,j+1,1,1);
 			//fprintf(stdout,"Got here\n");
 			test_data = NULL;
+			
+
 		}
-		
-		
-		
-		
+	        for(j = 0; j < 17560;j++){
+			MMALLOC(test_data,sizeof(struct test_tree_data));
+			test_data->count = 1;
+			test_data->prob = j+100;
+			test_val[0] = 8616418+j*100;
+			test_val[1] = 20246598+j*100;
+			test_val[2] = 8616418+j*100;
+			test_val[3] = 20246598+j*100;
+			
+			LOG_MSG("Insert:%d\n",j+1);
+			//fprintf(stdout,"Got here\n");
+			rtrd->insert(rtrd,test_val,test_data,j+100,1,1);
+			//fprintf(stdout,"Got here\n");
+			test_data = NULL;
+			
+
+		}
+	        
 		LOG_MSG("Done %d tree. (used:%f)",i,   (double)rtrd->new_node_index /(double) rtrd->num_new_node_malloc );
 	}
 	STOP_TIMER(t);
@@ -303,7 +374,7 @@ int main (int argc,char * argv[])
 
 	RUNP(test_data = (struct test_tree_data*) tree_list[0]->query(tree_list[0],test_val));
 
-	fprintf(stdout,"Got data: %d %f\n", test_data->count,test_data->prob);
+	fprintf(stdout,"Got data: %d %f GAGAGA\n", test_data->count,test_data->prob);
 	
 	for(i = 0; i < num_tree;i++){
 		tree_list[i]->print_rtree(tree_list[i], tree_list[i]->root);
@@ -744,10 +815,11 @@ int check_and_update_counts(struct rtr_data* rtrd , struct rtree_interval* query
 	
 	RUN(do_check_and_update_counts(rtrd, rtrd->root, identifier));
 
-	if(*identifier){
-		interval_ptr->data = NULL;
+	//if(*identifier){
+	//	interval_ptr->data = NULL;
 		
-	}
+	//}
+	//RUN(reset_rtr_branch(rtrd,rtrd->new_branch));
 	
 	return OK;
 ERROR:
@@ -789,7 +861,7 @@ int do_check_and_update_counts(struct rtr_data* rtrd, struct rtree_node* node, i
 
 				if(rtrd->resolve_dup){
 					//int (*resolve_dup)(struct rtree_interval* org, struct rtree_interval* new); 
-					RUN(rtrd->resolve_dup(	node->branch[i]->interval,rtrd->new_branch->interval));
+					RUN(rtrd->resolve_dup(	node->branch[i]->interval->data , rtrd->new_branch->interval->data));
 				}
 				return OK;
 			}
@@ -987,11 +1059,11 @@ int insert_data_rtree(struct rtr_data* rtrd , struct rtree_interval* new,int ide
 	RUN(copy_interval(rtrd,interval_ptr, new));
 	interval_ptr->count = new->count;
 	interval_ptr->data = new->data;
-	new->data = NULL;
-	
+	//new->data = NULL;
 	RUN(do_insert_data(rtrd,rtrd->root));
 	if(rtrd->new_node){
-        	new_root = rtrd->new_node_store[rtrd->new_node_index];
+	        
+		new_root = rtrd->new_node_store[rtrd->new_node_index];
 		//rtrd->new_node_store[rtrd->new_node_index] = NULL;
 		rtrd->new_node_index++;
 		if(rtrd->new_node_index ==rtrd->num_new_node_malloc){
@@ -1014,6 +1086,8 @@ int insert_data_rtree(struct rtr_data* rtrd , struct rtree_interval* new,int ide
 		rtrd->root =new_root;
 		rtrd->new_node = NULL;
 	}
+	//RUN(reset_rtr_branch(rtrd,rtrd->new_branch));
+        
 	return OK;
 ERROR:
 	return FAIL;
@@ -1025,7 +1099,6 @@ int do_insert_data(struct rtr_data* rtrd, struct rtree_node* node)
 	//struct rtree_interval* interval_ptr = NULL;
 	int i;
 	//int j;
-	
 	
 	if (node->level >  rtrd->level){
 		i = pick_branch(rtrd,  node);
@@ -1048,16 +1121,16 @@ int do_insert_data(struct rtr_data* rtrd, struct rtree_node* node)
 			
 			
 			/*fprintf(stdout,"A new node was created at level: %d\n",node->level);
-			
+			int j;
 			fprintf(stdout,"leftover:\n");
 			for(j = 0 ; j < node->branch[i]->child->count;j++){
 				print_rtree_interval(rtrd,  node->branch[i]->child->branch[j]->interval);
 			}
 			fprintf(stdout,"\n");
+			*/
 			
 			
-			
-			fprintf(stdout,"new:\n");
+			/*fprintf(stdout,"new:\n");
 			for(j = 0 ; j <  rtrd->new_node->count;j++){
 				print_rtree_interval(rtrd,  rtrd->new_node->branch[j]->interval);
 			}
@@ -1123,11 +1196,11 @@ int do_add_branch(struct rtr_data* rtrd, struct rtree_node* node)
 	
 	/*for(i = 0; i < rtrd->num_branches;i++){
 		if(node->branch[i]->identifier != 0 || node->branch[i]->child != NULL){
-		print_rtree_interval(rtrd,  node->branch[i]->interval);
+			print_rtree_interval(rtrd,  node->branch[i]->interval);
 		}
 	}
-	fprintf(stdout,"\n\n");*/
-	
+	fprintf(stdout,"\n\n");
+	*/
 	
 	/*if(node->level == 0){
 		for(i = 0; i < rtrd->num_branches;i++){
@@ -1156,6 +1229,8 @@ int do_add_branch(struct rtr_data* rtrd, struct rtree_node* node)
 	}*/
 	
 	if(node->count < rtrd->num_branches){ // no split necessary!!
+		//fprintf(stdout,"No split necessart...\n");
+	
 		for(i = 0; i < rtrd->num_branches;i++){
 			// got to the end - will just insert
 			if(node->branch[i]->identifier == 0 && node->branch[i]->child == NULL){
@@ -1166,17 +1241,20 @@ int do_add_branch(struct rtr_data* rtrd, struct rtree_node* node)
 					node->branch[i]->interval->data = rtrd->new_branch->interval->data;
 					node->branch[i]->interval->count = rtrd->new_branch->interval->count;
 					node->branch[i]->identifier = rtrd->new_branch->identifier;
-				//	fprintf(stdout,"\t at level:%d	add id:%d \n",node->level,rtrd->new_branch->identifier );
+					//			fprintf(stdout,"\t at level:%d	add id:%d \n",node->level,rtrd->new_branch->identifier );
 				}else{
-				//	fprintf(stdout,"\t at level:%d\n",node->level);
+					//fprintf(stdout,"\t at level:%d\n",node->level);
 					node->branch[i]->identifier = 0;
 				}
 				
 				RUN(copy_interval(rtrd,node->branch[i]->interval , rtrd->new_branch->interval));
-				//print_rtree_interval(rtrd, node->branch[i]->interval);
+				print_rtree_interval(rtrd, node->branch[i]->interval);
+				
+	
 				node->count++;
 				break;
 			}
+			
 		}
 		
 		/*fprintf(stdout,"Now looks like this:\n");
@@ -1197,8 +1275,8 @@ int do_add_branch(struct rtr_data* rtrd, struct rtree_node* node)
 		//fprintf(stdout,"SPACE? : %d\n", space);
 		return OK;
 		
-	}else{ // spit !./
-		
+	}else{ // split !./
+		//LOG_MSG("split");
 		//because intervals can be merged check is split is actually necessary or if one of the intervals stored in the node overlap / identical to new node...
 		/*if(rtrd->mode && node->level == 0){
 			if(rtrd->mode == MODE_RTREE_MERGE_OVERLAPPING){
@@ -1242,7 +1320,7 @@ int do_add_branch(struct rtr_data* rtrd, struct rtree_node* node)
 		
 		RUN(copy_interval(rtrd,rtrd->branch_buffer[node->count]->interval , rtrd->new_branch->interval));
 
-				// Step 2 select seeds for groups. ....
+		// Step 2 select seeds for groups. ....
 		// do splitting...
 		RUN(perform_a_split(rtrd));
 		
@@ -1264,7 +1342,7 @@ int do_add_branch(struct rtr_data* rtrd, struct rtree_node* node)
 		node->level = level;
 		// Step 5: assign nodes on buffer to eirther newnode (new) or node (old)//
 		for(i =0 ; i < rtrd->num_branches+1; i++){// Don't forget the buffer contains nodes + the new one...
-			rtrd->new_branch->identifier =rtrd->branch_buffer[i]->identifier;
+			rtrd->new_branch->identifier = rtrd->branch_buffer[i]->identifier;
 			rtrd->new_branch->child =rtrd->branch_buffer[i]->child;
 			RUN(copy_interval(rtrd,rtrd->new_branch->interval ,rtrd->branch_buffer[i]->interval));
 			if(rtrd->group[i] == 0){
@@ -1272,6 +1350,7 @@ int do_add_branch(struct rtr_data* rtrd, struct rtree_node* node)
 			}else{
 				RUN(do_add_branch(rtrd, rtrd->new_node ));
 			}
+			//	RUN(reset_rtr_branch(rtrd, rtrd->branch_buffer[i]));
 		}
 		//fprintf(stdout,"ORIGINGAL NODE:\n ");
 		//print_rtree_node(rtrd, node);
@@ -1466,6 +1545,9 @@ int perform_a_split(struct rtr_data* rtrd)
 	ASSERT(rtrd->count[0] + rtrd->count[1] == num_elements," Weird some nodes were not assigned to a group?");
 	ASSERT(rtrd->count[0] >= min_elements && rtrd->count[1] >= min_elements," more weirdness");
 	
+
+	//RUN(reset_rtree_interval(rtrd, rtrd->split_interval[0]));
+	//RUN(reset_rtree_interval(rtrd, rtrd->split_interval[1]));
 	
 	
 	//for(i = 0 ; i < num_elements;i++){
@@ -1515,7 +1597,7 @@ struct rtr_data* init_rtr_data(int dim, int num_branches,int expected_num_items)
 	rtrd->stats_overlapping = 0;
 	rtrd->stats_num_interval = 0;
 	rtrd->r = 0.5;
-	rtrd->shift = 20;
+	rtrd->shift = 4;
 	rtrd->compare_cutoff = 0.0;
 	rtrd->mode = MODE_RTREE_MERGE_NOPE;
 	rtrd->insert = insert;
@@ -1524,6 +1606,7 @@ struct rtr_data* init_rtr_data(int dim, int num_branches,int expected_num_items)
 	rtrd->flatten_rtree = flatten_rtree;
 	rtrd->re_label_tree_nodes = re_label_tree_nodes;
 	rtrd->print_rtree =  print_rtree_node; 
+	rtrd->resolve_dup = NULL; 
 	MMALLOC(rtrd->branch_buffer, sizeof(struct rtree_branch*) * (num_branches+1));
 	MMALLOC(rtrd->group, sizeof(uint8_t) * (num_branches+1));
 	MMALLOC(rtrd->taken, sizeof(uint8_t ) * (num_branches+1));
@@ -1533,8 +1616,18 @@ struct rtr_data* init_rtr_data(int dim, int num_branches,int expected_num_items)
 	
 	rtrd->new_node_store = NULL;
 	rtrd->new_node_index = 0;
+	rtrd->new_branch_store = NULL;
+	rtrd->new_branch_index = 0;
+
+	rtrd->data_store = NULL;
+	rtrd->data_index = 0;
+	
 	rtrd->num_new_node_malloc = expected_num_items  / (num_branches /2) + 1;
-		
+	rtrd->num_new_branch_malloc = rtrd->num_new_node_malloc* rtrd->num_branches + rtrd->num_branches + 2;
+	rtrd->num_data_malloc = expected_num_items;
+	
+	//LOG_MSG("Nodes:%d\nBranch:%d",rtrd->num_new_node_malloc,rtrd->num_new_branch_malloc);
+	
 	rtrd->num_flat_interval_malloc = expected_num_items;
 	
 	MMALLOC(rtrd->flat_interval, sizeof(struct rtree_interval*) *rtrd->num_flat_interval_malloc );
@@ -1542,12 +1635,27 @@ struct rtr_data* init_rtr_data(int dim, int num_branches,int expected_num_items)
 		rtrd->flat_interval[i] = NULL;
 	}
         
+	/* STORAGE for BRANCHES  */
+	MMALLOC(rtrd->new_branch_store, sizeof(struct rtree_branch*) * rtrd->num_new_branch_malloc);
+	for(i = 0; i < rtrd->num_new_branch_malloc;i++){
+		rtrd->new_branch_store[i] = NULL;
+		rtrd->new_branch_store[i] = init_rtr_branch(rtrd);
+	}
+	/* STORAGE for nodes  */
 	MMALLOC(rtrd->new_node_store, sizeof(struct rtree_node*)  * rtrd->num_new_node_malloc );
-	
 	for(i = 0; i <  rtrd->num_new_node_malloc;i++){
-		rtrd->new_node_store[i]  = NULL;
+		rtrd->new_node_store[i] = NULL;
 		RUNP(rtrd->new_node_store[i] = init_rtr_node(rtrd));
 	}
+
+	/* STORAGE for data  */
+	MMALLOC(rtrd->data_store,sizeof(void*) * rtrd->num_data_malloc);
+	for(i = 0; i <  rtrd->num_data_malloc;i++){
+		rtrd->data_store[i] = NULL;
+	}
+
+	
+	
 	
 	rtrd->tmp_interval = NULL;
 	rtrd->tmp_cover = NULL;
@@ -1560,12 +1668,25 @@ struct rtr_data* init_rtr_data(int dim, int num_branches,int expected_num_items)
 	rtrd->split_interval[1] = NULL;
 	RUNP(rtrd->split_interval[0]  = init_rtree_interval(rtrd));
 	RUNP(rtrd->split_interval[1]  = init_rtree_interval(rtrd));
-        RUNP(rtrd->new_branch = init_rtr_branch(rtrd));
+        RUNP(rtrd->new_branch = rtrd->new_branch_store[rtrd->new_branch_index]);
+
+	rtrd->new_branch_index++;
+	if(rtrd->new_branch_index == rtrd->num_new_branch_malloc){
+		// realloc...
+		RUN(extend_num_branched_in_rtr_data(rtrd, rtrd->num_new_branch_malloc << 1));
+	}
+
+
 	
 	for(i = 0; i < num_branches+1;i++){
 		rtrd->branch_buffer[i] = NULL;
 		
-		RUNP(rtrd->branch_buffer[i] = init_rtr_branch(rtrd));
+		RUNP(rtrd->branch_buffer[i] = rtrd->new_branch_store[rtrd->new_branch_index]);
+		rtrd->new_branch_index++;
+		if(rtrd->new_branch_index == rtrd->num_new_branch_malloc){
+			// realloc...
+			RUN(extend_num_branched_in_rtr_data(rtrd, rtrd->num_new_branch_malloc << 1));
+		}
 	}
 	
 	rtrd->root = rtrd->new_node_store[0];
@@ -1577,7 +1698,24 @@ ERROR:
 }
 
 
-int extend_num_nodes_in_rtr_data(struct rtr_data* rtrd, int num_add_elements)
+int extend_num_branched_in_rtr_data( struct rtr_data* rtrd, int num_add_elements)
+{
+	int i;
+	if(num_add_elements + rtrd->new_branch_index > rtrd->num_new_branch_malloc){
+		
+		rtrd->num_new_branch_malloc =  rtrd->new_branch_index + num_add_elements ;
+		MREALLOC(rtrd->new_branch_store, sizeof(struct rtree_branch*)  * rtrd->num_new_branch_malloc);
+		for(i = rtrd->new_branch_index ; i <  rtrd->num_new_branch_malloc;i++){
+			rtrd->new_branch_store[i]  = NULL;
+			RUNP(rtrd->new_branch_store[i] = init_rtr_branch(rtrd));
+		}
+	}
+	return OK;
+ERROR:
+	return FAIL;	
+}
+
+int extend_num_nodes_in_rtr_data( struct rtr_data* rtrd, int num_add_elements)
 {
 	int i;
 	if(num_add_elements + rtrd->new_node_index > rtrd->num_new_node_malloc){
@@ -1595,6 +1733,25 @@ int extend_num_nodes_in_rtr_data(struct rtr_data* rtrd, int num_add_elements)
 ERROR:
 	return FAIL;
 }
+
+int extend_data_storage(struct rtr_data* rtrd, int num_add_elements)
+{
+	int i;
+	if(num_add_elements + rtrd->data_index > rtrd->num_data_malloc){
+		
+		rtrd->num_data_malloc =  rtrd->data_index + num_add_elements ;
+		MREALLOC(rtrd->data_store, sizeof(void*)  * rtrd->num_data_malloc);
+		for(i = rtrd->data_index ; i <  rtrd->num_data_malloc;i++){
+			rtrd->data_store[i] = NULL;
+		}
+	}
+	
+	
+	return OK;
+ERROR:
+	return FAIL;	
+}
+
 
 int reset_rtr_data(struct rtr_data* rtrd)
 {
@@ -1635,9 +1792,6 @@ void free_rtr_data(struct rtr_data* rtrd)
 	if(rtrd){
 		
 		if(rtrd->branch_buffer){
-			for(i = 0; i <  rtrd->num_branches+1;i++){
-				free_rtr_branch(rtrd->branch_buffer[i]);
-			}
 			MFREE(rtrd->branch_buffer);
 		}
 		if(rtrd->group){
@@ -1650,17 +1804,22 @@ void free_rtr_data(struct rtr_data* rtrd)
 			MFREE(rtrd->area);
 		}
 		if(rtrd->split_interval){
-			free_rtree_interval(rtrd->split_interval[0]);
-			free_rtree_interval(rtrd->split_interval[1]);
+			if(rtrd->split_interval[0]){
+				free_rtree_interval(rtrd->split_interval[0]);
+			}
+			if(rtrd->split_interval[0]){
+			
+				free_rtree_interval(rtrd->split_interval[1]);
+			}
 			MFREE(rtrd->split_interval);
 		}
-		if(rtrd->new_branch){
-			free_rtr_branch(rtrd->new_branch);
-		}
+		//if(rtrd->new_branch){
+		//	free_rtr_branch(rtrd->new_branch);
+		//}
 		
-		if(rtrd->root){
-			//free_rtr_node(rtrd, rtrd->root);
-		}
+		//if(rtrd->root){
+		//	free_rtr_node(rtrd, rtrd->root);
+		//}
 		if(rtrd->flat_interval){
 			MFREE(rtrd->flat_interval);
 		}
@@ -1672,6 +1831,21 @@ void free_rtr_data(struct rtr_data* rtrd)
 			}
 			MFREE(rtrd->new_node_store);
 		}
+
+		if(rtrd->new_branch_store){
+			for (i = 0; i < rtrd->num_new_branch_malloc; i++) {
+				free_rtr_branch(rtrd->new_branch_store[i]);
+			}
+			MFREE(rtrd->new_branch_store);
+		}
+
+		if(rtrd->data_store){
+			for (i = 0; i < rtrd->data_index; i++) {
+				MFREE(rtrd->data_store[i]);
+			}
+			MFREE(rtrd->data_store);
+		}
+		
 		if(rtrd->tmp_interval){
 			free_rtree_interval(rtrd->tmp_interval);
 		}
@@ -1695,21 +1869,25 @@ struct rtree_node* init_rtr_node(struct rtr_data* rtrd)
 	MMALLOC(rtrn->branch, sizeof(struct rtree_branch*) * num_branches);
 	
 	for(i = 0; i < num_branches;i++){
-		RUNP(rtrn->branch[i] = init_rtr_branch(rtrd));
+
+		rtrn->branch[i] = rtrd->new_branch_store[rtrd->new_branch_index];
+		rtrd->new_branch_index++;
+		if(rtrd->new_branch_index == rtrd->num_new_branch_malloc){
+			// realloc...
+			RUN(extend_num_branched_in_rtr_data(rtrd, rtrd->num_new_branch_malloc << 1));
+		}
 	}
 	
 	rtrn->count = 0;
 	rtrn->level = 0;
-	
-	
-	
+        
 	return rtrn;
 ERROR:
 	return NULL;
 }
 
 
-int reset_rtr_node(struct rtr_data* rtrd,	struct rtree_node* rtrn)
+int reset_rtr_node(struct rtr_data* rtrd, struct rtree_node* rtrn)
 {
 	int i;
 	
@@ -1724,21 +1902,21 @@ ERROR:
 	return FAIL;
 }
 
-void free_rtr_node(struct rtr_data* rtrd,	struct rtree_node* rtrn)
+void free_rtr_node(struct rtr_data* rtrd, struct rtree_node* rtrn)
 {
 	if(rtrn){
 		int num_branches = rtrd->num_branches;
 		int i;
 		if(rtrn->branch){
-			for(i = 0; i < num_branches;i++){
+//			for(i = 0; i < num_branches;i++){
 				
-				if(rtrn->branch[i]->child){
-				//	free_rtr_node(rtrd,rtrn->branch[i]->child);
-				}
-				
-				free_rtr_branch(rtrn->branch[i]);
+//				if(rtrn->branch[i]->child){
+//					free_rtr_node(rtrd,rtrn->branch[i]->child);
+//				}
+//				
+//				free_rtr_branch(rtrn->branch[i]);
 				//RUNP(rtrn->branch[i] = init_rtr_branch(rtrd),"init_rtr_branch failed.");
-			}
+//			}
 			MFREE(rtrn->branch);
 		}
 		MFREE(rtrn);
@@ -1780,7 +1958,7 @@ ERROR:
 void free_rtr_branch(struct rtree_branch* rtrb)
 {
 	if(rtrb){
-		if(rtrb->interval){
+	        if(rtrb->interval){
 			free_rtree_interval(rtrb->interval);
 		}
 		MFREE(rtrb);
@@ -1827,9 +2005,6 @@ void free_rtree_interval(struct rtree_interval* rtri)
 	if(rtri){
 		if(rtri->coordinates){
 			MFREE(rtri->coordinates);
-		}
-		if(rtri->data){
-			MFREE(rtri->data);
 		}
 		MFREE(rtri);
 	}
