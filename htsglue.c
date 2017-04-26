@@ -184,10 +184,7 @@ char* get_sequence(faidx_t* index, struct genome_interval* g_int)//   char* chr,
 	}else if(val.len <= g_int->stop){
 		g_int->stop = val.len ;
 	}
-	
-
-	
-	
+		
 	sequence = faidx_fetch_seq(index, g_int->chromosome , g_int->start,  g_int->stop-1, &len);
 	
 	if(len == -2){
@@ -230,17 +227,19 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 	int i;
 	int r = 0;
 	int num_read = 0;
-	
+	int read_flag = 0;
 	int best_hits = 0;
-	
+
+	read_flag = sb_file->read_flag;
 	sb_file->num_read = 0;
 	sb_file->total_entries_in_file = 0;
 	bam1_t *b = sb_file->b;
 	bam_hdr_t *h =sb_file->header;
 	
+	
 	while ((r = sam_read1(sb_file->in, h, b)) >= 0){
 		sb_file->total_entries_in_file++;
-		if(!(BAM_FUNMAP & b->core.flag)){
+		if(!(read_flag & b->core.flag)){
 			if(b->core.qual >= sb_file->read_Q_threshold){
 				best_hits = 0;
 				struct sam_bam_entry* sb_ptr = sb_file->buffer[sb_file->num_read];
@@ -585,7 +584,7 @@ struct sam_bam_file* open_SAMBAMfile(char* name,int buffer_size,int max_num_hits
 	sb_file->max_num_hits = max_num_hits;
 	sb_file->si = NULL;
 	sb_file->total_entries_in_file = 0;
-	
+	sb_file->read_flag = BAM_FUNMAP | BAM_FQCFAIL | BAM_FSECONDARY;
 	sb_file->buffer_size = buffer_size;
 	sb_file->file_name = strdup(name);
 	RUNP(sb_file->in = sam_open(name, "r"));

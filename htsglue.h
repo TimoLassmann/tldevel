@@ -32,7 +32,6 @@
 
 #define STRAND_BUFFER 65536LL // this is a buffer between the plus strand
 
-
 struct seq_info{
 	char** names;
 	unsigned int* len;
@@ -80,6 +79,9 @@ struct sam_bam_file{
 	struct seq_info* si;
 	char* file_name;
 	struct sam_bam_entry** buffer;
+
+	int read_flag;
+	
 	int buffer_size;
 	int num_read;
 	int total_entries_in_file;
