@@ -252,11 +252,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 				//b->core.qual
 				//int len =b->core.l_qseq;
 				uint8_t * s =  bam_get_aux(b);
-				
-				//DPRINTF1("%d",id);
-				
-				fprintf(stdout,"%p\n", qual_ptr);
-				DPRINTF3("%d %s %d %d-%d (%" PRId64 ") chr len: %d cumlen: %ld ",b->core.qual, h->target_name[id], h->target_len[id]  ,b->core.pos, bam_endpos(b) ,sb_file->cum_chr_len[id],sb_file->si->len[id],sb_file->cum_chr_len[id]);
+			        DPRINTF3("%d %s %d %d-%d (%" PRId64 ") chr len: %d cumlen: %ld ",b->core.qual, h->target_name[id], h->target_len[id]  ,b->core.pos, bam_endpos(b) ,sb_file->cum_chr_len[id],sb_file->si->len[id],sb_file->cum_chr_len[id]);
 				
 #if (DEBUGLEVEL >= 3)
 				
