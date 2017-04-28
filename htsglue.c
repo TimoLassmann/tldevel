@@ -245,9 +245,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 				struct sam_bam_entry* sb_ptr = sb_file->buffer[sb_file->num_read];
 				//char *name  = bam_get_qname(b);
 				//char *qual  = bam1_qual(b);
-
-				snprintf(sb_ptr->name, MAX_SEQ_NAME_LEN,"%s",bam_get_qname(b));
-				
+				snprintf(sb_ptr->name, MAX_SEQ_NAME_LEN,"%s",bam_get_qname(b));				
 				uint8_t * seq =    bam_get_seq(b);
 				uint8_t* qual_ptr = bam_get_qual(b);
 				int id = b->core.tid;
@@ -317,13 +315,22 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 					MREALLOC(sb_ptr->base_qual,sizeof(uint8_t) * sb_file->buffer[num_read]->max_len );
 					
 				}
+				
 				for (i = 0; i < sb_ptr->len; ++i){
 					sb_ptr->sequence[i] ="=ACMGRSVTWYHKDBN"[bam_seqi(seq, i)];
-					sb_ptr->base_qual[i] = qual_ptr[i] + 33;
 				}
 				sb_ptr->sequence[sb_ptr->len ] = 0;
-				sb_ptr->base_qual[sb_ptr->len ] = 0;
-				
+
+				if(qual_ptr[0] == '*'){
+					sb_ptr->base_qual[0] = '*';
+					sb_ptr->base_qual[1] = 0;
+					
+				}else{
+					for (i = 0; i < sb_ptr->len; ++i){
+						sb_ptr->base_qual[i] = qual_ptr[i] + 33;
+					}
+					sb_ptr->base_qual[sb_ptr->len ] = 0;
+				}
 				
 				DPRINTF3("%s",sb_ptr->sequence);
 				DPRINTF3("%s",sb_ptr->base_qual);
