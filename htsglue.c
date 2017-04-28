@@ -255,7 +255,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 				
 				//DPRINTF1("%d",id);
 				
-				
+				fprintf(stdout,"%p\n", qual_ptr);
 				DPRINTF3("%d %s %d %d-%d (%" PRId64 ") chr len: %d cumlen: %ld ",b->core.qual, h->target_name[id], h->target_len[id]  ,b->core.pos, bam_endpos(b) ,sb_file->cum_chr_len[id],sb_file->si->len[id],sb_file->cum_chr_len[id]);
 				
 #if (DEBUGLEVEL >= 3)
@@ -321,10 +321,11 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 				}
 				sb_ptr->sequence[sb_ptr->len ] = 0;
 
-				if(qual_ptr[0] == '*'){
+
+
+				if(qual_ptr[0] == 0xFF){
 					sb_ptr->base_qual[0] = '*';
-					sb_ptr->base_qual[1] = 0;
-					
+					sb_ptr->base_qual[1] = 0;			 
 				}else{
 					for (i = 0; i < sb_ptr->len; ++i){
 						sb_ptr->base_qual[i] = qual_ptr[i] + 33;
@@ -1624,6 +1625,29 @@ int main (int argc,char * argv[])
 		fprintf(stdout,"run:  ./test <sam/bam/cram file> <corresponding genome file>\n");
 		return EXIT_SUCCESS;
 	}
+
+	if(argv[1] && !argv[2]){
+		RUNP(sb_file= open_SAMBAMfile(argv[1],100,10,-1,-1));
+
+		while(1){
+			RUN(read_SAMBAM_chunk(sb_file,1.0,0));
+			DPRINTF3("read %d entries\n",sb_file->num_read);
+			for(i =0; i < sb_file->num_read;i++){
+				struct sam_bam_entry* sb_ptr = sb_file->buffer[i];
+				fprintf(stdout,"%s %s (%d)  hits:\n", sb_ptr->sequence ,sb_ptr->base_qual,   sb_ptr->len);			     
+			}
+			
+			if(!num_read){
+				break;
+			}
+		}
+		RUN(close_SAMBAMfile(sb_file));
+		sb_file = NULL;
+
+		
+	}
+
+	
 	if(argv[2]){
 		
 		RUNP(index = get_faidx(argv[2]));
@@ -1631,7 +1655,7 @@ int main (int argc,char * argv[])
 	}
 	RUNP(g_int =init_genome_interval(NULL,NULL,NULL));
 	
-	if(argv[1]){
+	if(argv[1] && argv[2]){
 		RUNP(sb_file= open_SAMBAMfile(argv[1],100,10,-1,-1));
 		//echo_header(sb_file);
 		
@@ -1673,7 +1697,7 @@ int main (int argc,char * argv[])
 			DPRINTF3("read %d entries\n",sb_file->num_read);
 			for(i =0; i < sb_file->num_read;i++){
 				struct sam_bam_entry* sb_ptr = sb_file->buffer[i];
-				fprintf(stdout,"%s (%d)  hits:\n", sb_ptr->sequence ,sb_ptr->len);
+				fprintf(stdout,"%s %s (%d)  hits:\n", sb_ptr->sequence ,sb_ptr->base_qual,   sb_ptr->len);
 				for(j = 0; j < sb_ptr->num_hits;j++){
 					
 					//get_chr_start_stop(sb_file,i,j, g_int);
