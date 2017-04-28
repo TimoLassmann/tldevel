@@ -223,6 +223,9 @@ extern void bit_set(uint32_t* array, uint32_t i);
 extern void bit_clr(uint32_t* array, uint32_t i);
 extern int bit_test(uint32_t* array, uint32_t i);
 
+//Hash function
+
+uint32_t adler(const void* buf, size_t len);
 
 extern struct checkpoint* init_checkpoint(char* base_name,char* target_dir);
 extern int test_for_checkpoint_file(struct checkpoint* chk);

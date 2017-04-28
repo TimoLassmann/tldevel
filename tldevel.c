@@ -315,6 +315,23 @@ int my_file_exists(char* name)
 }
 
 
+uint32_t adler(const void* buf, size_t len)
+{
+	const uint8_t* buffer = NULL;
+	uint32_t s1 = 1;
+	uint32_t s2 = 0;
+	
+	buffer = (const uint8_t*) buf; 
+
+	for (size_t i = 0; i < len; i++) {
+		s1 = (s1 + buf[i]) % 65521;
+		s2 = (s2 + s1) % 65521;
+	}
+	return (s2 << 16) | s1;
+}
+
+
+
 int log_command_line(const int argc,const char * argv[])
 {
 	char* buffer = NULL;
