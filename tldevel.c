@@ -34,6 +34,7 @@ static void verror(FILE* f_ptr,const char *location, const char *format,  va_lis
 
 static void echo_build_config (void);
 static void echo_build_config_log (void);
+static int set_random_seed(void);
 
 static void print_program_description(const char **argv,const char* description);
 static void print_program_description_log(const char **argv,const char* description);
@@ -121,6 +122,8 @@ void echo_build_config (void)
 {
 	fprintf(stdout,"\n%s\n",build_config);
 	fflush(stdout);
+	
+	set_random_seed();
 }
 
 void echo_build_config_log (void)
@@ -141,6 +144,21 @@ void echo_build_config_log (void)
 	if(file){
 		fclose(file);
 	}
+	set_random_seed();
+}
+
+int set_random_seed(void)
+{
+#ifdef HAVE_ARC4RANDOM_UNIFORM
+	return OK;
+#elif HAVE_ARC4RANDOM
+	return OK;
+#else
+	srand((unsigned int) (time(NULL) * (42)));
+	srand48((long int)  (time(NULL) * (42)));
+	return OK;
+#endif // HAVE_ARC4RANDOM
+
 }
 
 
@@ -313,7 +331,6 @@ int my_file_exists(char* name)
 	}
 	return ret;
 }
-
 
 uint32_t adler(const void* buf, size_t len)
 {
@@ -1562,6 +1579,26 @@ float scaledprob2prob(float p)
 	}
 }
 
+float random_float_zero_to_x(const float x)
+{
+#ifdef HAVE_ARC4RANDOM
+	return (float) arc4random() / (float) 0xFFFFFFFF *x; 
+#else
+	return (float) drand48();
+#endif // HAVE_ARC4RANDOM
+		
+}
+
+uint32_t random_int_zero_to_x(const uint32_t x)
+{
+#ifdef HAVE_ARC4RANDOM_UNIFORM
+	return arc4random_uniform(x+1);
+#elif HAVE_ARC4RANDOM
+	return arc4random() % ( x+1); 
+#else
+	return rand() % (x+1);
+#endif // HAVE_ARC4RANDOM
+}
 
 
 char* shorten_pathname(char* p)
@@ -2170,8 +2207,11 @@ int main (int argc,char * argv[])
 	MFREE(my_str);
 
 	log_message("Yes %s is ","it");
-	
-	
+	int i;
+	for(i = 0; i < 100;i++){
+		fprintf(stdout,"%d %d %f %f\n", random_int_zero_to_x(10), random_int_zero_to_x(10),random_float_zero_to_x(1.0), random_float_zero_to_x(1.0));
+	}
+
 	
 	return EXIT_SUCCESS;
 ERROR:

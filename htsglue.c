@@ -272,12 +272,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 					sb_ptr->start[sb_ptr->num_hits]  = 0;
 					
 					sb_ptr->start[sb_ptr->num_hits]  = sb_file->cum_chr_len[id];
-					
-					//fprintf(stdout,"%d %s %d %d-%d (%lld) chr len: %d cumlen: %ld\n",b->core.qual, h->target_name[id], h->target_len[id]  ,b->core.pos, bam_endpos(b) ,sb_file->cum_chr_len[id],sb_file->si->len[id],sb_file->cum_chr_len[id]);
-					
-					
-					//0 chr1_gl000191_random 106433 0-31 (3095693983) chr len: 106433 cumlen: 3095693983
-					
+        				
 				}else{
 					sb_ptr->start[sb_ptr->num_hits] = labs(b->core.pos)+sb_file->cum_chr_len[id]-window;//stored 0... but sam/bam/ucsc output is 1 based...
 				}
@@ -287,15 +282,6 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 				}else{
 					sb_ptr->stop[sb_ptr->num_hits] = labs(bam_endpos(b)) +sb_file->cum_chr_len[id]+window;
 				}
-				/*if(labs(bam_endpos(b))+10 > sb_file->si->len[id]){
-					ERROR_MSG("%s %d-%d + 10 is longer than chromosome lengeth..", h->target_name[id],labs(b->core.pos),labs(bam_endpos(b)),sb_file->si->len[id]);
-					exit(0);
-				}
-				
-				if( labs(b->core.pos) - 10 < 0){
-					ERROR_MSG("%s %d-%d + 10 is longer than chromosome lengeth..", h->target_name[id],labs(b->core.pos),labs(bam_endpos(b)),sb_file->si->len[id]);
-					exit(0);
-				}*/
 				/* read in len of sequence */
 				
 				sb_ptr->len =b->core.l_qseq;

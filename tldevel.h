@@ -172,7 +172,6 @@
 
 #define DESTROY_CHK(n) if(chk_##n){free_checkpoint( chk_##n);};
 
-
 struct checkpoint{
 	char* base_dir;
 	char* base_name;
@@ -199,6 +198,8 @@ float logsum_lookup[LOGSUM_SIZE];
 
 extern int print_program_header(const char **argv,const char* description);
 extern int log_command_line(const int argc,const char * argv[]);
+
+
 
 
 
@@ -256,7 +257,8 @@ extern float logsum(const float a,const float b);
 extern float prob2scaledprob(float p);
 extern float scaledprob2prob(float p);
 
-
+float random_float_zero_to_x(const float x);
+uint32_t random_int_zero_to_x(const uint32_t x);
 
 
 #endif
