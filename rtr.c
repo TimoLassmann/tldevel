@@ -295,7 +295,7 @@ int main (int argc,char * argv[])
 	int num_intervals_for_testing = 10;
 	struct rtree_interval* tmp = NULL;
 	int64_t test_val[4]; 
-	int i,j,c;
+	int i,j;
 	int num_tree = 1;
 
 	struct test_tree_data* test_data = NULL;
