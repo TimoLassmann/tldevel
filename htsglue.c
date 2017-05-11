@@ -239,35 +239,69 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 	
 	while ((r = sam_read1(sb_file->in, h, b)) >= 0){
 		sb_file->total_entries_in_file++;
-		if(!(read_flag & b->core.flag)){
-			if(b->core.qual >= sb_file->read_Q_threshold){
+		if(!(read_flag & b->core.flag) && b->core.qual >= sb_file->read_Q_threshold){
+			struct sam_bam_entry* sb_ptr = sb_file->buffer[sb_file->num_read];
+			
+                        /* Whether mapped or not get the name , sequence and qual....   */
+			uint8_t * seq =    bam_get_seq(b);
+			uint8_t* qual_ptr = bam_get_qual(b);
+			int id = b->core.tid;
+			
+			snprintf(sb_ptr->name, MAX_SEQ_NAME_LEN,"%s",bam_get_qname(b));				
+
+			sb_ptr->num_hits = 0;
+			sb_ptr->qual = b->core.qual;
+
+			/* read in len of sequence */
+				
+			sb_ptr->len =b->core.l_qseq;
+				
+			/* read in the sequence... */
+				
+			if(sb_ptr->len+1  >= sb_ptr->max_len){
+				while(sb_ptr->len+1 >=sb_ptr->max_len){
+					sb_ptr->max_len = sb_ptr->max_len + 10;
+				}
+					
+				MREALLOC(sb_ptr->sequence, sizeof(char) * sb_file->buffer[num_read]->max_len );
+				MREALLOC(sb_ptr->base_qual,sizeof(uint8_t) * sb_file->buffer[num_read]->max_len );
+					
+			}
+				
+			for (i = 0; i < sb_ptr->len; ++i){
+				sb_ptr->sequence[i] ="=ACMGRSVTWYHKDBN"[bam_seqi(seq, i)];
+			}
+			sb_ptr->sequence[sb_ptr->len ] = 0;
+
+
+
+			if(qual_ptr[0] == 0xFF){
+				sb_ptr->base_qual[0] = '*';
+				sb_ptr->base_qual[1] = 0;			 
+			}else{
+				for (i = 0; i < sb_ptr->len; ++i){
+					sb_ptr->base_qual[i] = qual_ptr[i] + 33;
+				}
+				sb_ptr->base_qual[sb_ptr->len ] = 0;
+			}
+
+			
+			if(! (BAM_FUNMAP & b->core.flag)){
 				best_hits = 0;
-				struct sam_bam_entry* sb_ptr = sb_file->buffer[sb_file->num_read];
-				//char *name  = bam_get_qname(b);
-				//char *qual  = bam1_qual(b);
-				snprintf(sb_ptr->name, MAX_SEQ_NAME_LEN,"%s",bam_get_qname(b));				
-				uint8_t * seq =    bam_get_seq(b);
-				uint8_t* qual_ptr = bam_get_qual(b);
-				int id = b->core.tid;
-				//b->core.qual
-				//int len =b->core.l_qseq;
 				uint8_t * s =  bam_get_aux(b);
-			        DPRINTF3("%d %s %d %d-%d (%" PRId64 ") chr len: %d cumlen: %ld ",b->core.qual, h->target_name[id], h->target_len[id]  ,b->core.pos, bam_endpos(b) ,sb_file->cum_chr_len[id],sb_file->si->len[id],sb_file->cum_chr_len[id]);
-				
-#if (DEBUGLEVEL >= 3)
-				
-				for (i = 0; i < b->core.l_qseq; ++i) fprintf(stdout,"%c","=ACMGRSVTWYHKDBN"[bam_seqi(seq, i)]);
-				fprintf(stdout,"\n");
-#endif
-				/* add first hit... */
-				
-				sb_ptr->num_hits = 0;
-				sb_ptr->qual = b->core.qual;
 				
 				
-				//sb_ptr->stop[sb_ptr->num_hits] = labs(bam_endpos(b)) +sb_file->cum_chr_len[id];
-				
-				
+				DPRINTF1("MAPPED:%d",b->core.flag);
+				if(bam_is_rev(b)){
+					
+					sb_ptr->start[sb_ptr->num_hits]  += sb_file->total_length + STRAND_BUFFER;
+					sb_ptr->stop[sb_ptr->num_hits]  += sb_file->total_length + STRAND_BUFFER;
+					
+					RUN(rev_cmp(sb_ptr->sequence,sb_ptr->len));
+					
+					DPRINTF3("%s",sb_file->buffer[num_read]->sequence);
+					
+				}
 				if(labs(b->core.pos)- window < 1){
 					sb_ptr->start[sb_ptr->num_hits]  = 0;
 					
@@ -282,52 +316,8 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 				}else{
 					sb_ptr->stop[sb_ptr->num_hits] = labs(bam_endpos(b)) +sb_file->cum_chr_len[id]+window;
 				}
-				/* read in len of sequence */
-				
-				sb_ptr->len =b->core.l_qseq;
-				
-				/* read in the sequence... */
-				
-				if(sb_ptr->len+1  >= sb_ptr->max_len){
-					while(sb_ptr->len+1 >=sb_ptr->max_len){
-						sb_ptr->max_len = sb_ptr->max_len + 10;
-					}
-					
-					MREALLOC(sb_ptr->sequence, sizeof(char) * sb_file->buffer[num_read]->max_len );
-					MREALLOC(sb_ptr->base_qual,sizeof(uint8_t) * sb_file->buffer[num_read]->max_len );
-					
-				}
-				
-				for (i = 0; i < sb_ptr->len; ++i){
-					sb_ptr->sequence[i] ="=ACMGRSVTWYHKDBN"[bam_seqi(seq, i)];
-				}
-				sb_ptr->sequence[sb_ptr->len ] = 0;
-
-
-
-				if(qual_ptr[0] == 0xFF){
-					sb_ptr->base_qual[0] = '*';
-					sb_ptr->base_qual[1] = 0;			 
-				}else{
-					for (i = 0; i < sb_ptr->len; ++i){
-						sb_ptr->base_qual[i] = qual_ptr[i] + 33;
-					}
-					sb_ptr->base_qual[sb_ptr->len ] = 0;
-				}
-				
-				DPRINTF3("%s",sb_ptr->sequence);
-				DPRINTF3("%s",sb_ptr->base_qual);
-				if(bam_is_rev(b)){
-					
-					sb_ptr->start[sb_ptr->num_hits]  += sb_file->total_length + STRAND_BUFFER;
-					sb_ptr->stop[sb_ptr->num_hits]  += sb_file->total_length + STRAND_BUFFER;
-					
-					RUN(rev_cmp(sb_ptr->sequence,sb_ptr->len));
-					
-					DPRINTF3("%s",sb_file->buffer[num_read]->sequence);
-					
-				}
 				sb_ptr->num_hits++;
+
 				if(b->core.qual <= sb_file->multimap_Q_threshold ){
 					
 					while (s+4 <= b->data + b->l_data) {
@@ -343,9 +333,9 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 							
 							
 							
-							fprintf(stdout,"Number of hits: %d	%c\n", atoi( (char*)(s)),type);
-							fprintf(stdout,"%c%c%c\n",   *((char*)s), *((char*)s+1), *((char*)s+2) );
-						}*/
+						  fprintf(stdout,"Number of hits: %d	%c\n", atoi( (char*)(s)),type);
+						  fprintf(stdout,"%c%c%c\n",   *((char*)s), *((char*)s+1), *((char*)s+2) );
+						  }*/
 						
 						if(key[0]  == 'X' && key[1] == 'A'){
 							//fprintf(stdout,"FOUND XA\n");
@@ -440,10 +430,10 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 							++s;
 						} else if (type == 'C') {
 							if( key[0] == 'X' && key[1] == '0'){
-							/*	fprintf(stdout,"%s ",sb_ptr->name );
-								fprintf(stdout,"%c%c:", key[0],key[1]);
-								fprintf(stdout,"i:");
-								fprintf(stdout,"%d\n",(int)*s);*/
+								/*	fprintf(stdout,"%s ",sb_ptr->name );
+									fprintf(stdout,"%c%c:", key[0],key[1]);
+									fprintf(stdout,"i:");
+									fprintf(stdout,"%d\n",(int)*s);*/
 								best_hits =(int)*s;
 								
 							}
@@ -529,23 +519,48 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 							}
 						}
 					}
-				}
-				if(all){
-					sb_file->num_read++;
-					//num_read++;
-				}else{
-					if(sb_ptr->num_hits > 1){
-						//num_read++;
-						sb_file->num_read++;
-					}
-				}
 				
-				
-				if(sb_file->num_read == sb_file->buffer_size){
-					//*read = num_read;
-					return OK;
+			
 				}
 			}
+			
+				
+			//char *name  = bam_get_qname(b);
+			//char *qual  = bam1_qual(b);
+			DPRINTF3("%d %s %d %d-%d (%" PRId64 ") chr len: %d cumlen: %ld ",b->core.qual, h->target_name[id], h->target_len[id]  ,b->core.pos, bam_endpos(b) ,sb_file->cum_chr_len[id],sb_file->si->len[id],sb_file->cum_chr_len[id]);
+				
+#if (DEBUGLEVEL >= 3)
+				
+			for (i = 0; i < b->core.l_qseq; ++i) fprintf(stdout,"%c","=ACMGRSVTWYHKDBN"[bam_seqi(seq, i)]);
+			fprintf(stdout,"\n");
+#endif
+			/* add first hit... */
+				
+				
+				
+			//sb_ptr->stop[sb_ptr->num_hits] = labs(bam_endpos(b)) +sb_file->cum_chr_len[id];
+				
+				
+				
+			DPRINTF3("%s",sb_ptr->sequence);
+			DPRINTF3("%s",sb_ptr->base_qual);
+				
+			if(all){
+				sb_file->num_read++;
+				//num_read++;
+			}else{
+				if(sb_ptr->num_hits > 1){
+					//num_read++;
+					sb_file->num_read++;
+				}
+			}
+				
+				
+			if(sb_file->num_read == sb_file->buffer_size){
+				//*read = num_read;
+				return OK;
+			}
+			
 		}
 	}
 	
@@ -1612,20 +1627,40 @@ int main (int argc,char * argv[])
 		RUNP(sb_file= open_SAMBAMfile(argv[1],100,10,-1,-1));
 
 		while(1){
-			RUN(read_SAMBAM_chunk(sb_file,1.0,0));
-			DPRINTF3("read %d entries\n",sb_file->num_read);
+			RUN(read_SAMBAM_chunk(sb_file,1,0));
+			DPRINTF1("read %d entries\n",sb_file->num_read);
+			
+			if(!sb_file->num_read){
+				break;
+			}
+
 			for(i =0; i < sb_file->num_read;i++){
 				struct sam_bam_entry* sb_ptr = sb_file->buffer[i];
-				fprintf(stdout,"%s %s (%d)  hits:\n", sb_ptr->sequence ,sb_ptr->base_qual,   sb_ptr->len);			     
-			}
-			
-			if(!num_read){
-				break;
+				fprintf(stdout,"%s %s (%d)  hits: %d\n", sb_ptr->sequence ,sb_ptr->base_qual,   sb_ptr->len , sb_ptr->num_hits);   
 			}
 		}
 		RUN(close_SAMBAMfile(sb_file));
 		sb_file = NULL;
 
+		RUNP(sb_file= open_SAMBAMfile(argv[1],100,10,-1,-1));
+		sb_file->read_flag = 0;//BAM_FUNMAP | BAM_FQCFAIL | BAM_FSECONDARY;
+		while(1){
+			RUN(read_SAMBAM_chunk(sb_file,1,0));
+			DPRINTF1("read %d entries\n",sb_file->num_read);
+			if(!sb_file->num_read){
+				break;
+			}
+			for(i =0; i < sb_file->num_read;i++){
+				struct sam_bam_entry* sb_ptr = sb_file->buffer[i];
+				fprintf(stdout,"%s %s (%d)  hits: %d\n", sb_ptr->sequence ,sb_ptr->base_qual,   sb_ptr->len , sb_ptr->num_hits);     
+				for(j = 0; j < sb_ptr->num_hits;j++){
+					fprintf(stdout,"\t hit:%d\t%d\t%d\n",j, sb_ptr->start[j],sb_ptr->stop[j]);
+				}
+			}
+			
+		}
+		RUN(close_SAMBAMfile(sb_file));
+		sb_file = NULL;
 		
 	}
 
