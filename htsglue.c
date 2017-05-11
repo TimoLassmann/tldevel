@@ -589,7 +589,7 @@ struct sam_bam_file* open_SAMBAMfile(char* name,int buffer_size,int max_num_hits
 	sb_file->max_num_hits = max_num_hits;
 	sb_file->si = NULL;
 	sb_file->total_entries_in_file = 0;
-	sb_file->read_flag = BAM_FUNMAP | BAM_FQCFAIL | BAM_FSECONDARY;
+	sb_file->read_flag = BAM_FQCFAIL | BAM_FSECONDARY;
 	sb_file->buffer_size = buffer_size;
 	sb_file->file_name = strdup(name);
 	RUNP(sb_file->in = sam_open(name, "r"));
