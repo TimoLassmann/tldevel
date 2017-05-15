@@ -245,7 +245,6 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
                         /* Whether mapped or not get the name , sequence and qual....   */
 			uint8_t * seq =    bam_get_seq(b);
 			uint8_t* qual_ptr = bam_get_qual(b);
-			int id = b->core.tid;
 			
 			snprintf(sb_ptr->name, MAX_SEQ_NAME_LEN,"%s",bam_get_qname(b));				
 
@@ -289,9 +288,31 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 			if(! (BAM_FUNMAP & b->core.flag)){
 				best_hits = 0;
 				uint8_t * s =  bam_get_aux(b);
+				int id = b->core.tid;
+
+				if(labs(b->core.pos)- window >= 1 && labs(bam_endpos(b))+window <= sb_file->si->len[id]){
+					//do stuff;
+					sb_ptr->start[sb_ptr->num_hits] = labs(b->core.pos)+sb_file->cum_chr_len[id]-window;//stored 0... but sam/bam/ucsc output is 1 based...
+
+					sb_ptr->stop[sb_ptr->num_hits] = labs(bam_endpos(b)) +sb_file->cum_chr_len[id]+window;
+					
+					if(bam_is_rev(b)){
+					
+						sb_ptr->start[sb_ptr->num_hits]  += sb_file->total_length + STRAND_BUFFER;
+						sb_ptr->stop[sb_ptr->num_hits]  += sb_file->total_length + STRAND_BUFFER;
+					
+						RUN(rev_cmp(sb_ptr->sequence,sb_ptr->len));
+					
+						DPRINTF3("%s",sb_file->buffer[num_read]->sequence);
+					
+					}
+
+					sb_ptr->num_hits++;	   
+				}else{
+					WARNING_MSG("Alignment of read %s overlaps chromosome boundaries.");
+				}
 				
-				
-				DPRINTF1("MAPPED:%d",b->core.flag);
+				/*DPRINTF1("MAPPED:%d",b->core.flag);
 				if(bam_is_rev(b)){
 					
 					sb_ptr->start[sb_ptr->num_hits]  += sb_file->total_length + STRAND_BUFFER;
@@ -317,7 +338,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 					sb_ptr->stop[sb_ptr->num_hits] = labs(bam_endpos(b)) +sb_file->cum_chr_len[id]+window;
 				}
 				sb_ptr->num_hits++;
-
+				*/
 				if(b->core.qual <= sb_file->multimap_Q_threshold ){
 					
 					while (s+4 <= b->data + b->l_data) {
@@ -369,6 +390,29 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 								pos = atoi(pos_str);
 								id = bam_name2id(h, chr);
 								DPRINTF3("CHRID:%d length = %" PRId64 "\n",id,sb_file->cum_chr_len[id]);
+
+								if(labs(pos)- window >= 1 && labs(pos)+aln_len <= sb_file->si->len[id]){
+									//do stuff;
+									sb_ptr->start[sb_ptr->num_hits] = labs(pos)+sb_file->cum_chr_len[id]-window;//stored 0... but sam/bam/ucsc output is 1 based...
+
+									sb_ptr->stop[sb_ptr->num_hits] = labs(pos)+ aln_len  +sb_file->cum_chr_len[id]+window;
+					
+									if(pos < 0){
+					
+										sb_ptr->start[sb_ptr->num_hits]  += sb_file->total_length + STRAND_BUFFER;
+										sb_ptr->stop[sb_ptr->num_hits]  += sb_file->total_length + STRAND_BUFFER;
+					
+										RUN(rev_cmp(sb_ptr->sequence,sb_ptr->len));
+					
+										DPRINTF3("%s",sb_file->buffer[num_read]->sequence);
+					
+									}
+
+									sb_ptr->num_hits++;	   
+								}else{
+									WARNING_MSG("Alignment of read %s overlaps chromosome boundaries.");
+								}
+								/*
 								if(pos < 0){
 									if(labs(pos)- window < 1){
 										sb_ptr->start[sb_ptr->num_hits]  = 0 + sb_file->cum_chr_len[id] + sb_file->total_length + STRAND_BUFFER;
@@ -401,7 +445,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 									
 								}
 								sb_ptr->num_hits++;
-								
+								*/
 								
 								
 								s += n;
