@@ -309,7 +309,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 
 					sb_ptr->num_hits++;	   
 				}else{
-					WARNING_MSG("Alignment of read %s overlaps chromosome boundaries.");
+					WARNING_MSG("Alignment of read %s overlaps chromosome boundaries.", sb_ptr->name);
 				}
 				
 				/*DPRINTF1("MAPPED:%d",b->core.flag);
@@ -410,7 +410,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 
 									sb_ptr->num_hits++;	   
 								}else{
-									WARNING_MSG("Alignment of read %s overlaps chromosome boundaries.");
+									WARNING_MSG("Alignment of read %s overlaps chromosome boundaries.",sb_ptr->name);
 								}
 								/*
 								if(pos < 0){
