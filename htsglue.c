@@ -450,9 +450,9 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 								
 								
 								s += n;
-								if(best_hits && sb_ptr->num_hits == best_hits ){
-									break;
-								}
+								//if(best_hits && sb_ptr->num_hits == best_hits ){
+								//	break;
+								//}
 								
 								if(sb_ptr->num_hits >= sb_ptr->max_num_hits){
 									break;
