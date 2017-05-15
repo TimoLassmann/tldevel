@@ -1189,7 +1189,7 @@ int get_chr_start_stop(struct seq_info* si,struct genome_interval* g_int, int64_
 	
 	tmp_start = start;
 	tmp_stop = stop;
-	if(start >=  si->total_len){
+	if(start >=  si->total_len+ STRAND_BUFFER){
 		//*strand = 1;
 		g_int->strand = 1;
 		tmp_start -= (si->total_len + STRAND_BUFFER);
