@@ -1,13 +1,21 @@
+#ifdef HAVE_CONFIG_H
+#ifndef config_header_inc
+#define config_header_inc
+#include "config.h"
+#endif
+
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include "tldevel.h"
 
 #include "rbtree.h"
+
+
+
 
 #define RED 1
 #define BLACK 0

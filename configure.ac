@@ -1,7 +1,7 @@
 
 AC_INIT([libtldevel], [m4_esyscmd_s([git describe --always])]) 
 
-AC_CONFIG_HEADERS([config.h])
+
 
 
 AC_CONFIG_AUX_DIR([.])
@@ -19,8 +19,8 @@ AC_CHECK_LIB([m], [log])
 AC_CHECK_LIB([pthread], [pthread_create])
 
 
-sdfhtslib_support=ok
-AC_CHECK_LIB([hts], [main],[], [htslib_support=missing])
+htslib_support=ok
+AC_CHECK_LIB([hts], [fai_load],[], [htslib_support=missing])
 
 
 if test $htslib_support != ok; then
@@ -95,6 +95,7 @@ AC_SUBST([UNAME_INFO]) UNAME_INFO=`uname -n`
 
 AC_SUBST([COMPILER]) COMPILER=`$CC --version | head -n 1`
 
+AC_CONFIG_HEADERS([config.h])
 
 AC_CONFIG_FILES([Makefile
 		 env_settings
