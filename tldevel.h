@@ -257,8 +257,12 @@ extern float logsum(const float a,const float b);
 extern float prob2scaledprob(float p);
 extern float scaledprob2prob(float p);
 
-float random_float_zero_to_x(const float x);
-uint32_t random_int_zero_to_x(const uint32_t x);
+extern float random_float_zero_to_x(const float x);
+extern uint32_t random_int_zero_to_x(const uint32_t x);
+
+
+float random_float_zero_to_x_thread(const float x, unsigned int seed);
+uint32_t random_int_zero_to_x_thread(const uint32_t x, unsigned int seed);
 
 
 #endif
