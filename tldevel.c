@@ -1579,6 +1579,38 @@ float scaledprob2prob(float p)
 	}
 }
 
+float random_float_zero_to_x_thread(const float x, struct random_data* buf)
+{
+#ifdef HAVE_ARC4RANDOM
+	return (float) arc4random() / (float) 0xFFFFFFFF *x; 
+#else
+	int32_t r = 0;
+	RUN(random_r(buf,&r));	
+	return (float) r / (float) RAND_MAX *x; 
+ERROR:
+	WARNING_MSG("could not generate random number wirh random_r");
+	return FAIL;
+#endif
+}
+
+uint32_t random_int_zero_to_x_thread(const uint32_t x, struct random_data* buf)
+{
+
+#ifdef HAVE_ARC4RANDOM_UNIFORM
+	return arc4random_uniform(x+1);
+#elif HAVE_ARC4RANDOM
+	return arc4random() % ( x+1); 
+#else
+	int32_t r = 0;
+	RUN(random_r(buf,&r));
+	return r % ( x+1); 
+ERROR:
+	WARNING_MSG("could not generate random number wirh random_r");
+	return FAIL;
+#endif
+}
+
+
 float random_float_zero_to_x(const float x)
 {
 #ifdef HAVE_ARC4RANDOM
