@@ -1579,19 +1579,19 @@ float scaledprob2prob(float p)
 	}
 }
 
-float random_float_zero_to_x_thread(const float x, unsigned int seed)
+float random_float_zero_to_x_thread(const float x, unsigned int* seed)
 {
 #ifdef HAVE_ARC4RANDOM
 	return (float) arc4random() / (float) 0xFFFFFFFF *x; 
 #else
-	return (float) rand_r(&seed) / (float) RAND_MAX *x; 
+	return (float) rand_r(seed) / (float) RAND_MAX *x; 
 ERROR:
 	WARNING_MSG("could not generate random number wirh random_r");
 	return FAIL;
 #endif
 }
 
-uint32_t random_int_zero_to_x_thread(const uint32_t x, unsigned int seed)
+uint32_t random_int_zero_to_x_thread(const uint32_t x, unsigned int* seed)
 {
 
 #ifdef HAVE_ARC4RANDOM_UNIFORM
@@ -1599,7 +1599,7 @@ uint32_t random_int_zero_to_x_thread(const uint32_t x, unsigned int seed)
 #elif HAVE_ARC4RANDOM
 	return arc4random() % ( x+1); 
 #else
-	return rand_r(&seed) % (x); 
+	return rand_r(seed) % (x); 
 ERROR:
 	WARNING_MSG("could not generate random number wirh random_r");
 	return FAIL;
