@@ -1599,7 +1599,7 @@ uint32_t random_int_zero_to_x_thread(const uint32_t x, unsigned int* seed)
 #elif HAVE_ARC4RANDOM
 	return arc4random() % ( x+1); 
 #else
-	return rand_r(seed) % (x); 
+	return rand_r(seed) % (x+1); 
 ERROR:
 	WARNING_MSG("could not generate random number wirh random_r");
 	return FAIL;
