@@ -724,7 +724,7 @@ int main (int argc,char * argv[])
 	
 	root->print_tree(root,NULL);
 	
-	MMALLOC(sample1, sizeof(struct test_struct));
+	/*MMALLOC(sample1, sizeof(struct test_struct));
 	sample1->name = NULL;
 	MMALLOC(sample1->name,sizeof(char) * 10);
 	snprintf(sample1->name , 10,"ZAAA");
@@ -736,7 +736,7 @@ int main (int argc,char * argv[])
 	fprintf(stdout,"DELETED CCC (%d entries)\n", root->node->num);
 
 	root->print_tree(root,NULL);
-	
+	*/
 	
 	fprintf(stdout,"Search for CCC:\n");
 	tmp_ptr = tree_get_data(root,"CCC");

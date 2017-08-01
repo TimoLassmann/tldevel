@@ -40,6 +40,11 @@ libpwrite_a_LIBADD = libtldevel.a
 
 TESTS= libtldevel_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST libhtsglue_ITEST libpwrite_ITEST pwrite_test.sh
 
+
+TESTS_ENVIRONMENT = \
+	$(VALGRIND)
+
+
 check_PROGRAMS =  libtldevel_ITEST   rb_ITEST librtree_ITEST libthrpool_ITEST libhtsglue_ITEST libpwrite_ITEST
 
 libtldevel_ITEST_SOURCES = $(libtldevel_a_SOURCES)

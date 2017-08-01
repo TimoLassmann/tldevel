@@ -487,11 +487,12 @@ int main (int argc,char * argv[])
 	fprintf(stdout,"(%d)\n",realsum);
 	
 	
-	for(i = 0; i < 24;i++){
+	for(i = 0; i < 3200;i++){
 		free(td[i]);
 	}
 	free(td);
 	free(sum);
+	sleep(5);
 	return EXIT_SUCCESS;
 }
 

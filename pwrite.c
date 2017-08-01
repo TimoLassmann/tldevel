@@ -31,7 +31,7 @@ int init_thread_control_variables(struct pwrite_main* pw);
 int init_write_buffers(struct pwrite_main* pw);
 
 /* parallel write */
-int pwrite(struct pwrite_main* pw,const int id,const char *format,...);
+int pwrite_local(struct pwrite_main* pw,const int id,const char *format,...);
 
 /* flush buffer i and re-set run - necessary in user thread functions..  */
 int cleanup_p_write(struct pwrite_main* pw,const int id);
@@ -65,7 +65,7 @@ struct pwrite_main* init_pwrite_main(char* outname, int num_threads,int buffer_s
 	pw->out_ptr = NULL;
 
 	if(my_file_exists(outname)){
-		WARNING_MSG("File \%s\" will be overwritten.",outname);
+		WARNING_MSG("File %s will be overwritten.",outname);
 	}
 
 	RUNP(pw->out_ptr = fopen(outname, "w"));
@@ -76,7 +76,7 @@ struct pwrite_main* init_pwrite_main(char* outname, int num_threads,int buffer_s
 	pw->write_thread_function = write_thread_function;
 	pw->write_wait = wait_for_writer;
 	pw->free = free_pw_main;
-	pw->write = pwrite;
+	pw->write = pwrite_local;
 	pw->flush = cleanup_p_write;
 	/* allocations etc.. */
 	RUN(init_thread_control_variables(pw));
@@ -284,7 +284,7 @@ int flush_pwrite(struct pwrite_main* pw,const int id)
 	return OK;
 }
 
-int pwrite(struct pwrite_main* pw,const int id,const char *format,...)
+int pwrite_local(struct pwrite_main* pw,const int id,const char *format,...)
 {
         va_list ap; 
 	int w = 0;
@@ -337,6 +337,7 @@ ERROR:
 #define NUMTHREADS 65
 
 #include "thr_pool.h"
+#include <unistd.h>
 
 struct thread_data{
 	struct pwrite_main* pw;
@@ -431,6 +432,7 @@ int main (int argc,char * argv[])
 		pw->free(pw);
 	}
 	MFREE(filename);
+	sleep(5);
 	return EXIT_SUCCESS;
 ERROR:
 	if(filename){
