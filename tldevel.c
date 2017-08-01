@@ -36,17 +36,17 @@ static void echo_build_config (void);
 static void echo_build_config_log (void);
 static int set_random_seed(void);
 
-static void print_program_description(const char **argv,const char* description);
-static void print_program_description_log(const char **argv,const char* description);
+static void print_program_description(char* const argv[],const char* description);
+static void print_program_description_log(char* const argv[],const char* description);
 
-int print_program_header(const char **argv,const char* description)
+int print_program_header(char* const argv[],const char* description)
 {
 	tlog.echo_build_config();
 	tlog.print_program_description(argv,description); 
 	return OK;
 }
 
-void print_program_description_log(const char **argv,const char* description){
+void print_program_description_log(char* const argv[],const char* description){
 	int i;
 	int newline = 0;
 	FILE* file;
@@ -87,7 +87,7 @@ void print_program_description_log(const char **argv,const char* description){
 }
 
 
-void print_program_description(const char **argv,const char* description)
+void print_program_description(char * const argv[],const char* description)
 {
 	int i;
 	int newline = 0;
@@ -349,7 +349,7 @@ uint32_t adler(const void* buf, size_t len)
 
 
 
-int log_command_line(const int argc,const char * argv[])
+int log_command_line(const int argc,char* const argv[])
 {
 	char* buffer = NULL;
 	int i,j,c;
@@ -1585,9 +1585,9 @@ float random_float_zero_to_x_thread(const float x, unsigned int* seed)
 	return (float) arc4random() / (float) 0xFFFFFFFF *x; 
 #else
 	return (float) rand_r(seed) / (float) RAND_MAX *x; 
-ERROR:
-	WARNING_MSG("could not generate random number wirh random_r");
-	return FAIL;
+//ERROR:
+//	WARNING_MSG("could not generate random number wirh random_r");
+//	return FAIL;
 #endif
 }
 
@@ -1600,9 +1600,9 @@ uint32_t random_int_zero_to_x_thread(const uint32_t x, unsigned int* seed)
 	return arc4random() % ( x+1); 
 #else
 	return rand_r(seed) % (x+1); 
-ERROR:
-	WARNING_MSG("could not generate random number wirh random_r");
-	return FAIL;
+//ERROR:
+//	WARNING_MSG("could not generate random number wirh random_r");
+//	return FAIL;
 #endif
 }
 
@@ -2159,7 +2159,7 @@ struct char_struct{
 };
 
 
-int main (int argc,char * argv[])
+int main (int argc,char * const argv[])
 {
 	int* p = NULL;
 	MFREE(p);

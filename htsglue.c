@@ -228,8 +228,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 	int r = 0;
 	int num_read = 0;
 	int read_flag = 0;
-	int best_hits = 0;
-
+	
 	read_flag = sb_file->read_flag;
 	sb_file->num_read = 0;
 	sb_file->total_entries_in_file = 0;
@@ -286,7 +285,6 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 
 			
 			if(! (BAM_FUNMAP & b->core.flag)){
-				best_hits = 0;
 				uint8_t * s =  bam_get_aux(b);
 				int id = b->core.tid;
 
@@ -479,7 +477,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 									fprintf(stdout,"%c%c:", key[0],key[1]);
 									fprintf(stdout,"i:");
 									fprintf(stdout,"%d\n",(int)*s);*/
-								best_hits =(int)*s;
+								//best_hits =(int)*s;
 								
 							}
 							//kputsn("i:", 2, s);

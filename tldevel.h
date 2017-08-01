@@ -185,7 +185,7 @@ typedef struct {
 	void (*error)(const char *location, const char *format, ...);
 	void (*unformatted) ( const char *format, ...);
 	void (*echo_build_config) (void);
-	void (*print_program_description) (const char **argv,const char* description);
+	void (*print_program_description) (char *const argv[],const char* description);
 	int (*  set_logfile)(char* logfilename);
 } tlog_namespace;
 
@@ -196,8 +196,8 @@ extern char build_config[];
 float logsum_lookup[LOGSUM_SIZE];
 
 
-extern int print_program_header(const char **argv,const char* description);
-extern int log_command_line(const int argc,const char * argv[]);
+extern int print_program_header(char * const argv[],const char* description);
+extern int log_command_line(const int argc,char* const argv[]);
 
 
 
