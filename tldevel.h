@@ -154,7 +154,7 @@
 
 #define DECLARE_CHK(n,dir) struct checkpoint* chk_##n = NULL;  RUNP( chk_##n =  init_checkpoint(TOSTRING(n),dir));
 
-#define RUN_CHECKPOINT(n,EXP,...) do {					\
+#define RUN_CHECKPOINT(n,EXP) do {					\
 		if(test_for_checkpoint_file(chk_##n) ==0 ){		\
 			RUN(EXP);					\
 			RUN(set_checkpoint_file(chk_##n,TOSTRING(EXP),AT)); \
