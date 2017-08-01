@@ -90,7 +90,7 @@ AC_ARG_ENABLE(valgrind-tests,
     opt_valgrind_tests="$enableval", opt_valgrind_tests="no")
     
 
-OPTS="-q --trace-children=yes --error-exitcode=1 --leak-check=yes"
+OPTS="-q --trace-children=no --error-exitcode=1 --leak-check=yes"
   # Run self-tests under valgrind?
 if test "$opt_valgrind_tests" = "yes"; then
         AC_DEFINE(DEBUG,1,[Defines debugging .])   
