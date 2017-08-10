@@ -198,7 +198,7 @@ float logsum_lookup[LOGSUM_SIZE];
 
 extern int print_program_header(char * const argv[],const char* description);
 extern int log_command_line(const int argc,char* const argv[]);
-
+extern char* make_cmd_line(const int argc,char* const argv[]);
 
 
 

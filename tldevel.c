@@ -352,40 +352,51 @@ uint32_t adler(const void* buf, size_t len)
 int log_command_line(const int argc,char* const argv[])
 {
 	char* buffer = NULL;
-	int i,j,c;
-	
-	MMALLOC(buffer, 1024);
-	
-	buffer[0] = 'c';
-	buffer[1] = 'm';
-	buffer[2] = 'd';
-	buffer[3] = ':';
-	buffer[4] = ' ';
-	c = 5;
-	for(i =0 ; i < argc;i++){
-		for(j = 0; j < strlen(argv[i]);j++){
-			if(c == 1024-1){
-				break;
-			}
-			buffer[c] = argv[i][j];
-			c++;
-			
-		}
-		if(c == 1024-1){
-			break;
-		}
-		buffer[c] = ' ';
-		c++;
-		
-		
-	}
-	buffer[c] = 0;
+
+	RUNP(buffer = make_cmd_line(argc,argv));
 	LOG_MSG("%s",buffer);
 	MFREE(buffer);
 	return OK;
 ERROR:
 	MFREE(buffer);
 	return FAIL;
+}
+
+char* make_cmd_line(const int argc,char* const argv[])
+{
+	char* cmd = NULL;
+	int i,j,c;
+	
+	MMALLOC(cmd, 16384);
+	
+	cmd[0] = 'c';
+	cmd[1] = 'm';
+	cmd[2] = 'd';
+	cmd[3] = ':';
+	cmd[4] = ' ';
+	c = 5;
+	for(i =0 ; i < argc;i++){
+		for(j = 0; j < strlen(argv[i]);j++){
+			if(c == 16384-1){
+				break;
+			}
+			cmd[c] = argv[i][j];
+			c++;
+			
+		}
+		if(c == 16384-1){
+			break;
+		}
+		cmd[c] = ' ';
+		c++;
+		
+		
+	}
+	cmd[c] = 0;
+
+	return cmd;
+ERROR:
+	return NULL;
 }
 
 void log_message( const char *format, ...)
