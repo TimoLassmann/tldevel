@@ -79,7 +79,7 @@ esac
 
 if test "$enable_debugging" != "no"; then
         AC_DEFINE(DEBUG,1,[Defines debugging .])
-        CFLAGS="-ggdb -Wall -m64 -std=gnu11"
+        CFLAGS="-pg -ggdb -Wall -m64 -std=gnu11"
 else
         CFLAGS="-O2 -funroll-loops -Wall -std=gnu11"
         DEBUG=0
@@ -94,7 +94,7 @@ OPTS="-q --trace-children=no --error-exitcode=1 --leak-check=yes"
   # Run self-tests under valgrind?
 if test "$opt_valgrind_tests" = "yes"; then
         AC_DEFINE(DEBUG,1,[Defines debugging .])   
-        CFLAGS="-ggdb -pedantic -Wall -m64 -std=gnu11"
+        CFLAGS="-pg -ggdb -pedantic -Wall -m64 -std=gnu11"
 	AC_CHECK_PROGS(VALGRIND, valgrind)
 	VALGRIND="$VALGRIND $OPTS"
 else
