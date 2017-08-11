@@ -148,7 +148,7 @@
 #define DECLARE_CHK(n,dir) struct checkpoint* chk_##n = NULL;  RUNP( chk_##n =  init_checkpoint(TOSTRING(n),dir));
 
 #define RUN_CHECKPOINT(n,EXP,CMD) do {					\
-		if(test_for_checkpoint_file(chk_##n,CMD) ==0 ){		\
+		if(test_for_checkpoint_file(chk_##n,TOSTRING(EXP),AT,CMD) ==0 ){ \
 			RUN(EXP);					\
 			RUN(set_checkpoint_file(chk_##n,TOSTRING(EXP),AT,CMD)); \
 		}else{							\
@@ -223,7 +223,7 @@ uint32_t adler(const void* buf, size_t len);
 
 extern struct checkpoint* init_checkpoint(char* base_name,char* target_dir);
 
-extern int test_for_checkpoint_file(struct checkpoint* chk,char* cmd);
+extern int test_for_checkpoint_file(struct checkpoint* chk,char* function,char* location, char* cmd);
 
 extern int set_checkpoint_file(struct checkpoint* chk,char* function,char* location,char* cmd);
 extern void free_checkpoint(struct checkpoint* chk);

@@ -236,7 +236,7 @@ ERROR:
 
 
 
-int test_for_checkpoint_file(struct checkpoint* chk,char* cmd)
+int test_for_checkpoint_file(struct checkpoint* chk,char* function,char* location, char* cmd)
 {
 	FILE* f_ptr = NULL;
 	char buffer[BUFFER_LEN];
@@ -258,6 +258,8 @@ int test_for_checkpoint_file(struct checkpoint* chk,char* cmd)
 		if(!strncmp(cmd,buffer,99)){
 			return 1;
 		}
+
+		LOG_MSG("Re-running: %s (%s)",function,location);
 		LOG_MSG("arguments have changed from:");
 		LOG_MSG("%s",cmd);
 		LOG_MSG("to:");
