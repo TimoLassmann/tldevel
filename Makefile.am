@@ -84,10 +84,11 @@ build_config.c: ./helper/refset env_settings
 
 
 CLEANFILES = \
+	MAIN_0.chk \
 	build_config.c \
 	libhts_test.fa \
 	libhts_test.fa.fai \
 	pw_write_test.txt \
 	testlog.txt \
-	pwtest_t*
+	pwtest_t* 
 

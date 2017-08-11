@@ -198,7 +198,7 @@ ERROR:
 	return FAIL;
 }
 
-int set_checkpoint_file(struct checkpoint* chk,char* function,char* location)
+int set_checkpoint_file(struct checkpoint* chk,char* function,char* location,char* cmd)
 { 
 	char buffer[BUFFER_LEN];
 	FILE* f_ptr = NULL;
@@ -217,11 +217,12 @@ int set_checkpoint_file(struct checkpoint* chk,char* function,char* location)
 	
 	snprintf(buffer,BUFFER_LEN ,"%s/%s_%d.chk", chk->base_dir,chk->base_name,chk->test_num );
 	RUNP(f_ptr = fopen(buffer , "w" ));
-	
+	fprintf(f_ptr,"%*s: %s\n",MESSAGE_MARGIN, "command", cmd);
 	fprintf(f_ptr,"%*s: %d\n",MESSAGE_MARGIN, "checkpoint ID", chk->test_num);
 	fprintf(f_ptr,"%*s: %s\n",MESSAGE_MARGIN, "function", function);
 	fprintf(f_ptr,"%*s: %s\n",MESSAGE_MARGIN, "called in", location);
 	fprintf(f_ptr,"%*s: %s\n",MESSAGE_MARGIN, "at time", time_string);
+	
 	fclose(f_ptr);
 	
 	return OK;
@@ -232,17 +233,45 @@ ERROR:
 	return FAIL;
 }
 
-int test_for_checkpoint_file(struct checkpoint* chk)
+
+
+
+int test_for_checkpoint_file(struct checkpoint* chk,char* cmd)
 {
+	FILE* f_ptr = NULL;
 	char buffer[BUFFER_LEN];
 	static int8_t found = 0;
 	
 	snprintf(buffer,BUFFER_LEN ,"%s/%s_%d.chk", chk->base_dir,chk->base_name,chk->test_num );
 	if(my_file_exists(buffer) && !found){
-		return 1;
+		RUNP(f_ptr = fopen(buffer , "r" ));
+		/*	checkpoint ID: 0
+              function: run_forest(bsd)
+             called in: ssrdt_net.c line 191
+               at time: 2017-08-10 17:02:24
+		*/
+		/* get first line and compare to  */
+		buffer[0]= 0;
+		fscanf(f_ptr,"%*s %99[^\n]s",buffer); 
+		fclose(f_ptr);
+		//fprintf(stdout,"%s\n%s\n",cmd,buffer);
+		if(!strncmp(cmd,buffer,99)){
+			return 1;
+		}
+		LOG_MSG("arguments have changed from:");
+		LOG_MSG("%s",cmd);
+		LOG_MSG("to:");
+		LOG_MSG("%s",buffer);
+		LOG_MSG("will re-run everything from this point.");
+		
+		
+		found = 1;
 	}else{
 		found = 1;
 	}
+	return 0;
+ERROR:
+	LOG_MSG("test_for_checkpoint file has failed.");
 	return 0;
 }
 
@@ -369,12 +398,7 @@ char* make_cmd_line(const int argc,char* const argv[])
 	
 	MMALLOC(cmd, 16384);
 	
-	cmd[0] = 'c';
-	cmd[1] = 'm';
-	cmd[2] = 'd';
-	cmd[3] = ':';
-	cmd[4] = ' ';
-	c = 5;
+	c = 0;
 	for(i =0 ; i < argc;i++){
 		for(j = 0; j < strlen(argv[i]);j++){
 			if(c == 16384-1){
@@ -2245,12 +2269,18 @@ int main (int argc,char * const argv[])
 	MFREE(my_str->seq);
 	MFREE(my_str);
 
+	
 	log_message("Yes %s is ","it");
 	int i;
 	for(i = 0; i < 100;i++){
 		fprintf(stdout,"%d %d %f %f\n", random_int_zero_to_x(10), random_int_zero_to_x(10),random_float_zero_to_x(1.0), random_float_zero_to_x(1.0));
 	}
 
+	char* cmd = NULL;
+	RUNP(cmd =  make_cmd_line(argc,argv));
+	DECLARE_CHK(MAIN,".")
+
+	RUN_CHECKPOINT(MAIN,float_4d_test(),cmd);
 	
 	return EXIT_SUCCESS;
 ERROR:

@@ -11,11 +11,8 @@
 #include <sys/stat.h>
 #include <math.h>
 
-
-
 #define MESSAGE_MARGIN 22
 #define TYPE_MARGIN 8 
-
 
 #define OK              0
 #define FAIL            1
@@ -135,10 +132,6 @@
 
 #define ASSERT(TEST,...)  if(!(TEST)) {  tlog.error(AT,#TEST );tlog.error(AT, ##__VA_ARGS__);goto ERROR;}
 
-
-
-
-
 #define MACRO_MIN(a,b)          (((a)<(b))?(a):(b))
 #define MACRO_MAX(a,b)          (((a)>(b))?(a):(b))
 
@@ -154,10 +147,10 @@
 
 #define DECLARE_CHK(n,dir) struct checkpoint* chk_##n = NULL;  RUNP( chk_##n =  init_checkpoint(TOSTRING(n),dir));
 
-#define RUN_CHECKPOINT(n,EXP) do {					\
-		if(test_for_checkpoint_file(chk_##n) ==0 ){		\
+#define RUN_CHECKPOINT(n,EXP,CMD) do {					\
+		if(test_for_checkpoint_file(chk_##n,CMD) ==0 ){		\
 			RUN(EXP);					\
-			RUN(set_checkpoint_file(chk_##n,TOSTRING(EXP),AT)); \
+			RUN(set_checkpoint_file(chk_##n,TOSTRING(EXP),AT,CMD)); \
 		}else{							\
 			tlog.log_message("Skipping over: %s (%s)",TOSTRING(EXP),AT); \
 		}							\
@@ -229,9 +222,10 @@ extern int bit_test(uint32_t* array, uint32_t i);
 uint32_t adler(const void* buf, size_t len);
 
 extern struct checkpoint* init_checkpoint(char* base_name,char* target_dir);
-extern int test_for_checkpoint_file(struct checkpoint* chk);
 
-extern int set_checkpoint_file(struct checkpoint* chk,char* function,char* location);
+extern int test_for_checkpoint_file(struct checkpoint* chk,char* cmd);
+
+extern int set_checkpoint_file(struct checkpoint* chk,char* function,char* location,char* cmd);
 extern void free_checkpoint(struct checkpoint* chk);
 
 
