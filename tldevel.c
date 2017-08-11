@@ -382,16 +382,23 @@ int ulltoa(uint64_t value, char *buf, int radix)
 {
 	char tmp[64 + 1];/* Lowest radix is 2, so 64-bits plus a null */
 	char *p1 = tmp, *p2;
+	int c;
 	static const char xlat[] = "0123456789abcdefghijklmnopqrstuvwxyz";
 
 	if(radix < 2 || radix > 36) {
 		return FAIL;
 	}
-
+	c = 0;
 	do {
 		*p1++ = xlat[value % (unsigned)radix];
+		c++;
 	} while((value /= (unsigned)radix));
 
+	while(c != 64){
+		*p1++ = xlat[0];
+		c++;
+	}
+	
 	for(p2 = buf; p1 != tmp; *p2++ = *--p1) {
 		/* nothing to do */
 	}
