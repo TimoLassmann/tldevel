@@ -378,7 +378,7 @@ uint32_t adler(const void* buf, size_t len)
 	return (s2 << 16) | s1;
 }
 
-char *ulltoa(_uint64 value, char *buf, int radix)
+char* ulltoa(uint64_t value, char *buf, int radix)
 {
 	char tmp[64 + 1];/* Lowest radix is 2, so 64-bits plus a null */
 	char *p1 = tmp, *p2;
