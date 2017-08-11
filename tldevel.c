@@ -378,14 +378,14 @@ uint32_t adler(const void* buf, size_t len)
 	return (s2 << 16) | s1;
 }
 
-char* ulltoa(uint64_t value, char *buf, int radix)
+int ulltoa(uint64_t value, char *buf, int radix)
 {
 	char tmp[64 + 1];/* Lowest radix is 2, so 64-bits plus a null */
 	char *p1 = tmp, *p2;
 	static const char xlat[] = "0123456789abcdefghijklmnopqrstuvwxyz";
 
 	if(radix < 2 || radix > 36) {
-		return NULL;
+		return FAIL;
 	}
 
 	do {
@@ -397,7 +397,7 @@ char* ulltoa(uint64_t value, char *buf, int radix)
 	}
 	*p2 = '\0';
 
-	return buf;
+	return OK;
 }
 
 int log_command_line(const int argc,char* const argv[])

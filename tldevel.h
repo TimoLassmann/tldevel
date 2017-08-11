@@ -220,7 +220,7 @@ extern int bit_test(uint32_t* array, uint32_t i);
 //Hash function
 
 uint32_t adler(const void* buf, size_t len);
-extern char* ulltoa(uint64_t value, char *buf, int radix);
+extern int ulltoa(uint64_t value, char *buf, int radix);
 
 extern struct checkpoint* init_checkpoint(char* base_name,char* target_dir);
 
