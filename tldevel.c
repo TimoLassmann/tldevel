@@ -385,8 +385,7 @@ char* ulltoa(uint64_t value, char *buf, int radix)
 	static const char xlat[] = "0123456789abcdefghijklmnopqrstuvwxyz";
 
 	if(radix < 2 || radix > 36) {
-		errno = EINVAL;
-		return 0;
+		return NULL;
 	}
 
 	do {
