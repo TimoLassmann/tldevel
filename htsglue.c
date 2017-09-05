@@ -398,11 +398,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 									if(pos < 0){
 					
 										sb_ptr->start[sb_ptr->num_hits]  += sb_file->total_length + STRAND_BUFFER;
-										sb_ptr->stop[sb_ptr->num_hits]  += sb_file->total_length + STRAND_BUFFER;
-					
-										RUN(rev_cmp(sb_ptr->sequence,sb_ptr->len));
-					
-										DPRINTF3("%s",sb_file->buffer[num_read]->sequence);
+										sb_ptr->stop[sb_ptr->num_hits]  += sb_file->total_length + STRAND_BUFFER;				       
 					
 									}
 

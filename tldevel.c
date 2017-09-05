@@ -393,8 +393,8 @@ int ulltoa(uint64_t value, char *buf, int radix)
 		*p1++ = xlat[value % (unsigned)radix];
 		c++;
 	} while((value /= (unsigned)radix));
-
-	while(c != 64){
+	
+	while(c < 64){
 		*p1++ = xlat[0];
 		c++;
 	}
