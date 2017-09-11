@@ -11,6 +11,7 @@
 #define	_REENTRANT
 #endif
 
+#include <unistd.h>
 #include "thr_pool.h"
 
 

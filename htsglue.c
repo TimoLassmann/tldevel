@@ -345,10 +345,10 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 						key[0] = s[0]; key[1] = s[1];
 						s += 2; type = *s++;
 						
-						//fprintf(stdout,"\n");
-						//fprintf(stdout,"%c%c",key[0] ,key[1]);
-						//fprintf(stdout,":");
-						/*if(key[0]  == 'X' && key[1] == '0'){
+						/*fprintf(stdout,"\n");
+						fprintf(stdout,"%c%c",key[0] ,key[1]);
+						fprintf(stdout,":");
+						if(key[0]  == 'X' && key[1] == '0'){
 							
 							
 							
@@ -376,7 +376,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 							//fprintf(stdout,"\n\n");
 							
 							while (s < b->data + b->l_data && *s){
-								DPRINTF3("HERE2:%s",s);
+								//DPRINTF3("HERE2:%s",s);
 								n = 0;
 								chr[0] = 0;
 								
@@ -449,7 +449,10 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 								//}
 								
 								if(sb_ptr->num_hits >= sb_ptr->max_num_hits){
-									break;
+									//fprintf(stdout,"BREAKING!!!");
+									goto exit_alignments; 
+									//s = NULL;//  b->data + b->l_data;
+									//break;
 								}
 								//s+=n;
 								//fprintf(stdout,"%c",*s++);
@@ -458,8 +461,9 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 							//MFREE(pos);
 							//MFREE(chr);
 							//MFREE(cigar);
-							if (s >= b->data + b->l_data)
-								return -1;
+							if (s >= b->data + b->l_data){
+								ERROR_MSG("S is too big"); 
+							}
 							++s;
 						}else if (type == 'A') {
 							//	fprintf(stdout,"A:");
@@ -493,7 +497,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 								///kputsn("i:", 2, str);
 								//kputw(*(uint16_t*)s, str);
 								s += 2;
-							} else return -1;
+							} else ERROR_MSG("S is too big"); ;
 						} else if (type == 's') {
 							if (s+2 <= b->data + b->l_data) {
 								//		fprintf(stdout,"i:");
@@ -501,30 +505,30 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 								//kputsn("i:", 2, str);
 								//kputw(*(int16_t*)s, str);
 								s += 2;
-							} else return -1;
+							} else ERROR_MSG("S is too big"); ;
 						} else if (type == 'I') {
 							if (s+4 <= b->data + b->l_data) {
 								//kputsn("i:", 2, str);
 								//kputuw(*(uint32_t*)s, str);
 								s += 4;
-							} else return -1;
+							} else ERROR_MSG("S is too big"); ;
 						} else if (type == 'i') {
 							if (s+4 <= b->data + b->l_data) {
 								//kputsn("i:", 2, str);
 								//kputw(*(int32_t*)s, str);
 								s += 4;
-							} else return -1;
+							} else ERROR_MSG("S is too big"); ;
 						} else if (type == 'f') {
 							if (s+4 <= b->data + b->l_data) {
 								//ksprintf(str, "f:%g", *(float*)s);
 								s += 4;
-							} else return -1;
+							} else ERROR_MSG("S is too big"); ;
 							
 						} else if (type == 'd') {
 							if (s+8 <= b->data + b->l_data) {
 								//ksprintf(str, "d:%g", *(double*)s);
 								s += 8;
-							} else return -1;
+							} else ERROR_MSG("S is too big"); ;
 						} else if (type == 'Z' || type == 'H') {
 							//	fprintf(stdout,"%c:",type);
 							
@@ -536,7 +540,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 								s++;
 							}
 							if (s >= b->data + b->l_data)
-								return -1;
+								ERROR_MSG("S is too big"); 
 							++s;
 						} else if (type == 'B') {
 							uint8_t sub_type = *(s++);
@@ -544,7 +548,7 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 							memcpy(&n, s, 4);
 							s += 4; // no point to the start of the array
 							if (s + n >= b->data + b->l_data)
-								return -1;
+								ERROR_MSG("S is too big"); 
 							//kputsn("B:", 2, str); kputc(sub_type, str); // write the typing
 							for (i = 0; i < n; ++i) { // FIXME: for better performance, put the loop after "if"
 								//kputc(',', str);
@@ -559,14 +563,16 @@ int read_SAMBAM_chunk(struct sam_bam_file* sb_file,int all, int window)
 						}
 					}
 				
-			
+				
+					
 				}
 			}
 			
-				
+		exit_alignments:
+			
 			//char *name  = bam_get_qname(b);
 			//char *qual  = bam1_qual(b);
-			DPRINTF3("%d %s %d %d-%d (%" PRId64 ") chr len: %d cumlen: %ld ",b->core.qual, h->target_name[id], h->target_len[id]  ,b->core.pos, bam_endpos(b) ,sb_file->cum_chr_len[id],sb_file->si->len[id],sb_file->cum_chr_len[id]);
+			//DPRINTF3("%d %s %d %d-%d (%" PRId64 ") chr len: %d cumlen: %ld ",b->core.qual, h->target_name[id], h->target_len[id]  ,b->core.pos, bam_endpos(b) ,sb_file->cum_chr_len[id],sb_file->si->len[id],sb_file->cum_chr_len[id]);
 				
 #if (DEBUGLEVEL >= 3)
 				
@@ -1641,7 +1647,6 @@ int main (int argc,char * argv[])
 {
 	
 	struct sam_bam_file* sb_file = NULL;
-	int num_read = 0;
 	int i,j;
 	struct genome_interval* g_int = NULL;
 	
@@ -1694,7 +1699,7 @@ int main (int argc,char * argv[])
 				struct sam_bam_entry* sb_ptr = sb_file->buffer[i];
 				fprintf(stdout,"%s %s (%d)  hits: %d\n", sb_ptr->sequence ,sb_ptr->base_qual,   sb_ptr->len , sb_ptr->num_hits);     
 				for(j = 0; j < sb_ptr->num_hits;j++){
-					fprintf(stdout,"\t hit:%d\t%d\t%d\n",j, sb_ptr->start[j],sb_ptr->stop[j]);
+					fprintf(stdout,"\t hit:%d\t%" PRId64 "\t%" PRId64 "\n",j,sb_ptr->start[j],sb_ptr->stop[j]);
 				}
 			}
 			
@@ -1713,7 +1718,9 @@ int main (int argc,char * argv[])
 	RUNP(g_int =init_genome_interval(NULL,NULL,NULL));
 	
 	if(argv[1] && argv[2]){
-		RUNP(sb_file= open_SAMBAMfile(argv[1],100,10,-1,-1));
+		//RUNP(sb_file = open_SAMBAMfile(param->bedfile,buffer_size,10,0,0));
+	
+		RUNP(sb_file= open_SAMBAMfile(argv[1],100,10,0,0));
 		//echo_header(sb_file);
 		
 		//test seq retrieval;
@@ -1750,7 +1757,7 @@ int main (int argc,char * argv[])
 		}
 		
 		while(1){
-			RUN(read_SAMBAM_chunk(sb_file,1.0,0));
+			RUN(read_SAMBAM_chunk(sb_file,1,0));
 			DPRINTF3("read %d entries\n",sb_file->num_read);
 			for(i =0; i < sb_file->num_read;i++){
 				struct sam_bam_entry* sb_ptr = sb_file->buffer[i];
@@ -1778,7 +1785,7 @@ int main (int argc,char * argv[])
 				fprintf(stdout,"\n");
 			}
 			
-			if(!num_read){
+			if(!sb_file->num_read){
 				break;
 			}
 		}
