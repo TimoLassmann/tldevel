@@ -1088,6 +1088,7 @@ int get_alignment_length(char*p,bam_hdr_t *h, int* len)
 	return OK;
 ERROR:
 	
+	WARNING_MSG("get_alignment_length failed: %s",p);
 	MFREE(cigar);
 	return FAIL;
 }
