@@ -8,9 +8,6 @@
 
 static char logfile[BUFFER_LEN] = "default.log";
 
-//static  void message(const char *location, const char *format, ...);
-// void message_tee(const char *location, const char *format, ...);
-
 static void log_message( const char *format, ...);
 static void log_message_tee( const char *format, ...);
 
@@ -83,7 +80,6 @@ void print_program_description_log(char* const argv[],const char* description){
 	if(file){
 		fclose(file);
 	} 
-	// print param here? ....
 }
 
 
@@ -128,9 +124,6 @@ void echo_build_config (void)
 
 void echo_build_config_log (void)
 {
-	//
-	//echo_build_config();
-	
 	FILE *file;
 	if(!my_file_exists(logfile)){
 		file = fopen(logfile, "w");
@@ -157,7 +150,7 @@ int set_random_seed(void)
 	srand((unsigned int) (time(NULL) * (42)));
 	srand48((long int)  (time(NULL) * (42)));
 	return OK;
-#endif // HAVE_ARC4RANDOM
+#endif 
 
 }
 
@@ -165,8 +158,6 @@ int set_random_seed(void)
 
 int set_logfile(char* logfilename)
 {
-	//ASSERT(logfilename != NULL,"No logfilename given.");
-
 	if(logfilename != NULL){
 		ASSERT(strlen(logfilename)  > 3, "log file name: %s is too short. ",logfilename );
 		
@@ -190,9 +181,6 @@ int set_logfile(char* logfilename)
 		tlog.print_program_description = print_program_description;
 
 	}
-	
-	
-	
 	return OK;
 ERROR:
 	return FAIL;
@@ -213,8 +201,6 @@ int set_checkpoint_file(struct checkpoint* chk,char* function,char* location,cha
 	if(!strftime(time_string, 200, "%F %H:%M:%S", ptr)){
 		error(AT,"Write failed");
 	}
-	
-	
 	snprintf(buffer,BUFFER_LEN ,"%s/%s_%d.chk", chk->base_dir,chk->base_name,chk->test_num );
 	RUNP(f_ptr = fopen(buffer , "w" ));
 	fprintf(f_ptr,"%*s: %s\n",MESSAGE_MARGIN, "command", cmd);
@@ -233,9 +219,6 @@ ERROR:
 	return FAIL;
 }
 
-
-
-
 int test_for_checkpoint_file(struct checkpoint* chk,char* function,char* location, char* cmd)
 {
 	FILE* f_ptr = NULL;
@@ -245,11 +228,6 @@ int test_for_checkpoint_file(struct checkpoint* chk,char* function,char* locatio
 	snprintf(buffer,BUFFER_LEN ,"%s/%s_%d.chk", chk->base_dir,chk->base_name,chk->test_num );
 	if(my_file_exists(buffer) && !found){
 		RUNP(f_ptr = fopen(buffer , "r" ));
-		/*	checkpoint ID: 0
-              function: run_forest(bsd)
-             called in: ssrdt_net.c line 191
-               at time: 2017-08-10 17:02:24
-		*/
 		/* get first line and compare to  */
 		buffer[0]= 0;
 		if(fscanf(f_ptr,"%*s %99[^\n]s",buffer) != 1){
@@ -267,8 +245,7 @@ int test_for_checkpoint_file(struct checkpoint* chk,char* function,char* locatio
 		LOG_MSG("to:");
 		LOG_MSG("%s",buffer);
 		LOG_MSG("will re-run everything from this point.");
-		
-		
+				
 		found = 1;
 	}else{
 		found = 1;
@@ -382,7 +359,7 @@ uint32_t adler(const void* buf, size_t len)
 
 int ulltoa(uint64_t value, char *buf, int radix)
 {
-	char tmp[64 + 1];/* Lowest radix is 2, so 64-bits plus a null */
+	char tmp[64 + 1];
 	char *p1 = tmp, *p2;
 	int c;
 	static const char xlat[] = "0123456789abcdefghijklmnopqrstuvwxyz";
@@ -402,10 +379,8 @@ int ulltoa(uint64_t value, char *buf, int radix)
 	}
 	
 	for(p2 = buf; p1 != tmp; *p2++ = *--p1) {
-		/* nothing to do */
 	}
 	*p2 = '\0';
-
 	return OK;
 }
 
@@ -457,54 +432,18 @@ ERROR:
 void log_message( const char *format, ...)
 {
 	va_list argp;
-	//struct tm *ptr;
-	
-	//char time_string[200];
-	
-	//if(get_time(time_string, 200) != OK){
-	//	fprintf(stdout,"notime");
-	//}
-	
-	//if(fprintf(stdout,"%s%s",time_string,new_message ) < 0) KSLIB_XEXCEPTION(kslEWRT, "write failed");
-	//fprintf(stdout,"%*s: ",MESSAGE_MARGIN, time_string);
-	
 	va_start(argp, format);
 	vlog(stdout,format, argp);
-	
-	//vfprintf(stdout, format, argp);
 	va_end(argp);
-	//fprintf(stdout,"\n");
-	//fflush(stdout);
-
 }
 
 
 void log_message_tee( const char *format, ...)
 {
 	va_list argp;
-	//struct tm *ptr;
-	
-	
-	
-	//time_t current = time(NULL);
-	//ptr = localtime(&current);
-	
-	//if(!strftime(time_string, 200, "[%F %H:%M:%S]", ptr)){
-	//	error(AT,"Write failed");
-	//}
-	
-	//if(fprintf(stdout,"%s%s",time_string,new_message ) < 0) KSLIB_XEXCEPTION(kslEWRT, "write failed");
-	/*fprintf(stdout,"%*s: ",MESSAGE_MARGIN, time_string);
-	
-	  va_start(argp, format);
-	  vfprintf(stdout, format, argp);
-	  va_end(argp);
-	  fprintf(stdout,"\n");
-	  fflush(stdout);*/
 	va_start(argp, format);
 	vlog(stdout,format, argp);
 	va_end(argp);
-	//fprintf(stderr,"Writing to file : %s\n",  logfile);
 	FILE *file;
 	if(!my_file_exists(logfile)){
 		file = fopen(logfile, "w");
@@ -533,7 +472,6 @@ ERROR:
 void vunformat(FILE* f_ptr,const char *format,  va_list argp)
 {
 	vfprintf(f_ptr, format, argp);
-	//fprintf(f_ptr,"\n");
 }
 
 void vlog(FILE* f_ptr,const char *format,  va_list argp)
@@ -563,7 +501,6 @@ void vmessage(FILE* f_ptr,const char *location, const char *format,  va_list arg
 	vfprintf(f_ptr, format, argp);
 	fprintf(f_ptr," (%s)\n",location);
 	fflush(f_ptr);
-	//fprintf(stderr, "\n");
 }
 
 void vwarning(FILE* f_ptr,const char *location, const char *format,  va_list argp)
@@ -579,7 +516,6 @@ void vwarning(FILE* f_ptr,const char *location, const char *format,  va_list arg
 	fprintf(f_ptr," (%s)\n",location);
 	fflush(f_ptr);
 }
-// IWWAS
 
 void verror(FILE* f_ptr, const char *location, const char *format,  va_list argp)
 {
@@ -593,19 +529,14 @@ void verror(FILE* f_ptr, const char *location, const char *format,  va_list argp
 	vfprintf(f_ptr, format, argp);
 	fprintf(f_ptr," (%s)\n",location);
 	fflush(f_ptr);
-	//fprintf(stderr, "\n");
 }
 
 
 void unformatted( const char *format, ...)
 {
 	va_list argp;
-	//fprintf(stdout,"%-25s %8s ", location,"MESSAGE:");
-	//fprintf(stdout,"%*s: ",MESSAGE_MARGIN,"MESSAGE ");
-	va_start(argp, format);
-	
+	va_start(argp, format);	
 	vunformat(stdout,format,argp);
-	//	vfprintf(stdout, format, argp);
 	va_end(argp);
 
 }
@@ -613,12 +544,9 @@ void unformatted( const char *format, ...)
 void unformatted_tee( const char *format, ...)
 {
 	va_list argp;
-	//fprintf(stdout,"%-25s %8s ", location,"MESSAGE:");
-	//fprintf(stdout,"%*s: ",MESSAGE_MARGIN,"MESSAGE ");
-	va_start(argp, format);
 	
+	va_start(argp, format);	
 	vunformat(stdout,format,argp);
-	//	vfprintf(stdout, format, argp);
 	va_end(argp);
 	
 	FILE *file;
@@ -631,49 +559,28 @@ void unformatted_tee( const char *format, ...)
 	
 	vunformat(file,format,argp);
 	va_end(argp);
-	//fprintf(file,"%*s: ",MESSAGE_MARGIN, "MESSAGE ");
-	//va_start(argp, format);
-	//vfprintf(file, format, argp);
-	//va_end(argp);
-	//fprintf(file," (%s)\n",location);
-	//fflush(file);
-	
 	if(file){
 		fclose(file);
-	}
-	
-	
+	}	
 }
-
-
 
 void message(const char *location, const char *format, ...)
 {
 	va_list argp;
-	//fprintf(stdout,"%-25s %8s ", location,"MESSAGE:");
-	//fprintf(stdout,"%*s: ",MESSAGE_MARGIN,"MESSAGE ");
+
 	va_start(argp, format);
-	
 	vmessage(stdout,location,format,argp);
-	//	vfprintf(stdout, format, argp);
-	va_end(argp);
-	//	fprintf(stdout," (%s)\n",location);
-	//fprintf(stdout,"\n");
-	//	fflush(stdout);
-	
+	va_end(argp);	
 }
 
 void message_tee(const char *location, const char *format, ...)
 {
 	va_list argp;
-	va_start(argp, format);
 	
+	va_start(argp, format);
 	vmessage(stdout,location,format,argp);
 	va_end(argp);
 
-	
-	
-	
 	FILE *file;
 	if(!my_file_exists(logfile)){
 		file = fopen(logfile, "w");
@@ -684,13 +591,6 @@ void message_tee(const char *location, const char *format, ...)
 
 	vmessage(file,location,format,argp);
 	va_end(argp);
-	//fprintf(file,"%*s: ",MESSAGE_MARGIN, "MESSAGE ");
-	//va_start(argp, format);
-	//vfprintf(file, format, argp);
-	//va_end(argp);
-	//fprintf(file," (%s)\n",location);
-	//fflush(file);
-	
 	if(file){
 		fclose(file);
 	}
@@ -762,8 +662,6 @@ void error_tee(const char *location, const char *format, ...)
 		fclose(file);
 	}
 }
-
-
 
 char** malloc_2d_char(char**m,int newdim1, int newdim2, char fill_value)
 {
@@ -937,9 +835,7 @@ int** malloc_2d_int(int**m,int newdim1, int newdim2, int fill_value)
 	int max1, max2;
 	
 	ASSERT((newdim1 > 0), "Malloc 2D int failed: dim1:%d\n",newdim1);
-	ASSERT((newdim2 > 0), "Malloc 2D int failed: dim2:%d\n",newdim2);
-	
-	
+	ASSERT((newdim2 > 0), "Malloc 2D int failed: dim2:%d\n",newdim2);	
 	
 	if(m == NULL){
 		MMALLOC(ptr_t, sizeof(int*) * newdim1);
@@ -1227,7 +1123,6 @@ float** malloc_2d_float(float**m,int newdim1, int newdim2,float fill_value)
 			int_ptr[1] = newdim1;
 			int_ptr[2] = newdim2;
 			m = ptr_t;
-			
 		}
 	}
 	return m;
@@ -1251,8 +1146,6 @@ float*** malloc_3d_float(int dim1, int dim2, int dim3, float fill_value)
 	ASSERT((dim1 > 0), "Malloc 3D float failed: dim1:%d\n",dim1);
 	ASSERT((dim2 > 0), "Malloc 3D float failed: dim2:%d\n",dim2);
 	ASSERT((dim3 > 0), "Malloc 3D float failed: dim3:%d\n",dim3);
-	
-	
 	
 	MMALLOC(ptr_t, sizeof(float**) * dim1);
 	MMALLOC(ptr_tt, sizeof(float*) * (dim1*dim2));
@@ -1295,15 +1188,10 @@ float**** malloc_4d_float(int dim1, int dim2, int dim3,int dim4, float fill_valu
 	
 	int* int_ptr = NULL;
 	
-	
 	ASSERT((dim1 > 0), "Malloc 3D float failed: dim1:%d\n",dim1);
 	ASSERT((dim2 > 0), "Malloc 3D float failed: dim2:%d\n",dim2);
 	ASSERT((dim3 > 0), "Malloc 3D float failed: dim3:%d\n",dim3);
 	ASSERT((dim4 > 0), "Malloc 3D float failed: dim4:%d\n",dim4);
-	
-	
-	//dim3 = -1;
-	
 	
 	MMALLOC(ptr_t, sizeof(float***) * (long int)dim1);
 	MMALLOC(ptr_tt, sizeof(float**) * ((long int)dim1*(long int)dim2));
@@ -1341,8 +1229,6 @@ ERROR:
 	return NULL;
 }
 
-
-
 double** malloc_2d_double(double**m,int newdim1, int newdim2, double fill_value)
 {
 	int i,j;
@@ -1355,11 +1241,7 @@ double** malloc_2d_double(double**m,int newdim1, int newdim2, double fill_value)
 	
 	ASSERT((newdim1 > 0), "Malloc 2D double failed: dim1:%d\n",newdim1);
 	ASSERT((newdim2 > 0), "Malloc 2D double failed: dim2:%d\n",newdim2);
-	
-	
-	
-
-	
+		
 	if(m == NULL){
 		MMALLOC(ptr_t, sizeof(double*) * newdim1);
 		MMALLOC(ptr_tt, sizeof(double) * (newdim1*newdim2) + 3*sizeof(int) );
@@ -1388,10 +1270,6 @@ double** malloc_2d_double(double**m,int newdim1, int newdim2, double fill_value)
 		
 		olddim1 = *(int_ptr+1);
 		olddim2 = *(int_ptr+2);
-		//	DPRINTF3("%d-%d new: %d-%d", olddim1,olddim2, newdim1,newdim2 );
-		
-		
-		
 		
 		/* in case we want a smaller matrix don't realloc but zero out "free mem"*/
 		if(olddim1 >newdim1 || olddim2 > newdim2){
@@ -1514,7 +1392,6 @@ void free_2d(void** m)
 {
 	int* ptr_tt  = (int*)m[0];
 	ptr_tt = ptr_tt -3;
-	//DPRINTF3("%d %d %d",*(ptr_tt+0),*(ptr_tt+1),*(ptr_tt+2));
 	MFREE(ptr_tt);
 	MFREE(m);
 }
@@ -1523,7 +1400,6 @@ void free_3d(void*** m)
 {
 	int* ptr_ttt  = (int*)m[0][0];
 	ptr_ttt = ptr_ttt -4;
-	//DPRINTF3("%d %d %d %d",*(ptr_ttt+0),*(ptr_ttt+1),*(ptr_ttt+2),*(ptr_ttt+3));
 	MFREE(ptr_ttt);
 	MFREE(m[0]);
 	MFREE(m);
@@ -1533,7 +1409,6 @@ void free_4d(void**** m)
 {
 	int* ptr_tttt  = (int*)m[0][0][0];
 	ptr_tttt = ptr_tttt -5;
-	//DPRINTF3("%d %d %d %d	%d",*(ptr_tttt+0),*(ptr_tttt+1),*(ptr_tttt+2),*(ptr_tttt+3),*(ptr_tttt+4));
 	MFREE(ptr_tttt);
 	MFREE(m[0][0]);
 	MFREE(m[0]);
@@ -1607,7 +1482,6 @@ void init_logsum()
 		called = 1;
 		for(i = 0; i < LOGSUM_SIZE;i++){
 			logsum_lookup[i] = log(1.0 +exp((double) -i / SCALE));
-			//logsub_lookup[i]  = log(1.0 - exp((double) -i / SCALE));
 		}
 	}
 }
@@ -1651,9 +1525,6 @@ float random_float_zero_to_x_thread(const float x, unsigned int* seed)
 	return (float) arc4random() / (float) 0xFFFFFFFF *x; 
 #else
 	return (float) rand_r(seed) / (float) RAND_MAX *x; 
-//ERROR:
-//	WARNING_MSG("could not generate random number wirh random_r");
-//	return FAIL;
 #endif
 }
 
@@ -1666,9 +1537,6 @@ uint32_t random_int_zero_to_x_thread(const uint32_t x, unsigned int* seed)
 	return arc4random() % ( x+1); 
 #else
 	return rand_r(seed) % (x+1); 
-//ERROR:
-//	WARNING_MSG("could not generate random number wirh random_r");
-//	return FAIL;
 #endif
 }
 
@@ -1724,7 +1592,6 @@ char* basename(const char* name)
 			break;
 		}
 		i++;
-		//c++;
 	}
 	return (char*)(name +c);
 }
@@ -1775,7 +1642,7 @@ int float_4d_test(void)
 	dim4 = 5;
 	
 	RUNP(m = malloc_4d_float(dim1,dim2,dim3,dim4,0.0f));
-	//m = malloc_4d_float(dim1,dim2,dim3,dim4,0.0f);
+
 	for(i =0;i < dim1;i++){
 		for(j = 0; j < dim2;j++){
 			for(c = 0; c < dim3;c++){
@@ -1861,8 +1728,7 @@ int char_test(void)
 	dim2 = 5;
 	
 	RUNP(m = malloc_2d_char(m,dim1,dim2,0));
-	//DPRINTF1("H2 char 2D\n");
-
+	
 	if(!m){
 		ERROR_MSG("malloc_2d_char failed");
 	}
@@ -2260,16 +2126,10 @@ int main (int argc,char * const argv[])
 	tlog.warning(AT, "Oh dear I have a warning (not to be written to log...) : %s","big warning to be tee'd");
 	ASSERT(1 == 1,"Of dear 1 in NOT equal to %d", 1);
 	
-	//exit(0);
 	
 	fprintf(stdout,"%'lld\n",MAX_MEMORY_LIMIT);
 	fprintf(stdout,"Running libks sanity tests\n");
 	
-	
-	//ASSERT((1== 1),"1 == 1");
-	//ASSERT((1== 0),"one is not equal to 0");
-	
-	//RUN(dummy_broken_func(10));
 	RUN(char_test() );
 	char_test();
 	int_test();
@@ -2282,10 +2142,7 @@ int main (int argc,char * const argv[])
 	p= NULL;
 	
 	MCALLOC(p, 10,int);
-	
 
-	
-	//MMALLOC(p, sizeof(int) * 10);
 	MFREE(p);
 	
 	

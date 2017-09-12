@@ -193,9 +193,6 @@ extern int print_program_header(char * const argv[],const char* description);
 extern int log_command_line(const int argc,char* const argv[]);
 extern char* make_cmd_line(const int argc,char* const argv[]);
 
-
-
-
 extern int get_time(char* time_ptr, int size);
 extern int my_file_exists(char* name);
 
@@ -248,7 +245,6 @@ extern float uint32_to_prob(uint32_t a);
 
 
 extern float logsum(const float a,const float b);
-//float logsub(const float a,const float b);
 extern float prob2scaledprob(float p);
 extern float scaledprob2prob(float p);
 

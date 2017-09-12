@@ -24,12 +24,6 @@
 #include "htslib/sam.h"
 #include "htslib/faidx.h"
 
-// This is a buffer between the plus strand:
-// 0 -> total_len
-// buffer
-// and the negative strand
-// total_len+ buffer -> totallen*2+buffer..
-
 #define STRAND_BUFFER 65536LL // this is a buffer between the plus strand
 
 struct seq_info{
@@ -106,10 +100,6 @@ extern int get_max_seq_len_from_sb_buffer(struct sam_bam_file* sb_file,int* max_
 extern int echo_header(struct sam_bam_file* sb_file);
 extern int compare_multiple_SAM_BAM_headers(char** filenames, int num_files);
 
-
-
-//extern int get_chr_start_stop(struct sam_bam_file* sb_file,int read, int hit,char* chr,int* start,int*stop,int* strand);
-//extern int get_chr_start_stop(struct sam_bam_file* sb_file,int read,int hit, struct genome_interval* g_int);
 extern int get_chr_start_stop(struct seq_info* si,struct genome_interval* g_int, int64_t start, int64_t stop);
 
 
