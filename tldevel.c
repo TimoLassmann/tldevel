@@ -252,7 +252,9 @@ int test_for_checkpoint_file(struct checkpoint* chk,char* function,char* locatio
 		*/
 		/* get first line and compare to  */
 		buffer[0]= 0;
-		fscanf(f_ptr,"%*s %99[^\n]s",buffer); 
+		if(fscanf(f_ptr,"%*s %99[^\n]s",buffer) != 1){
+			ERROR_MSG("fscanf failed.");
+		}
 		fclose(f_ptr);
 		//fprintf(stdout,"%s\n%s\n",cmd,buffer);
 		if(!strncmp(cmd,buffer,99)){
