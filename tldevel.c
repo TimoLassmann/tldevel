@@ -31,7 +31,6 @@ static void verror(FILE* f_ptr,const char *location, const char *format,  va_lis
 
 static void echo_build_config (void);
 static void echo_build_config_log (void);
-
 static int set_random_seed(void);
 
 static void print_program_description(char* const argv[],const char* description);
