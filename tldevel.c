@@ -1546,7 +1546,7 @@ float random_float_zero_to_x(const float x)
 #ifdef HAVE_ARC4RANDOM
 	return (float) arc4random() / (float) 0xFFFFFFFF *x; 
 #else
-	return (float) drand48();
+	return (float) drand48() * x;
 #endif // HAVE_ARC4RANDOM
 		
 }
