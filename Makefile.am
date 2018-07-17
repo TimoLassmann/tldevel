@@ -1,9 +1,11 @@
 
 EXTRA_DIST=pwrite_test.sh
 
-noinst_LIBRARIES = libtldevel.a librtree.a libhtsglue.a libthrpool.a libpwrite.a 
+noinst_LIBRARIES = libtldevel.a librtree.a  libthrpool.a libpwrite.a 
 
-# AUTOMAKE_OPTIONS = subdir-objects
+if GOT_HTS
+  noinst_LIBRARIES += libhtsglue.a
+endif
 
 SUBDIRS = helper
 

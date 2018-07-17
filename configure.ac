@@ -19,18 +19,9 @@ AC_CHECK_LIB([pthread], [pthread_create])
 htslib_support=ok
 AC_CHECK_LIB([hts], [fai_load],[], [htslib_support=missing])
 
-
-if test $htslib_support != ok; then
-  AC_MSG_ERROR([htslib not found
-
-This packages uses the htslib library. Please install and try again!
+AM_CONDITIONAL([GOT_HTS],[test "$htslib_support" = "ok"])
 
 
-https://github.com/samtools/htslib
-
-
-FAILED.  This error must be resolved in order to build this package successfully.])
-fi
 
 # Checks for header files.
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h])
@@ -100,6 +91,18 @@ fi
 AC_MSG_CHECKING([whether self tests are run under valgrind])
 AC_MSG_RESULT($opt_valgrind_tests)
 
+
+if test $htslib_support != ok; then
+  AC_MSG_WARN([htslib not found
+
+This packages uses the htslib library. Please install for extra functionality!
+
+
+git clone https://github.com/samtools/htslib
+
+
+])
+fi
 
 
 AC_CANONICAL_HOST
