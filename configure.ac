@@ -1,9 +1,9 @@
-
 AC_INIT([libtldevel], [m4_esyscmd_s([git describe --always])]) 
 
 AC_CONFIG_AUX_DIR([.])
 AM_INIT_AUTOMAKE
-AM_SILENT_RULES([yes])
+AM_SILENT_RULES([no])
+
 # Checks for programs.
 AC_PROG_CC
 
@@ -20,8 +20,6 @@ htslib_support=ok
 AC_CHECK_LIB([hts], [fai_load],[], [htslib_support=missing])
 
 AM_CONDITIONAL([GOT_HTS],[test "$htslib_support" = "ok"])
-
-
 
 # Checks for header files.
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h])
@@ -64,12 +62,11 @@ esac
 
 
 
-
 if test "$enable_debugging" != "no"; then
         AC_DEFINE(DEBUG,1,[Defines debugging .])
         CFLAGS="-pg -ggdb -Wall -m64 -std=gnu11"
 else
-        CFLAGS="-O2 -funroll-loops -Wall -std=gnu11"
+        CFLAGS="-O3 -funroll-loops -Wall -std=gnu11"
         DEBUG=0
 fi
 
