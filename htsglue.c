@@ -161,17 +161,20 @@ char* get_sequence(faidx_t* index, struct genome_interval* g_int)//   char* chr,
 	
 	khiter_t iter;
 	faidx1_t val;
+
+  ASSERT(index != NULL, "No index");
 	//char *seq=NULL;
 	
 	// Adjust position
-	iter = kh_get(s, index->hash, g_int->chromosome);
+	/*iter = kh_get(s, index->hash, g_int->chromosome);
 	if (iter == kh_end(index->hash))
 	{
 		ERROR_MSG("get_sequence failed - chr:%s not found in index.",g_int->chromosome);
 	}
+
 	val = kh_value(index->hash, iter);
 	
-	
+  DPRINTF3("val.len: %d %f", val.len,val.len);	
 	ASSERT(g_int->stop >= g_int->start,"Start coordinate bigger than end: %d -> %d.",g_int->start ,g_int->stop);
 	
 	if( g_int->start < 0){
@@ -184,7 +187,7 @@ char* get_sequence(faidx_t* index, struct genome_interval* g_int)//   char* chr,
 	}else if(val.len <= g_int->stop){
 		g_int->stop = val.len ;
 	}
-		
+  */
 	sequence = faidx_fetch_seq(index, g_int->chromosome , g_int->start,  g_int->stop-1, &len);
 	
 	if(len == -2){
@@ -653,12 +656,13 @@ struct seq_info* make_si_info_from_fai(const faidx_t *fai)
 		faidx1_t x;
 		k = kh_get(s, fai->hash, fai->name[i]);
 		x = kh_value(fai->hash, k);
+    
 		
 		si->names[i] = NULL;
 		si->sn_len[i] = (int)strlen(fai->name[i]) +1;
 		MMALLOC(si->names[i], sizeof(char) *si->sn_len[i] );
 		snprintf(si->names[i], si->sn_len[i] , "%s",fai->name[i] );
-		si->len[i] = x.len;
+		si->len[i] = faidx_seq_len(fai, fai->name[i]);
 		
 		si->cum_chr_len[i] = prev;
 		
