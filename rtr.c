@@ -219,7 +219,7 @@ ERROR:
 	return FAIL;
 }
 
-#ifdef ITEST
+#ifdef RTRITEST
 
 int resolve_test_tree_data(void* a,void* b);
 int my_print_rtree_node(struct rtr_data* rtr_data, struct rtree_node* rtr_node);

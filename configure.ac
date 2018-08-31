@@ -1,25 +1,18 @@
-AC_INIT([libtldevel], [m4_esyscmd_s([git describe --always])]) 
-
+AC_INIT([libtldevel], [m4_esyscmd_s([git describe --always])])
 AC_CONFIG_AUX_DIR([.])
 AM_INIT_AUTOMAKE
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_RANLIB
 AM_SILENT_RULES([no])
 
-# Checks for programs.
-AC_PROG_CC
-
-#AM_PROG_AR
-AC_PROG_RANLIB
 
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-lm':
 AC_CHECK_LIB([m], [log])
 AC_CHECK_LIB([pthread], [pthread_create])
 
-
-htslib_support=ok
-AC_CHECK_LIB([hts], [fai_load],[], [htslib_support=missing])
-
-AM_CONDITIONAL([GOT_HTS],[test "$htslib_support" = "ok"])
+#AC_CHECK_LIB([hts],[fai_build])
 
 # Checks for header files.
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h])
@@ -34,7 +27,7 @@ AC_TYPE_INT64_T
 AC_TYPE_UINT8_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
-AC_TYPE_UINT64_T 
+AC_TYPE_UINT64_T
 
 # Checks for library functions.
 AC_FUNC_ERROR_AT_LINE
@@ -73,12 +66,12 @@ fi
 AC_ARG_ENABLE(valgrind-tests,
     [  --enable-valgrind-tests run self tests under valgrind],
     opt_valgrind_tests="$enableval", opt_valgrind_tests="no")
-    
+
 
 OPTS="-q --trace-children=no --error-exitcode=1 --leak-check=yes"
   # Run self-tests under valgrind?
 if test "$opt_valgrind_tests" = "yes"; then
-        AC_DEFINE(DEBUG,1,[Defines debugging .])   
+        AC_DEFINE(DEBUG,1,[Defines debugging .])
         CFLAGS="-pg -ggdb -pedantic -Wall -m64 -std=gnu11"
 	AC_CHECK_PROGS(VALGRIND, valgrind)
 	VALGRIND="$VALGRIND $OPTS"
@@ -87,20 +80,6 @@ else
 fi
 AC_MSG_CHECKING([whether self tests are run under valgrind])
 AC_MSG_RESULT($opt_valgrind_tests)
-
-
-if test $htslib_support != ok; then
-  AC_MSG_WARN([htslib not found
-
-This packages uses the htslib library. Please install for extra functionality!
-
-
-git clone https://github.com/samtools/htslib
-
-
-])
-fi
-
 
 AC_CANONICAL_HOST
 
@@ -112,7 +91,10 @@ AC_SUBST([UNAME_INFO]) UNAME_INFO=`uname -n`
 
 AC_SUBST([COMPILER]) COMPILER=`$CC --version | head -n 1`
 
-AC_CONFIG_HEADERS([config.h])
+
+
+ac_configure_args="$ac_configure_args PACKAGE_VERSION=$PACKAGE_VERSION   PACKAGE_NAME=$PACKAGE_NAME"
+
 
 AC_CONFIG_FILES([Makefile
 		 env_settings

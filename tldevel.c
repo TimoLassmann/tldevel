@@ -39,7 +39,7 @@ static void print_program_description_log(char* const argv[],const char* descrip
 int print_program_header(char* const argv[],const char* description)
 {
         tlog.echo_build_config();
-        tlog.print_program_description(argv,description); 
+        tlog.print_program_description(argv,description);
         return OK;
 }
 
@@ -47,13 +47,13 @@ void print_program_description_log(char* const argv[],const char* description){
         int i;
         int newline = 0;
         FILE* file;
-		
+
         if(!my_file_exists(logfile)){
                 file = fopen(logfile, "w");
         }else{
                 file = fopen(logfile, "a");
         }
-  
+
         fprintf(file,"%-*s: %s\n" ,MESSAGE_MARGIN,"Running program", basename(argv[0]));
         if(description){
                 newline = 1;
@@ -63,10 +63,10 @@ void print_program_description_log(char* const argv[],const char* description){
                                 fprintf(file,"\n");
                                 fprintf(file,"%-*s: ",MESSAGE_MARGIN,"");
                                 newline = 1;
-				
+
                         }else{
                                 if(isspace(description[i]) &&newline){
-					
+
                                 }else{
                                         fprintf(file,"%c",description[i]);
                                         newline = 0;
@@ -76,10 +76,10 @@ void print_program_description_log(char* const argv[],const char* description){
                 fprintf(file,"\n");
         }
         fflush(file);
-	
+
         if(file){
                 fclose(file);
-        } 
+        }
 }
 
 
@@ -96,10 +96,10 @@ void print_program_description(char * const argv[],const char* description)
                                 fprintf(stdout,"\n");
                                 fprintf(stdout,"%-*s: ",MESSAGE_MARGIN,"");
                                 newline = 1;
-				
+
                         }else{
                                 if(isspace(description[i]) &&newline){
-					
+
                                 }else{
                                         fprintf(stdout,"%c",description[i]);
                                         newline = 0;
@@ -118,7 +118,7 @@ void echo_build_config (void)
 {
         fprintf(stdout,"\n%s\n",build_config);
         fflush(stdout);
-	
+
         set_random_seed();
 }
 
@@ -132,8 +132,8 @@ void echo_build_config_log (void)
         }
         DPRINTF3("Logfile: %s\n",logfile );
         fprintf(file,"\n%s\n",build_config);
-	
-	
+
+
         if(file){
                 fclose(file);
         }
@@ -150,7 +150,7 @@ int set_random_seed(void)
         srand((unsigned int) (time(NULL) * (42)));
         srand48((long int)  (time(NULL) * (42)));
         return OK;
-#endif 
+#endif
 
 }
 
@@ -160,7 +160,7 @@ int set_logfile(char* logfilename)
 {
         if(logfilename != NULL){
                 ASSERT(strlen(logfilename)  > 3, "log file name: %s is too short. ",logfilename );
-		
+
                 memset( logfile, 0, BUFFER_LEN );
                 strcpy( logfile, logfilename);
 
@@ -187,17 +187,17 @@ ERROR:
 }
 
 int set_checkpoint_file(struct checkpoint* chk,char* function,char* location,char* cmd)
-{ 
+{
         char buffer[BUFFER_LEN];
         FILE* f_ptr = NULL;
-	
+
         struct tm *ptr;
-	
+
         char time_string[200];
-	
+
         time_t current = time(NULL);
         ptr = localtime(&current);
-	
+
         if(!strftime(time_string, 200, "%F %H:%M:%S", ptr)){
                 error(AT,"Write failed");
         }
@@ -208,9 +208,9 @@ int set_checkpoint_file(struct checkpoint* chk,char* function,char* location,cha
         fprintf(f_ptr,"%*s: %s\n",MESSAGE_MARGIN, "function", function);
         fprintf(f_ptr,"%*s: %s\n",MESSAGE_MARGIN, "called in", location);
         fprintf(f_ptr,"%*s: %s\n",MESSAGE_MARGIN, "at time", time_string);
-	
+
         fclose(f_ptr);
-	
+
         return OK;
 ERROR:
         if(f_ptr){
@@ -224,7 +224,7 @@ int test_for_checkpoint_file(struct checkpoint* chk,char* function,char* locatio
         FILE* f_ptr = NULL;
         char buffer[BUFFER_LEN];
         static int8_t found = 0;
-	
+
         snprintf(buffer,BUFFER_LEN ,"%s/%s_%d.chk", chk->base_dir,chk->base_name,chk->test_num );
         if(my_file_exists(buffer) && !found){
                 RUNP(f_ptr = fopen(buffer , "r" ));
@@ -245,7 +245,7 @@ int test_for_checkpoint_file(struct checkpoint* chk,char* function,char* locatio
                 LOG_MSG("   to:");
                 LOG_MSG("     %s",buffer);
                 LOG_MSG("   will re-run everything from this point.");
-				
+
                 found = 1;
         }else{
                 found = 1;
@@ -262,26 +262,26 @@ struct checkpoint* init_checkpoint(char* base_name,char* target_dir)
         size_t i = 0;
         int j;
         MMALLOC(chk, sizeof(struct checkpoint));
-	
+
         chk->test_num = 0;
         chk->base_dir = NULL;
         chk->base_name = NULL;
-	
+
         i = strlen(target_dir);
         MMALLOC(chk->base_dir, sizeof(char) * (i+1));
-	
+
         for(j = 0;j < i;j++){
                 chk->base_dir[j] = target_dir[j];
         }
         chk->base_dir[i] = 0;
-	
+
         i = strlen(base_name);
         MMALLOC(chk->base_name, sizeof(char) * (i+1));
         for(j = 0;j < i;j++){
                 chk->base_name[j] = base_name[j];
         }
         chk->base_name[i] = 0;
-	
+
         return chk;
 ERROR:
         return NULL;
@@ -347,8 +347,8 @@ uint32_t adler(const void* buf, size_t len)
         const uint8_t* buffer = NULL;
         uint32_t s1 = 1;
         uint32_t s2 = 0;
-	
-        buffer = (const uint8_t*) buf; 
+
+        buffer = (const uint8_t*) buf;
 
         for (size_t i = 0; i < len; i++) {
                 s1 = (s1 + buffer[i]) % 65521;
@@ -372,12 +372,12 @@ int ulltoa(uint64_t value, char *buf, int radix)
                 *p1++ = xlat[value % (unsigned)radix];
                 c++;
         } while((value /= (unsigned)radix));
-	
+
         while(c < 64){
                 *p1++ = xlat[0];
                 c++;
         }
-	
+
         for(p2 = buf; p1 != tmp; *p2++ = *--p1) {
         }
         *p2 = '\0';
@@ -401,9 +401,9 @@ char* make_cmd_line(const int argc,char* const argv[])
 {
         char* cmd = NULL;
         int i,j,c;
-	
+
         MMALLOC(cmd, 16384);
-	
+
         c = 0;
         for(i =0 ; i < argc;i++){
                 for(j = 0; j < strlen(argv[i]);j++){
@@ -412,15 +412,15 @@ char* make_cmd_line(const int argc,char* const argv[])
                         }
                         cmd[c] = argv[i][j];
                         c++;
-			
+
                 }
                 if(c == 16384-1){
                         break;
                 }
                 cmd[c] = ' ';
                 c++;
-		
-		
+
+
         }
         cmd[c] = 0;
 
@@ -478,7 +478,7 @@ void vlog(FILE* f_ptr,const char *format,  va_list argp)
 {
 
         char time_string[200];
-	
+
         if(get_time(time_string, 200) != OK){
                 fprintf(stderr,"notime");
         }
@@ -492,7 +492,7 @@ void vlog(FILE* f_ptr,const char *format,  va_list argp)
 void vmessage(FILE* f_ptr,const char *location, const char *format,  va_list argp)
 {
         char time_string[200];
-	
+
         if(get_time(time_string, 200) != OK){
                 fprintf(stderr,"notime");
         }
@@ -506,7 +506,7 @@ void vmessage(FILE* f_ptr,const char *location, const char *format,  va_list arg
 void vwarning(FILE* f_ptr,const char *location, const char *format,  va_list argp)
 {
         char time_string[200];
-	
+
         if(get_time(time_string, 200) != OK){
                 fprintf(stderr,"notime");
         }
@@ -520,7 +520,7 @@ void vwarning(FILE* f_ptr,const char *location, const char *format,  va_list arg
 void verror(FILE* f_ptr, const char *location, const char *format,  va_list argp)
 {
         char time_string[200];
-	
+
         if(get_time(time_string, 200) != OK){
                 fprintf(stderr,"notime");
         }
@@ -535,7 +535,7 @@ void verror(FILE* f_ptr, const char *location, const char *format,  va_list argp
 void unformatted( const char *format, ...)
 {
         va_list argp;
-        va_start(argp, format);	
+        va_start(argp, format);
         vunformat(stdout,format,argp);
         va_end(argp);
 
@@ -544,11 +544,11 @@ void unformatted( const char *format, ...)
 void unformatted_tee( const char *format, ...)
 {
         va_list argp;
-	
-        va_start(argp, format);	
+
+        va_start(argp, format);
         vunformat(stdout,format,argp);
         va_end(argp);
-	
+
         FILE *file;
         if(!my_file_exists(logfile)){
                 file = fopen(logfile, "w");
@@ -556,12 +556,12 @@ void unformatted_tee( const char *format, ...)
                 file = fopen(logfile, "a");
         }
         va_start(argp, format);
-	
+
         vunformat(file,format,argp);
         va_end(argp);
         if(file){
                 fclose(file);
-        }	
+        }
 }
 
 void message(const char *location, const char *format, ...)
@@ -570,13 +570,13 @@ void message(const char *location, const char *format, ...)
 
         va_start(argp, format);
         vmessage(stdout,location,format,argp);
-        va_end(argp);	
+        va_end(argp);
 }
 
 void message_tee(const char *location, const char *format, ...)
 {
         va_list argp;
-	
+
         va_start(argp, format);
         vmessage(stdout,location,format,argp);
         va_end(argp);
@@ -613,7 +613,7 @@ void warning_tee(const char *location, const char *format, ...)
         va_start(argp, format);
         vwarning(stdout,location, format, argp);
         va_end(argp);
-  
+
         FILE *file;
         if(!my_file_exists(logfile)){
                 file = fopen(logfile, "w");
@@ -623,12 +623,12 @@ void warning_tee(const char *location, const char *format, ...)
         va_start(argp, format);
         vwarning(file,location, format, argp);
         va_end(argp);
-  
-	
+
+
         if(file){
                 fclose(file);
         }
- 
+
 }
 
 
@@ -646,8 +646,8 @@ void error_tee(const char *location, const char *format, ...)
         va_start(argp, format);
         verror(stderr,location,format,argp);
         va_end(argp);
-	
-	
+
+
         FILE *file;
         if(!my_file_exists(logfile)){
                 file = fopen(logfile, "w");
@@ -657,7 +657,7 @@ void error_tee(const char *location, const char *format, ...)
         va_start(argp, format);
         verror(file,location,format,argp);
         va_end(argp);
-	
+
         if(file){
                 fclose(file);
         }
@@ -666,31 +666,31 @@ void error_tee(const char *location, const char *format, ...)
 char** malloc_2d_char(char**m,int newdim1, int newdim2, char fill_value)
 {
         int i,j;
-	
+
         char** ptr_t = NULL;
         char* ptr_tt = NULL;
-	
+
         int* int_ptr = NULL;
-	
+
         int olddim1,olddim2;
         int max1, max2;
-	
-	
+
+
         ASSERT((newdim1 > 0), "Malloc 2D char failed: dim1:%d\n",newdim1);
         ASSERT((newdim2 > 0), "Malloc 2D char failed: dim2:%d\n",newdim2);
-	
-	
+
+
         if(m == NULL){
                 MMALLOC(ptr_t, sizeof(char*) * newdim1);
                 MMALLOC(ptr_tt, sizeof(char) * (newdim1*newdim2) + 3*sizeof(int) );
-		
+
                 int_ptr = (int*)ptr_tt;
                 int_ptr[0] = 2;
                 int_ptr[1] = newdim1;
                 int_ptr[2] = newdim2;
-		
+
                 ptr_tt = (char*)(int_ptr + 3);
-		
+
                 for(i = 0;i< newdim1;i++){
                         ptr_t[i] = ptr_tt + i * newdim2;
                         for(j = 0; j < newdim2;j++){
@@ -698,19 +698,19 @@ char** malloc_2d_char(char**m,int newdim1, int newdim2, char fill_value)
                         }
                 }
                 m = ptr_t;
-		
+
         }else{
                 ptr_t = m;
                 int_ptr = (int*) m[0];
                 int_ptr  = int_ptr -3;
-		
+
                 ptr_tt = (char* )int_ptr;
-		
+
                 olddim1 = *(int_ptr+1);
                 olddim2 = *(int_ptr+2);
-		
+
                 DPRINTF3("%d-%d new: %d-%d", olddim1,olddim2, newdim1,newdim2);
-		
+
                 /* in case we want a smaller matrix don't realloc but zero out "free mem"*/
                 if(olddim1 >newdim1 || olddim2 > newdim2){
                         max1 = (olddim1 > newdim1) ? olddim1:newdim1;
@@ -728,17 +728,17 @@ char** malloc_2d_char(char**m,int newdim1, int newdim2, char fill_value)
                         if(olddim1 >newdim1){
                                 newdim2 = olddim2;
                         }
-			
+
                 }
-		
+
                 /* case 0: old == new*/
                 if(olddim1 == newdim1 && olddim2 == newdim2){
                         return m;
                 }
-		
+
                 /*case 1 : both dimensions increase... */
-		
-		
+
+
                 if(olddim1 < newdim1 && olddim2 < newdim2){
                         MREALLOC(ptr_t,  sizeof(char*) * newdim1);
                         MREALLOC(ptr_tt,  sizeof(char) * (newdim1*newdim2) + 3*sizeof(int) );
@@ -746,15 +746,15 @@ char** malloc_2d_char(char**m,int newdim1, int newdim2, char fill_value)
                         ptr_tt = (char*) (int_ptr + 3);
                         for(i = olddim1-1; i >= 0;i-- ){
                                 for(j = olddim2-1;j >=0;j--){
-					
+
                                         *(ptr_tt + i* newdim2 + j) =*(ptr_tt + i*olddim2 + j);
                                 }
                                 for(j = newdim2-1;j >= olddim2;j--){
                                         *(ptr_tt + i* newdim2 + j) = fill_value;
                                 }
-				
+
                         }
-			
+
                         for(i = olddim1; i < newdim1;i++){
                                 for(j = 0; j < newdim2;j++){
                                         *(ptr_tt + i* newdim2 + j) = fill_value;
@@ -763,8 +763,8 @@ char** malloc_2d_char(char**m,int newdim1, int newdim2, char fill_value)
                         for(i = 0;i< newdim1;i++){
                                 ptr_t[i] = ptr_tt + i * newdim2;
                         }
-			
-			
+
+
                         int_ptr[0] = 2;
                         int_ptr[1] = newdim1;
                         int_ptr[2] = newdim2;
@@ -776,20 +776,20 @@ char** malloc_2d_char(char**m,int newdim1, int newdim2, char fill_value)
                         ptr_tt = (char*) (int_ptr + 3);
                         for(i = olddim1-1; i >= 0;i-- ){
                                 for(j = olddim2-1;j >=0;j--){
-					
+
                                         *(ptr_tt + i* newdim2 + j) =*(ptr_tt + i*olddim2 + j);
                                 }
                                 for(j = newdim2-1;j >= olddim2;j--){
                                         *(ptr_tt + i* newdim2 + j) = fill_value;
                                 }
-				
+
                         }
-			
+
                         for(i = 0;i< newdim1;i++){
                                 ptr_t[i] = ptr_tt + i * newdim2;
                         }
-			
-			
+
+
                         int_ptr[0] = 2;
                         int_ptr[1] = newdim1;
                         int_ptr[2] = newdim2;
@@ -814,7 +814,7 @@ char** malloc_2d_char(char**m,int newdim1, int newdim2, char fill_value)
                         int_ptr[1] = newdim1;
                         int_ptr[2] = newdim2;
                         m = ptr_t;
-			
+
                 }
         }
         return m;
@@ -830,22 +830,22 @@ int** malloc_2d_int(int**m,int newdim1, int newdim2, int fill_value)
         int i,j;
         int** ptr_t = NULL;
         int* ptr_tt = NULL;
-	
+
         int olddim1,olddim2;
         int max1, max2;
-	
+
         ASSERT((newdim1 > 0), "Malloc 2D int failed: dim1:%d\n",newdim1);
-        ASSERT((newdim2 > 0), "Malloc 2D int failed: dim2:%d\n",newdim2);	
-	
+        ASSERT((newdim2 > 0), "Malloc 2D int failed: dim2:%d\n",newdim2);
+
         if(m == NULL){
                 MMALLOC(ptr_t, sizeof(int*) * newdim1);
                 MMALLOC(ptr_tt, sizeof(int) * (newdim1*newdim2) + 3*sizeof(int));
                 ptr_tt[0] = 2;
                 ptr_tt[1] = newdim1;
                 ptr_tt[2] = newdim2;
-		
+
                 ptr_tt = ptr_tt + 3;
-		
+
                 for(i = 0;i< newdim1;i++){
                         ptr_t[i] = ptr_tt + i * newdim2;
                         for(j = 0; j < newdim2;j++){
@@ -853,14 +853,14 @@ int** malloc_2d_int(int**m,int newdim1, int newdim2, int fill_value)
                         }
                 }
                 m = ptr_t;
-		
+
         }else{
                 ptr_t = m;
                 ptr_tt  =m[0]-3;
                 olddim1 = *(ptr_tt+1);
                 olddim2 = *(ptr_tt+2);
                 DPRINTF3("%d-%d new: %d-%d", olddim1,olddim2, newdim1,newdim2 );
-		
+
                 /* in case we want a smaller matrix don't realloc but zero out "free mem"*/
                 if(olddim1 >newdim1 || olddim2 > newdim2){
                         max1 = (olddim1 > newdim1) ? olddim1:newdim1;
@@ -878,32 +878,32 @@ int** malloc_2d_int(int**m,int newdim1, int newdim2, int fill_value)
                         if(olddim1 >newdim1){
                                 newdim2 = olddim2;
                         }
-			
+
                 }
-		
+
                 /* case 0: old == new*/
                 if(olddim1 == newdim1 && olddim2 == newdim2){
                         return m;
                 }
-		
+
                 /*case 1 : both dimensions increase... */
-		
-		
+
+
                 if(olddim1 < newdim1 && olddim2 < newdim2){
                         MREALLOC(ptr_t,  sizeof(int*) * newdim1);
                         MREALLOC(ptr_tt, sizeof(int) * (newdim1*newdim2) + 3*sizeof(int));
                         ptr_tt = ptr_tt + 3;
                         for(i = olddim1-1; i >= 0;i-- ){
                                 for(j = olddim2-1;j >=0;j--){
-					
+
                                         *(ptr_tt + i* newdim2 + j) =*(ptr_tt + i*olddim2 + j);
                                 }
                                 for(j = newdim2-1;j >= olddim2;j--){
                                         *(ptr_tt + i* newdim2 + j) = fill_value;
                                 }
-				
+
                         }
-			
+
                         for(i = olddim1; i < newdim1;i++){
                                 for(j = 0; j < newdim2;j++){
                                         *(ptr_tt + i* newdim2 + j) = fill_value;
@@ -912,8 +912,8 @@ int** malloc_2d_int(int**m,int newdim1, int newdim2, int fill_value)
                         for(i = 0;i< newdim1;i++){
                                 ptr_t[i] = ptr_tt + i * newdim2;
                         }
-			
-			
+
+
                         ptr_tt = ptr_tt - 3;
                         ptr_tt[0] = 2;
                         ptr_tt[1] = newdim1;
@@ -925,19 +925,19 @@ int** malloc_2d_int(int**m,int newdim1, int newdim2, int fill_value)
                         ptr_tt = ptr_tt + 3;
                         for(i = olddim1-1; i >= 0;i-- ){
                                 for(j = olddim2-1;j >=0;j--){
-					
+
                                         *(ptr_tt + i* newdim2 + j) =*(ptr_tt + i*olddim2 + j);
                                 }
                                 for(j = newdim2-1;j >= olddim2;j--){
                                         *(ptr_tt + i* newdim2 + j) = fill_value;
                                 }
-				
+
                         }
-			
+
                         for(i = 0;i< newdim1;i++){
                                 ptr_t[i] = ptr_tt + i * newdim2;
                         }
-			
+
                         ptr_tt = ptr_tt - 3;
                         ptr_tt[0] = 2;
                         ptr_tt[1] = olddim1;
@@ -958,21 +958,21 @@ int** malloc_2d_int(int**m,int newdim1, int newdim2, int fill_value)
                         for(i = 0;i< newdim1;i++){
                                 ptr_t[i] = ptr_tt + i * newdim2;
                         }
-			
-			
+
+
                         ptr_tt = ptr_tt - 3;
                         ptr_tt[0] = 2;
                         ptr_tt[1] = newdim1;
                         ptr_tt[2] = olddim2;
                         m = ptr_t;
-			
+
                 }
         }
         return m;
 ERROR:
         MFREE(ptr_t );
         MFREE(ptr_tt);
-	
+
         return NULL;
 }
 
@@ -981,27 +981,27 @@ float** malloc_2d_float(float**m,int newdim1, int newdim2,float fill_value)
         int i,j;
         float** ptr_t = NULL;
         float* ptr_tt = NULL;
-	
+
         int* int_ptr = NULL;
-	
+
         int olddim1,olddim2;
         int max1, max2;
-	
+
         ASSERT((newdim1 > 0), "Malloc 2D float failed: dim1:%d\n",newdim1);
         ASSERT((newdim2 > 0), "Malloc 2D float failed: dim2:%d\n",newdim2);
-	
-	
+
+
         if(m == NULL){
                 MMALLOC(ptr_t, sizeof(float*) * newdim1);
                 MMALLOC(ptr_tt, sizeof(float) * (newdim1*newdim2) + 3*sizeof(int) );
-		
+
                 int_ptr = (int*)ptr_tt;
                 int_ptr[0] = 2;
                 int_ptr[1] = newdim1;
                 int_ptr[2] = newdim2;
-		
+
                 ptr_tt = (float*)(int_ptr + 3);
-		
+
                 for(i = 0;i< newdim1;i++){
                         ptr_t[i] = ptr_tt + i * newdim2;
                         for(j = 0; j < newdim2;j++){
@@ -1009,18 +1009,18 @@ float** malloc_2d_float(float**m,int newdim1, int newdim2,float fill_value)
                         }
                 }
                 m = ptr_t;
-		
+
         }else{
                 ptr_t = m;
                 int_ptr = (int*) m[0];
                 int_ptr  = int_ptr -3;
-		
+
                 ptr_tt = (float* )int_ptr;
-		
+
                 olddim1 = *(int_ptr+1);
                 olddim2 = *(int_ptr+2);
                 DPRINTF3("%d-%d new: %d-%d", olddim1,olddim2, newdim1,newdim2 );
-		
+
                 /* in case we want a smaller matrix don't realloc but zero out "free mem"*/
                 if(olddim1 >newdim1 || olddim2 > newdim2){
                         max1 = (olddim1 > newdim1) ? olddim1:newdim1;
@@ -1038,16 +1038,16 @@ float** malloc_2d_float(float**m,int newdim1, int newdim2,float fill_value)
                         if(olddim1 >newdim1){
                                 newdim2 = olddim2;
                         }
-			
+
                 }
-		
+
                 /* case 0: old == new*/
                 if(olddim1 == newdim1 && olddim2 == newdim2){
                         return m;
                 }
-		
+
                 /*case 1 : both dimensions increase... */
-		
+
                 if(olddim1 < newdim1 && olddim2 < newdim2){
                         MREALLOC(ptr_t,  sizeof(float*) * newdim1);
                         MREALLOC(ptr_tt,  sizeof(float) * (newdim1*newdim2) + 3*sizeof(int) );
@@ -1055,15 +1055,15 @@ float** malloc_2d_float(float**m,int newdim1, int newdim2,float fill_value)
                         ptr_tt = (float*) (int_ptr + 3);
                         for(i = olddim1-1; i >= 0;i-- ){
                                 for(j = olddim2-1;j >=0;j--){
-					
+
                                         *(ptr_tt + i* newdim2 + j) =*(ptr_tt + i*olddim2 + j);
                                 }
                                 for(j = newdim2-1;j >= olddim2;j--){
                                         *(ptr_tt + i* newdim2 + j) = fill_value;
                                 }
-				
+
                         }
-			
+
                         for(i = olddim1; i < newdim1;i++){
                                 for(j = 0; j < newdim2;j++){
                                         *(ptr_tt + i* newdim2 + j) = fill_value;
@@ -1072,8 +1072,8 @@ float** malloc_2d_float(float**m,int newdim1, int newdim2,float fill_value)
                         for(i = 0;i< newdim1;i++){
                                 ptr_t[i] = ptr_tt + i * newdim2;
                         }
-			
-			
+
+
                         int_ptr[0] = 2;
                         int_ptr[1] = newdim1;
                         int_ptr[2] = newdim2;
@@ -1085,20 +1085,20 @@ float** malloc_2d_float(float**m,int newdim1, int newdim2,float fill_value)
                         ptr_tt = (float*) (int_ptr + 3);
                         for(i = olddim1-1; i >= 0;i-- ){
                                 for(j = olddim2-1;j >=0;j--){
-					
+
                                         *(ptr_tt + i* newdim2 + j) =*(ptr_tt + i*olddim2 + j);
                                 }
                                 for(j = newdim2-1;j >= olddim2;j--){
                                         *(ptr_tt + i* newdim2 + j) = fill_value;
                                 }
-				
+
                         }
-			
+
                         for(i = 0;i< newdim1;i++){
                                 ptr_t[i] = ptr_tt + i * newdim2;
                         }
-			
-			
+
+
                         int_ptr[0] = 2;
                         int_ptr[1] = newdim1;
                         int_ptr[2] = newdim2;
@@ -1126,7 +1126,7 @@ float** malloc_2d_float(float**m,int newdim1, int newdim2,float fill_value)
                 }
         }
         return m;
-	
+
 ERROR:
         MFREE(ptr_t );
         MFREE(ptr_tt);
@@ -1140,25 +1140,25 @@ float*** malloc_3d_float(int dim1, int dim2, int dim3, float fill_value)
         float*** ptr_t = NULL;
         float** ptr_tt = NULL;
         float* ptr_ttt = NULL;
-	
+
         int* int_ptr = NULL;
-	
+
         ASSERT((dim1 > 0), "Malloc 3D float failed: dim1:%d\n",dim1);
         ASSERT((dim2 > 0), "Malloc 3D float failed: dim2:%d\n",dim2);
         ASSERT((dim3 > 0), "Malloc 3D float failed: dim3:%d\n",dim3);
-	
+
         MMALLOC(ptr_t, sizeof(float**) * dim1);
         MMALLOC(ptr_tt, sizeof(float*) * (dim1*dim2));
         MMALLOC(ptr_ttt, sizeof(float) * (dim1 * dim2 * dim3) + 4*sizeof(int) );
-	
+
         int_ptr = (int*)ptr_ttt;
         int_ptr[0] = 3;
         int_ptr[1] = dim1;
         int_ptr[2] = dim2;
         int_ptr[3] = dim3;
-	
+
         ptr_ttt = (float*)(int_ptr + 4);
-	
+
         for (i = 0; i < dim1; i++){
                 ptr_t[i] = ptr_tt + dim2*i;
                 for (j = 0; j < dim2; j++){
@@ -1168,7 +1168,7 @@ float*** malloc_3d_float(int dim1, int dim2, int dim3, float fill_value)
                         }
                 }
         }
-	
+
         return ptr_t;
 ERROR:
         MFREE(ptr_t );
@@ -1185,19 +1185,19 @@ float**** malloc_4d_float(int dim1, int dim2, int dim3,int dim4, float fill_valu
         float*** ptr_tt = NULL;
         float** ptr_ttt = NULL;
         float* ptr_tttt = NULL;
-	
+
         int* int_ptr = NULL;
-	
+
         ASSERT((dim1 > 0), "Malloc 3D float failed: dim1:%d\n",dim1);
         ASSERT((dim2 > 0), "Malloc 3D float failed: dim2:%d\n",dim2);
         ASSERT((dim3 > 0), "Malloc 3D float failed: dim3:%d\n",dim3);
         ASSERT((dim4 > 0), "Malloc 3D float failed: dim4:%d\n",dim4);
-	
+
         MMALLOC(ptr_t, sizeof(float***) * (long int)dim1);
         MMALLOC(ptr_tt, sizeof(float**) * ((long int)dim1*(long int)dim2));
         MMALLOC(ptr_ttt, sizeof(float*) * ((long int)dim1 * (long int)dim2 * (long int)dim3));
         MMALLOC(ptr_tttt, sizeof(float) * ((long int)dim1 * (long int)dim2 * (long int)dim3 *(long int)dim4) + 5*sizeof(int) );
-	
+
         int_ptr = (int*)ptr_tttt;
         int_ptr[0] = 4;
         int_ptr[1] = dim1;
@@ -1205,7 +1205,7 @@ float**** malloc_4d_float(int dim1, int dim2, int dim3,int dim4, float fill_valu
         int_ptr[3] = dim3;
         int_ptr[4] = dim4;
         ptr_tttt = (float*)(int_ptr + 5);
-	
+
         for (i = 0; i < dim1; i++){
                 ptr_t[i] = ptr_tt + dim2*i;
                 for (j = 0; j < dim2; j++){
@@ -1219,7 +1219,7 @@ float**** malloc_4d_float(int dim1, int dim2, int dim3,int dim4, float fill_valu
                         }
                 }
         }
-	
+
         return ptr_t;
 ERROR:
         MFREE(ptr_t );
@@ -1234,25 +1234,25 @@ double** malloc_2d_double(double**m,int newdim1, int newdim2, double fill_value)
         int i,j;
         double** ptr_t = NULL;
         double* ptr_tt = NULL;
-	
+
         int* int_ptr = NULL;
         int max1, max2;
         int olddim1,olddim2;
-	
+
         ASSERT((newdim1 > 0), "Malloc 2D double failed: dim1:%d\n",newdim1);
         ASSERT((newdim2 > 0), "Malloc 2D double failed: dim2:%d\n",newdim2);
-		
+
         if(m == NULL){
                 MMALLOC(ptr_t, sizeof(double*) * newdim1);
                 MMALLOC(ptr_tt, sizeof(double) * (newdim1*newdim2) + 3*sizeof(int) );
-		
+
                 int_ptr = (int*)ptr_tt;
                 int_ptr[0] = 2;
                 int_ptr[1] = newdim1;
                 int_ptr[2] = newdim2;
-		
+
                 ptr_tt = (double*)(int_ptr + 3);
-		
+
                 for(i = 0;i< newdim1;i++){
                         ptr_t[i] = ptr_tt + i * newdim2;
                         for(j = 0; j < newdim2;j++){
@@ -1260,17 +1260,17 @@ double** malloc_2d_double(double**m,int newdim1, int newdim2, double fill_value)
                         }
                 }
                 m = ptr_t;
-		
+
         }else{
                 ptr_t = m;
                 int_ptr = (int*) m[0];
                 int_ptr  = int_ptr -3;
-		
+
                 ptr_tt = (double* )int_ptr;
-		
+
                 olddim1 = *(int_ptr+1);
                 olddim2 = *(int_ptr+2);
-		
+
                 /* in case we want a smaller matrix don't realloc but zero out "free mem"*/
                 if(olddim1 >newdim1 || olddim2 > newdim2){
                         max1 = (olddim1 > newdim1) ? olddim1:newdim1;
@@ -1288,18 +1288,18 @@ double** malloc_2d_double(double**m,int newdim1, int newdim2, double fill_value)
                         if(olddim1 >newdim1){
                                 newdim2 = olddim2;
                         }
-			
+
                 }
-		
-		
+
+
                 /* case 0: old == new*/
                 if(olddim1 == newdim1 && olddim2 == newdim2){
                         return m;
                 }
-		
+
                 /*case 1 : both dimensions increase... */
-		
-		
+
+
                 if(olddim1 < newdim1 && olddim2 < newdim2){
                         MREALLOC(ptr_t,  sizeof(double*) * newdim1);
                         MREALLOC(ptr_tt,  sizeof(double) * (newdim1*newdim2) + 3*sizeof(int) );
@@ -1307,15 +1307,15 @@ double** malloc_2d_double(double**m,int newdim1, int newdim2, double fill_value)
                         ptr_tt = (double*) (int_ptr + 3);
                         for(i = olddim1-1; i >= 0;i-- ){
                                 for(j = olddim2-1;j >=0;j--){
-					
+
                                         *(ptr_tt + i* newdim2 + j) =*(ptr_tt + i*olddim2 + j);
                                 }
                                 for(j = newdim2-1;j >= olddim2;j--){
                                         *(ptr_tt + i* newdim2 + j) = fill_value;
                                 }
-				
+
                         }
-			
+
                         for(i = olddim1; i < newdim1;i++){
                                 for(j = 0; j < newdim2;j++){
                                         *(ptr_tt + i* newdim2 + j) = fill_value;
@@ -1324,8 +1324,8 @@ double** malloc_2d_double(double**m,int newdim1, int newdim2, double fill_value)
                         for(i = 0;i< newdim1;i++){
                                 ptr_t[i] = ptr_tt + i * newdim2;
                         }
-			
-			
+
+
                         int_ptr[0] = 2;
                         int_ptr[1] = newdim1;
                         int_ptr[2] = newdim2;
@@ -1337,20 +1337,20 @@ double** malloc_2d_double(double**m,int newdim1, int newdim2, double fill_value)
                         ptr_tt = (double*) (int_ptr + 3);
                         for(i = olddim1-1; i >= 0;i-- ){
                                 for(j = olddim2-1;j >=0;j--){
-					
+
                                         *(ptr_tt + i* newdim2 + j) =*(ptr_tt + i*olddim2 + j);
                                 }
                                 for(j = newdim2-1;j >= olddim2;j--){
                                         *(ptr_tt + i* newdim2 + j) = fill_value;
                                 }
-				
+
                         }
-			
+
                         for(i = 0;i< newdim1;i++){
                                 ptr_t[i] = ptr_tt + i * newdim2;
                         }
-			
-			
+
+
                         int_ptr[0] = 2;
                         int_ptr[1] = newdim1;
                         int_ptr[2] = newdim2;
@@ -1375,14 +1375,14 @@ double** malloc_2d_double(double**m,int newdim1, int newdim2, double fill_value)
                         int_ptr[1] = newdim1;
                         int_ptr[2] = newdim2;
                         m = ptr_t;
-			
+
                 }
         }
         return m;
 ERROR:
         MFREE(ptr_t );
         MFREE(ptr_tt);
-	
+
         return NULL;
 }
 
@@ -1420,7 +1420,7 @@ void free_4d(void**** m)
 uint16_t prob_to_uint16(float x)
 {
         uint16_t a;
-	
+
         x = scaledprob2prob(x);
         if(x > 1.0){
                 x = 1.0;
@@ -1428,16 +1428,16 @@ uint16_t prob_to_uint16(float x)
         if(x < 0.0){
                 x = 0.0;
         }
-	
+
         a = (uint16_t) roundf(x *UINT16_MAX);
-	
+
         return a;
 }
 
 float uint16_to_prob(uint16_t a)
 {
         float x;
-	
+
         x = prob2scaledprob( (double)a  / UINT16_MAX);
         return x;
 }
@@ -1447,7 +1447,7 @@ float uint16_to_prob(uint16_t a)
 uint32_t prob_to_uint32(float x)
 {
         uint32_t a;
-	
+
         x = scaledprob2prob(x);
         if(x > 1.0){
                 x = 1.0;
@@ -1455,16 +1455,16 @@ uint32_t prob_to_uint32(float x)
         if(x < 0.0){
                 x = 0.0;
         }
-	
+
         a = (uint32_t) roundf(x *UINT32_MAX);
-	
+
         return a;
 }
 
 float uint32_to_prob(uint32_t a)
 {
         float x;
-	
+
         x = prob2scaledprob( (double)a  / UINT32_MAX);
         return x;
 }
@@ -1490,7 +1490,7 @@ float logsum(const float a,const float b)
 {
         register const float max = MACRO_MAX(a, b);
         register const float min = MACRO_MIN(a, b);
-	
+
         if(min == -INFINITY){
                 return max;
         }
@@ -1522,9 +1522,9 @@ float scaledprob2prob(float p)
 float random_float_zero_to_x_thread(const float x, unsigned int* seed)
 {
 #ifdef HAVE_ARC4RANDOM
-        return (float) arc4random() / (float) 0xFFFFFFFF *x; 
+        return (float) arc4random() / (float) 0xFFFFFFFF *x;
 #else
-        return (float) rand_r(seed) / (float) RAND_MAX *x; 
+        return (float) rand_r(seed) / (float) RAND_MAX *x;
 #endif
 }
 
@@ -1534,9 +1534,9 @@ uint32_t random_int_zero_to_x_thread(const uint32_t x, unsigned int* seed)
 #ifdef HAVE_ARC4RANDOM_UNIFORM
         return arc4random_uniform(x+1);
 #elif HAVE_ARC4RANDOM
-        return arc4random() % ( x+1); 
+        return arc4random() % ( x+1);
 #else
-        return rand_r(seed) % (x+1); 
+        return rand_r(seed) % (x+1);
 #endif
 }
 
@@ -1544,11 +1544,11 @@ uint32_t random_int_zero_to_x_thread(const uint32_t x, unsigned int* seed)
 float random_float_zero_to_x(const float x)
 {
 #ifdef HAVE_ARC4RANDOM
-        return (float) arc4random() / (float) 0xFFFFFFFF *x; 
+        return (float) arc4random() / (float) 0xFFFFFFFF *x;
 #else
         return (float) drand48() * x;
 #endif // HAVE_ARC4RANDOM
-		
+
 }
 
 uint32_t random_int_zero_to_x(const uint32_t x)
@@ -1556,7 +1556,7 @@ uint32_t random_int_zero_to_x(const uint32_t x)
 #ifdef HAVE_ARC4RANDOM_UNIFORM
         return arc4random_uniform(x+1);
 #elif HAVE_ARC4RANDOM
-        return arc4random() % ( x+1); 
+        return arc4random() % ( x+1);
 #else
         return rand() % (x+1);
 #endif // HAVE_ARC4RANDOM
@@ -1583,7 +1583,7 @@ char* basename(const char* name)
 {
         int i= 0;
         int c = 0;
-	
+
         while(1){
                 if(name[i] == '/'){
                         c = i+1;
@@ -1636,11 +1636,11 @@ int float_4d_test(void)
         int i,j,c,f;
         int dim1,dim2,dim3,dim4;
         dim1 = 2;
-	
+
         dim2 = 3;
         dim3 = 5;
         dim4 = 5;
-	
+
         RUNP(m = malloc_4d_float(dim1,dim2,dim3,dim4,0.0f));
 
         for(i =0;i < dim1;i++){
@@ -1652,10 +1652,10 @@ int float_4d_test(void)
                         }
                 }
         }
-	
+
         for(i =0;i < dim1;i++){
                 fprintf(stdout,"LEVEL: %d\n",i);
-		
+
                 for(j = 0; j < dim2;j++){
                         fprintf(stdout,"SUBLEVEL: %d\n",j);
                         for(c = 0; c < dim3;c++){
@@ -1669,8 +1669,8 @@ int float_4d_test(void)
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
-	
-	
+
+
         free_4d((void****)m);
         return OK;
 ERROR:
@@ -1684,10 +1684,10 @@ int float_3d_test(void)
         int i,j,c;
         int dim1,dim2,dim3;
         dim1 = 3;
-	
+
         dim2 = 5;
         dim3 = 5;
-	
+
         RUNP(m = malloc_3d_float(dim1,dim2,dim3,0.0f));
         for(i =0;i < dim1;i++){
                 for(j = 0; j < dim2;j++){
@@ -1696,10 +1696,10 @@ int float_3d_test(void)
                         }
                 }
         }
-	
+
         for(i =0;i < dim1;i++){
                 fprintf(stdout,"LEVEL: %d\n",i);
-		
+
                 for(j = 0; j < dim2;j++){
                         for(c = 0; c < dim3;c++){
                                 fprintf(stdout," %0.1f",m[i][j][c]);
@@ -1709,8 +1709,8 @@ int float_3d_test(void)
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
-	
-	
+
+
         free_3d((void***)m);
         return OK;
 ERROR:
@@ -1721,14 +1721,14 @@ int char_test(void)
 {
         int dim1,dim2,i,j;
         char** m = NULL;
-	
+
         DPRINTF1("Testing char 2D");
-	
+
         dim1 = 5;
         dim2 = 5;
-	
+
         RUNP(m = malloc_2d_char(m,dim1,dim2,0));
-	
+
         if(!m){
                 ERROR_MSG("malloc_2d_char failed");
         }
@@ -1776,7 +1776,7 @@ int char_test(void)
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
-	
+
         dim1 += 0;
         dim2 += 1;
         RUNP(m = malloc_2d_char(m,dim1,dim2,0));
@@ -1791,7 +1791,7 @@ int char_test(void)
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
-	
+
         dim1 = 3;
         dim2 = 3;
         RUNP(m = malloc_2d_char(m,dim1,dim2,0));
@@ -1806,8 +1806,8 @@ int char_test(void)
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
-	
-	
+
+
         dim1 = 10;
         dim2 = 10;
         RUNP(m = malloc_2d_char(m,dim1,dim2,0));
@@ -1822,7 +1822,7 @@ int char_test(void)
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
-	
+
         free_2d((void**) m);
         return OK;
 ERROR:
@@ -1834,9 +1834,9 @@ int int_test(void)
 {
         int dim1,dim2,i,j;
         int** m = NULL;
-	
+
         fprintf(stdout,"Testing int 2D\n");
-	
+
         dim1 = 5;
         dim2 = 5;
         RUNP(m = malloc_2d_int(m,dim1,dim2,0));
@@ -1872,7 +1872,7 @@ int int_test(void)
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
-	
+
         dim1 += 0;
         dim2 += 1;
         RUNP(m = malloc_2d_int(m,dim1,dim2,0));
@@ -1883,8 +1883,8 @@ int int_test(void)
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
-	
-	
+
+
         dim1 = 3;
         dim2 = 3;
         RUNP(m = malloc_2d_int(m,dim1,dim2,0));
@@ -1895,7 +1895,7 @@ int int_test(void)
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
-	
+
         dim1 = 10;
         dim2 = 10;
         RUNP(m = malloc_2d_int(m,dim1,dim2,0));
@@ -1906,7 +1906,7 @@ int int_test(void)
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
-	
+
         free_2d((void**) m);
         return OK;
 ERROR:
@@ -1918,9 +1918,9 @@ int float_test(void)
 {
         int dim1,dim2,i,j;
         float** m = NULL;
-	
+
         DPRINTF1("Testing float 2D");
-	
+
         dim1 = 5;
         dim2 = 5;
         RUNP(m = malloc_2d_float(m,dim1,dim2,0.0f));
@@ -1931,9 +1931,9 @@ int float_test(void)
         }
         for(i =0;i < dim1;i++){
                 for(j = 0; j < dim2;j++){
-			
+
                         fprintf(stdout," %0.1f",m[i][j]);
-			
+
                 }
                 fprintf(stdout,"\n");
         }
@@ -1958,7 +1958,7 @@ int float_test(void)
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
-	
+
         dim1 += 0;
         dim2 += 1;
         RUNP(m = malloc_2d_float(m,dim1,dim2,0.0f));
@@ -1969,7 +1969,7 @@ int float_test(void)
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
-	
+
         dim1 = 3;
         dim2 = 3;
         RUNP(m = malloc_2d_float(m,dim1,dim2,0.0f));
@@ -1980,7 +1980,7 @@ int float_test(void)
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
-	
+
         dim1 = 10;
         dim2 = 10;
         RUNP(m = malloc_2d_float(m,dim1,dim2,0.0f));
@@ -1991,7 +1991,7 @@ int float_test(void)
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
-	
+
         free_2d((void**) m);
         return OK;
 ERROR:
@@ -2003,12 +2003,12 @@ int double_test(void)
 {
         int dim1,dim2,i,j;
         double** m = NULL;
-	
+
         DPRINTF1("Testing double 2D");
-	
+
         dim1 = 5;
         dim2 = 5;
-	
+
         RUNP(m = malloc_2d_double(m,dim1,dim2,0.0));
         for(i =0;i < dim1;i++){
                 for(j = 0; j < dim2;j++){
@@ -2017,9 +2017,9 @@ int double_test(void)
         }
         for(i =0;i < dim1;i++){
                 for(j = 0; j < dim2;j++){
-			
+
                         fprintf(stdout," %0.1f",m[i][j]);
-			
+
                 }
                 fprintf(stdout,"\n");
         }
@@ -2044,7 +2044,7 @@ int double_test(void)
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
-	
+
         dim1 += 0;
         dim2 += 1;
         RUNP(m = malloc_2d_double(m,dim1,dim2,0.0));
@@ -2055,7 +2055,7 @@ int double_test(void)
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
-	
+
         dim1 = 3;
         dim2 = 3;
         RUNP(m = malloc_2d_double(m,dim1,dim2,0.0));
@@ -2066,7 +2066,7 @@ int double_test(void)
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
-	
+
         dim1 = 10;
         dim2 = 10;
         RUNP(m = malloc_2d_double(m,dim1,dim2,0.0));
@@ -2077,8 +2077,8 @@ int double_test(void)
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
-	
-	
+
+
         free_2d((void**) m);
         return OK;
 ERROR:
@@ -2098,66 +2098,66 @@ int main (int argc,char * const argv[])
         MFREE(p);
         char* my_str_seq  = NULL;
         struct char_struct* my_str = NULL;
-	
+
         tlog.echo_build_config();
-	
+
         fprintf(stdout,"Testing logging functions\n");
         LOG_MSG("Testing %s","the here and now.");
         tlog.log_message("TESTING");
         tlog.error(AT,"test error %d in stderr %s", 1,"this should go to stderr" );
         tlog.message(AT, "Here is a message %d", 100);
         tlog.warning(AT, "Oh dear I have a warning: %s","big warning to stdout");
-	
+
         tlog.set_logfile("testlog.txt");
         tlog.echo_build_config() ;
         tlog.set_logfile("00");
-	
+
         tlog.message(AT, "Here is a message %d", 666);
         tlog.log_message("TESTING TEE");
 
         tlog.error(AT,"test error %d in stderr %s", 2,"this should be tee'd" );
         //tlog.error(AT,"test TEE ERROR " );
-	
-	
+
+
         tlog.warning(AT, "Oh dear I have a warning: %s","big warning to be tee'd");
-	
+
         tlog.set_logfile(NULL);
-	
+
         tlog.warning(AT, "Oh dear I have a warning (not to be written to log...) : %s","big warning to be tee'd");
         ASSERT(1 == 1,"Of dear 1 in NOT equal to %d", 1);
-	
-	
+
+
         fprintf(stdout,"%'lld\n",MAX_MEMORY_LIMIT);
         fprintf(stdout,"Running libks sanity tests\n");
-	
+
         RUN(char_test() );
         char_test();
         int_test();
         float_test();
         double_test();
-	
+
         float_3d_test();
         float_4d_test();
-	
+
         p= NULL;
-	
+
         MCALLOC(p, 10,int);
 
         MFREE(p);
-	
-	
+
+
         MCALLOC(my_str, 1,struct char_struct);
 
         fprintf(stderr,"%d %s\n",	my_str->len,my_str->seq);
-	
+
         MMALLOC(my_str_seq, sizeof(char) * 10);
         my_str->seq =my_str_seq;
-	
+
         log_message("All is good");
         MFREE(my_str->seq);
         MFREE(my_str);
 
-	
+
         log_message("Yes %s is ","it");
         int i;
         for(i = 0; i < 100;i++){
@@ -2169,7 +2169,7 @@ int main (int argc,char * const argv[])
         DECLARE_CHK(MAIN,".")
 
                 RUN_CHECKPOINT(MAIN,float_4d_test(),cmd);
-	
+
         return EXIT_SUCCESS;
 ERROR:
         MFREE(my_str_seq);
