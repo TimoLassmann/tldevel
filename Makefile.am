@@ -21,7 +21,7 @@ PWRITESOURCES  = pwrite.h   pwrite.c
 libtldevel_a_SOURCES = $(TLDEVELSOURCES) $(RBTREESOURCES) $(RTRTREESOURCES) $(THRPOOLSOURCES) $(PWRITESOURCES)
 
 
-libhtsglue_a_SOURCES =  \
+# libhtsglue_a_SOURCES =  \
 htsglue.h \
 htsglue.c
 
@@ -52,9 +52,9 @@ libthrpool_ITEST_LDADD =
 
 
 
-libhtsglue_ITEST_SOURCES = $(libhtsglue_a_SOURCES) $(TLDEVELSOURCES)  $(RBTREESOURCES)
-libhtsglue_ITEST_CPPFLAGS  = $(AM_CPPFLAGS) $(HTSLIB_CPPFLAGS)      -DHTSITEST
-libhtsglue_ITEST_LDADD = $(HTSLIB_LDFLAGS)  libhts.a
+# libhtsglue_ITEST_SOURCES = $(libhtsglue_a_SOURCES) $(TLDEVELSOURCES)  $(RBTREESOURCES)
+# libhtsglue_ITEST_CPPFLAGS  = $(AM_CPPFLAGS) $(HTSLIB_CPPFLAGS)      -DHTSITEST
+# libhtsglue_ITEST_LDADD = $(HTSLIB_LDFLAGS)  libhts.a
 
 
 libpwrite_ITEST_SOURCES = $(PWRITESOURCES)
