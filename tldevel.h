@@ -217,7 +217,7 @@ typedef struct {
         extern type *alloc_1D_array_size_ ##type (type *array, int dim1);
 
 #define ALLOC_2D_ARRAY_DEF(type)                                            \
-        extern type **alloc_2D_array_size_ ##type (type **array, int dim1,int dim2);
+        extern type **alloc_2D_array_size_ ##type (type **array, int dim1,int dim2, type fill_value);
 
 
 #define FREE_1D_ARRAY_DEF(type)                          \
@@ -274,7 +274,7 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t)
                                         int_fast32_t*: alloc_1D_array_size_int_fast32_t \
                 )
 
-#define SELECTGALLOC_3(_1, _2, _3) _Generic((_1),                       \
+#define SELECTGALLOC_4(_1, _2, _3, _4) _Generic((_1),                      \
                                             char**: _Generic((_2),      \
                                                              int: alloc_2D_array_size_char \
                                                     ),                  \
@@ -360,7 +360,7 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t)
 
 
 #define ALLOC_2D_ARRAY(type)                                            \
-        type **alloc_2D_array_size_ ##type (type **array, int dim1,int dim2) { \
+        type **alloc_2D_array_size_ ##type (type **array, int dim1,int dim2,type fill_value) { \
                 int i;                                                  \
                 mem_i* h = NULL;                                        \
                 type** ptr_t = NULL;                                    \
@@ -375,6 +375,8 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t)
                         h = (mem_i*)tmp;                                \
                         h->dim1  = dim1;                                \
                         h->dim2  = dim2;                                \
+                        max1 = dim1;                                    \
+                        max2 = dim2;                                    \
                         ptr_t =(type**) (tmp + sizeof(mem_i));          \
                         for(i = 0;i< dim1;i++){                         \
                                 ptr_t[i] = ptr_tt + i * dim2;           \
@@ -402,6 +404,10 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t)
                                 ptr_t[i] = ptr_tt + i * max2;           \
                         }                                               \
                         array = ptr_t;                                  \
+                }                                                       \
+                max1 = max1 * max2;                                     \
+                for(i = max1-1;i >= 0;i--){                             \
+                        ptr_tt[i] = fill_value;                         \
                 }                                                       \
                 return array;                                           \
         ERROR:                                                          \

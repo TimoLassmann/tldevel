@@ -15,7 +15,7 @@ int main(int argc, char** argv)
 
         MMALLOC(test, sizeof(struct test));
         test->a = NULL;
-        test->a = galloc(test->a,2,4);
+        test->a = galloc(test->a,2,4,0.5f);
         gfree(test->a);
         MFREE(test);
         tmp= galloc(tmp,1);
@@ -32,15 +32,27 @@ int main(int argc, char** argv)
         gfree(tmp);
 
         int** aligator = NULL;
+        int i,j;
 
         fprintf(stdout,"%ld %ld\n", sizeof *aligator, sizeof **aligator);
-        aligator = galloc(aligator, 4,4);
+        aligator = galloc(aligator, 4,4,0);
         fprintf(stdout,"len: %d\n", DIM1(aligator));
         fprintf(stdout,"len: %d\n", DIM2(aligator));
-        aligator = galloc(aligator, 3,40);
+        for(i = 0; i < DIM1(aligator);i++){
+                for(j = 0; j < DIM2(aligator);j++){
+                        aligator[i][j] = i*j + j;
+                }
+        }
+        aligator = galloc(aligator, 8,8,3);
         fprintf(stdout,"len: %d\n", DIM1(aligator));
         fprintf(stdout,"len: %d\n", DIM2(aligator));
-        
+        for(i = 0; i < DIM1(aligator);i++){
+                for(j = 0; j < DIM2(aligator);j++){
+                        fprintf(stdout,"%d ",aligator[i][j]);
+                }
+                fprintf(stdout,"\n");
+        }
+        fprintf(stdout,"\n");
         gfree(aligator);
         return 0;
 ERROR:
