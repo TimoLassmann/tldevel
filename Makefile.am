@@ -25,6 +25,9 @@ libtldevel_a_SOURCES = $(TLDEVELSOURCES) $(RBTREESOURCES) $(RTRTREESOURCES) $(TH
 htsglue.h \
 htsglue.c
 
+AM_LDFLAGS = @DEAD_STRIP@
+AM_LDFLAGS += -Wno-undef
+
 
 TESTS= libtldevel_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST  libpwrite_ITEST pwrite_test.sh
 
@@ -32,11 +35,16 @@ TESTS_ENVIRONMENT = \
 	$(VALGRIND)
 
 
-check_PROGRAMS =  libtldevel_ITEST   rb_ITEST librtree_ITEST libthrpool_ITEST libpwrite_ITEST
+check_PROGRAMS =  libtldevel_ITEST   rb_ITEST librtree_ITEST libthrpool_ITEST libpwrite_ITEST mem_ITEST
 
 libtldevel_ITEST_SOURCES = $(TLDEVELSOURCES)
 libtldevel_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DITEST
 libtldevel_ITEST_LDADD =
+
+mem_ITEST_SOURCES = mem_itest.c
+mem_ITEST_CPPFLAGS  = $(AM_CPPFLAGS) 
+mem_ITEST_LDADD = libtldevel.a
+
 
 librtree_ITEST_SOURCES = $(RTRTREESOURCES) $(TLDEVELSOURCES)
 librtree_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DRTRITEST

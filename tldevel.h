@@ -7,6 +7,8 @@
 #include "config.h"
 #endif
 
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -15,10 +17,9 @@
 #include <stdint.h>
 #include <sys/stat.h>
 #include <math.h>
+#include <ctype.h>
 
-#define MESSAGE_MARGIN 22
-#define TYPE_MARGIN 8
-
+/* Basic stuff */
 #define OK              0
 #define FAIL            1
 
@@ -29,15 +30,149 @@
 #define TOSTRING(x) STRINGIFY(x)
 #define AT __FILE__ " line " TOSTRING(__LINE__)
 
-#define MCALLOC(p,count,type) do {                                      \
-                if (p != NULL){                                         \
-                        ERROR_MSG( "calloc on a nun-null pointer");     \
-                        goto ERROR;                                     \
-                }                                                       \
-                if (((p) = calloc(count, sizeof(type))) == NULL) {      \
-                        ERROR_MSG("calloc of n=%d of type %s failed", count, #type); \
-                        goto ERROR;                                     \
-                }                                                       \
+#define MACRO_MIN(a,b)          (((a)<(b))?(a):(b))
+#define MACRO_MAX(a,b)          (((a)>(b))?(a):(b))
+
+#define ARGN(...) ARGN_(__VA_ARGS__)
+#define ARGN_(_0, _1, _2, _3 , N, ...) N
+
+#define NARG(...) ARGN(__VA_ARGS__ COMMA(__VA_ARGS__) 4, 3, 2, 1, 0)
+#define HAS_COMMA(...) ARGN(__VA_ARGS__, 1, 1, 0)
+
+#define SET_COMMA(...) ,
+
+#define COMMA(...) SELECT_COMMA                     \
+        (                                           \
+                HAS_COMMA(__VA_ARGS__),             \
+                HAS_COMMA(__VA_ARGS__ ()),          \
+                HAS_COMMA(SET_COMMA __VA_ARGS__),   \
+                HAS_COMMA(SET_COMMA __VA_ARGS__),   \
+                HAS_COMMA(SET_COMMA __VA_ARGS__ ()) \
+                )
+
+#define SELECT_COMMA(_0, _1, _2, _3, _4) SELECT_COMMA_(_0, _1, _2, _3, _4)
+#define SELECT_COMMA_(_0, _1, _2, _3, _4) COMMA_ ## _0 ## _1 ## _2 ## _3 ## _4
+
+#define COMMA_00000 ,
+#define COMMA_00001
+#define COMMA_00010 ,
+#define COMMA_00011 ,
+#define COMMA_00100 ,
+#define COMMA_00101 ,
+#define COMMA_00110 ,
+#define COMMA_00111 ,
+#define COMMA_01000 ,
+#define COMMA_01001 ,
+#define COMMA_01010 ,
+#define COMMA_01011 ,
+#define COMMA_01100 ,
+#define COMMA_01101 ,
+#define COMMA_01110 ,
+#define COMMA_01111 ,
+#define COMMA_10000 ,
+#define COMMA_10001 ,
+#define COMMA_10010 ,
+#define COMMA_10011 ,
+#define COMMA_10100 ,
+#define COMMA_10101 ,
+#define COMMA_10110 ,
+#define COMMA_10111 ,
+#define COMMA_11000 ,
+#define COMMA_11001 ,
+#define COMMA_11010 ,
+#define COMMA_11011 ,
+#define COMMA_11100 ,
+#define COMMA_11101 ,
+#define COMMA_11110 ,
+#define COMMA_11111 ,
+
+
+/* END Basic stuff */
+
+
+
+
+/* Start logging block */
+
+
+#define MESSAGE_MARGIN 22
+#define TYPE_MARGIN 8
+
+extern void error(const char *location, const char *format, ...);
+extern void warning(const char *location, const char *format, ...);
+extern void log_message( const char *format, ...);
+extern void message(const char *location, const char *format, ...);
+
+extern int log_command_line(const int argc,char* const argv[]);
+extern char* make_cmd_line(const int argc,char* const argv[]);
+
+extern char build_config[];
+extern int print_program_header(char* const argv[],const char* description);
+//extern void echo_build_config (void);
+
+
+
+#define ERROR_MSG(...) do {                     \
+                error(AT, __VA_ARGS__ );   \
+                goto ERROR;                     \
+        }while (0)
+
+#define WARNING_MSG(...) do {                   \
+                warning(AT, __VA_ARGS__ );	\
+        }while (0)
+
+
+#define LOG_MSG(...) do {                         \
+                log_message( __VA_ARGS__ );	\
+        }while (0)
+
+#define CODE_MSG(...) do {                       \
+                message(AT, __VA_ARGS__ );      \
+        }while (0)
+
+
+#define ASSERT(TEST,...)  if(!(TEST)) {         \
+                error(AT,#TEST );          \
+                error(AT, ##__VA_ARGS__);  \
+                goto ERROR;                     \
+        }
+
+#define ADDFAILED(x)  "Function \"" TOSTRING(x) "\" failed."
+
+#define RUN(EXP) do {                               \
+                if((EXP) != OK){                    \
+                        ERROR_MSG(ADDFAILED(EXP));	\
+                }                                   \
+        }while (0)
+
+#define RUNP(EXP) do {                              \
+                if((EXP) == NULL){                  \
+                        ERROR_MSG(ADDFAILED(EXP));	\
+                }                                   \
+        }while (0)
+
+
+
+
+/****************************/
+/* End of logging functions */
+/****************************/
+
+/******************************/
+/* Start of memory functions  */
+/******************************/
+
+typedef struct {
+        int dim1;
+        int dim2;
+} mem_i;
+
+#define MFREE(p) do {                                           \
+                if(p){                                          \
+                        free(p);                                \
+                }else{                                          \
+                        WARNING_MSG("free on a null pointer");  \
+                }                                               \
         } while (0)
 
 #define MMALLOC(p,size) do {                                          \
@@ -55,98 +190,258 @@
                 }                                                     \
         } while (0)
 
-#define MREALLOC(p, newsize) do {                                       \
+#define MREALLOC(p, size) do {                                          \
                 void *tmpp;                                             \
+                if(size == 0){                                       \
+                        ERROR_MSG("malloc of size %d failed", size);    \
+                        goto ERROR;                                     \
+                }                                                       \
                 if ((p) == NULL) {                                      \
-                        tmpp = malloc(newsize);                         \
+                        tmpp = malloc(size);                            \
                 }else {                                                 \
-                        tmpp = realloc((p), (newsize));                 \
+                        tmpp = realloc((p), (size));                    \
                 }                                                       \
                 if (tmpp != NULL){                                      \
                         p = tmpp;                                       \
                 }else {                                                 \
-                        ERROR_MSG("realloc for size %d failed", newsize); \
+                        ERROR_MSG("realloc for size %d failed", size); \
                         goto ERROR;                                     \
                 }} while (0)
 
-#define ADDFAILED(x)  "Function \"" TOSTRING(x) "\" failed."
-
-#define RUN(EXP) do {                                                 \
-                                   if((EXP) != OK){                   \
-                                           ERROR_MSG(ADDFAILED(EXP));	\
-                                   }                                  \
-                           }while (0)
-
-#define RUNP(EXP) do {                                                \
-                                   if((EXP) == NULL){                 \
-                                           ERROR_MSG(ADDFAILED(EXP));	\
-                                   }                                  \
-                           }while (0)
-
-#define ERROR_MSG(...) do {                                       \
-                                   tlog.error(AT, __VA_ARGS__ );	\
-                                   goto ERROR;                    \
-                           }while (0)
-
-#define WARNING_MSG(...) do {                                       \
-                                   tlog.warning(AT, __VA_ARGS__ );	\
-                           }while (0)
+#define DIM1(X) ((mem_i*)((void*)X - sizeof(mem_i)))->dim1
+#define DIM2(X) ((mem_i*)((void*)X - sizeof(mem_i)))->dim2
 
 
-#define LOG_MSG(...) do {                                           \
-                                   tlog.log_message( __VA_ARGS__ );	\
-                           }while (0)
 
-#define UNFORMAT_MSG(...) do {                                      \
-                                   tlog.unformatted( __VA_ARGS__ );	\
-                           }while (0)
+#define ALLOC_1D_ARRAY_DEF(type)                                            \
+        extern type *alloc_1D_array_size_ ##type (type *array, int dim1);
+
+#define ALLOC_2D_ARRAY_DEF(type)                                            \
+extern type **alloc_2D_array_size_ ##type (type **array, int dim1,int dim2);
+
+
+#define FREE_1D_ARRAY_DEF(type)                          \
+        extern void free_1d_array_ ##type(type *array);
+
+#define FREE_2D_ARRAY_DEF(type)                         \
+        extern void free_2d_array_ ##type(type **array);
+
+FREE_1D_ARRAY_DEF(int)
+FREE_1D_ARRAY_DEF(float)
+FREE_1D_ARRAY_DEF(double)
+FREE_1D_ARRAY_DEF(int_fast32_t)
+
+FREE_2D_ARRAY_DEF(int)
+FREE_2D_ARRAY_DEF(float)
+FREE_2D_ARRAY_DEF(double)
+FREE_2D_ARRAY_DEF(int_fast32_t)
+
+ALLOC_1D_ARRAY_DEF(int)
+ALLOC_1D_ARRAY_DEF(float)
+ALLOC_1D_ARRAY_DEF(double)
+ALLOC_1D_ARRAY_DEF(int_fast32_t)
+
+ALLOC_2D_ARRAY_DEF(int)
+ALLOC_2D_ARRAY_DEF(float)
+ALLOC_2D_ARRAY_DEF(double)
+ALLOC_2D_ARRAY_DEF(int_fast32_t)
+
+
+
+//int  *alloc_1D_array_size_int (int *array, int dim1);
+
+#define galloc(...) SELECTGALLOC(__VA_ARGS__)(__VA_ARGS__)
+
+#define SELECTGALLOC(...) CONCAT(SELECTGALLOC_, NARG(__VA_ARGS__))(__VA_ARGS__)
+#define CONCAT(X, Y) CONCAT_(X, Y)
+#define CONCAT_(X, Y) X ## Y
+
+#define SELECTGALLOC_0()
+
+#define SELECTGALLOC_1(_1) _Generic ((_1),          \
+                               default: galloc_void \
+                )
+
+#define SELECTGALLOC_2(_1, _2) _Generic((_1),                           \
+                                  int*: alloc_1D_array_size_int,        \
+                                  float*:  alloc_1D_array_size_float,   \
+                                  double*:alloc_1D_array_size_double,   \
+                                  int_fast32_t*: alloc_1D_array_size_int_fast32_t \
+                )
+
+#define SELECTGALLOC_3(_1, _2, _3) _Generic((_1),                       \
+                                      int**: _Generic((_2),              \
+                                                     int: alloc_2D_array_size_int \
+                                              ),                        \
+                                      float**: _Generic((_2),            \
+                                                       int: alloc_2D_array_size_float \
+                                              ),                        \
+                                      double**: _Generic((_2),           \
+                                                        int: alloc_2D_array_size_double \
+                                              ),                        \
+                                      int_fast32_t**:  _Generic((_2),    \
+                                                               int: alloc_2D_array_size_int_fast32_t \
+                                              )                         \
+                )
+
+
+
+
+/**************************/
+/* All the free functions */
+/**************************/
+
+#define FREE_1D_ARRAY(type)                          \
+        void free_1d_array_ ##type(type *array){     \
+                MFREE((void*)array - sizeof(mem_i));  \
+        }
+
+
+#define FREE_2D_ARRAY(type)                         \
+        void free_2d_array_ ##type(type **array){   \
+                 MFREE(array[0]);                     \
+                 MFREE((void*)array- sizeof(mem_i));  \
+        }
+
+#define gfree(X) _Generic((X),                                          \
+                          int*: free_1d_array_int,                      \
+                          float*: free_1d_array_float,                  \
+                          double*: free_1d_array_double,                \
+                          int_fast32_t*: free_1d_array_int_fast32_t,    \
+                          int**: free_2d_array_int,                     \
+                          float**: free_2d_array_float,                 \
+                          double**: free_2d_array_double,               \
+                          int_fast32_t**: free_2d_array_int_fast32_t   \
+                )(X)
+
+
+
+
+
+
+/***************************************************************/
+/* Mildely more clever versions for allocing 1D and 2d arrays. */
+/***************************************************************/
+
+
+#define ALLOC_1D_ARRAY(type)                                            \
+        type *alloc_1D_array_size_ ##type (type *array, int dim1) {     \
+                mem_i* h = NULL;                                        \
+                void* tmp = NULL;                                       \
+                if(array == NULL){                                      \
+                        MMALLOC(tmp,(dim1  * sizeof *array + sizeof(mem_i))); \
+                }else{                                                  \
+                        tmp = array;                                    \
+                        tmp = tmp - sizeof(mem_i);                      \
+                        h = (mem_i*)(tmp);                              \
+                        if(h->dim1 < dim1){                             \
+                                MREALLOC(tmp,(dim1  * sizeof *array + sizeof(mem_i))); \
+                        }else{                                          \
+                                return tmp + sizeof(mem_i);             \
+                        }                                               \
+                }                                                       \
+                h = (mem_i*)(tmp);                                      \
+                h->dim1  = dim1;                                        \
+                h->dim2  = 0;                                           \
+                return (type*)  (tmp + sizeof(mem_i));                  \
+        ERROR:                                                          \
+                return NULL;                                            \
+        }
+
+
+#define ALLOC_2D_ARRAY(type)                                            \
+        type **alloc_2D_array_size_ ##type (type **array, int dim1,int dim2) { \
+                int i;                                                  \
+                mem_i* h = NULL;                                        \
+                type** ptr_t = NULL;                                    \
+                type* ptr_tt = NULL;                                    \
+                void* tmp = NULL;                                       \
+                int max1, max2;                                         \
+                ASSERT((dim1 > 0), "Malloc 2D double failed: dim1:%d\n",dim1); \
+                ASSERT((dim2 > 0), "Malloc 2D double failed: dim2:%d\n",dim2); \
+                if(array == NULL){                                      \
+                        MMALLOC(tmp,(dim1  * sizeof *array+ sizeof(mem_i))); \
+                        MMALLOC(ptr_tt,((dim1 * dim2)  * sizeof **array)); \
+                        h = (mem_i*)tmp;                                \
+                        h->dim1  = dim1;                                \
+                        h->dim2  = dim2;                                \
+                        ptr_t =(type**) (tmp + sizeof(mem_i));          \
+                        for(i = 0;i< dim1;i++){                         \
+                                ptr_t[i] = ptr_tt + i * dim2;           \
+                        }                                               \
+                        array = ptr_t;                                  \
+                }else{                                                  \
+                        ptr_tt = array[0];                              \
+                        tmp = (void*)(array) -sizeof(mem_i) ;           \
+                        h = (mem_i*)tmp;                                \
+                        max1 = MACRO_MAX(dim1,h->dim1);                 \
+                        max2 = MACRO_MAX(dim2,h->dim2);                 \
+                        if(dim1 > h->dim1){                             \
+                                MREALLOC(tmp,(dim1  * sizeof *array+ sizeof(mem_i))); \
+                                MREALLOC(ptr_tt,((dim1* max2)  * sizeof **array )); \
+                        }else if(dim2 > h->dim2){                       \
+                                MREALLOC(ptr_tt,((max1 * dim2) * sizeof **array )); \
+                        }else{                                          \
+                                return array;                           \
+                        }                                               \
+                        h = (mem_i*)tmp;                                \
+                        h->dim1 = max1;                                 \
+                        h->dim2 = max2;                                 \
+                        ptr_t = (type**) (tmp + sizeof(mem_i));         \
+                        for(i = 0; i < max1;i++){                       \
+                                ptr_t[i] = ptr_tt + i * max2;           \
+                        }                                               \
+                        array = ptr_t;                                  \
+                }                                                       \
+                return array;                                           \
+        ERROR:                                                          \
+                return NULL;                                            \
+        }
+
+
+
+/******************************/
+/* End of memory functions  */
+/******************************/
+
+
+/* Logging DONE */
+#define MCALLOC(p,count,type) do {                                      \
+                if (p != NULL){                                         \
+                        ERROR_MSG( "calloc on a nun-null pointer");     \
+                        goto ERROR;                                     \
+                }                                                       \
+                if (((p) = calloc(count, sizeof(type))) == NULL) {      \
+                        ERROR_MSG("calloc of n=%d of type %s failed", count, #type); \
+                        goto ERROR;                                     \
+                }                                                       \
+        } while (0)
 
 #if (DEBUGLEVEL >= 1)
-#define DPRINTF1(...)  tlog.message(AT,##__VA_ARGS__);
-#define DCHECK1(TEST,...) if(!(TEST)) {tlog.error(AT,#TEST );tlog.error(AT,##__VA_ARGS__);goto ERROR;}
-
-#define MFREE(p) do {                                                   \
-                                   if(p){                               \
-                                           free(p);                     \
-                                           p = NULL;                    \
-                                   }else{                               \
-                                           WARNING_MSG("free on a null pointer"); \
-                                   }                                    \
-                           } while (0)
-
+#define DPRINTF1(...)  message(AT,##__VA_ARGS__);
+#define DCHECK1(TEST,...) if(!(TEST)) {error(AT,#TEST );error(AT,##__VA_ARGS__);goto ERROR;}
 #else
 #define DPRINTF1(...)
 #define DCHECK1(A,...)
-
-#define MFREE(p) do {                           \
-                                   free(p);			\
-                                   p = NULL;    \
-                           } while (0)
 #endif
 
 #if (DEBUGLEVEL >= 2)
-#define DPRINTF2(...)  tlog.message(AT,##__VA_ARGS__);
-#define DCHECK2(TEST,...)  if(!(TEST)) {tlog.error(AT,#TEST );tlog.error(AT,##__VA_ARGS__);goto ERROR;}
+#define DPRINTF2(...)  message(AT,##__VA_ARGS__);
+#define DCHECK2(TEST,...)  if(!(TEST)) {error(AT,#TEST );error(AT,##__VA_ARGS__);goto ERROR;}
 #else
 #define DPRINTF2(...)
 #define DCHECK2(TEST,...)
 #endif
+
 #if (DEBUGLEVEL >= 3)
-#define DPRINTF3(...)  tlog.message(AT,##__VA_ARGS__);
-#define DCHECK3(TEST,...)  if(!(TEST)) {tlog.error(AT,#TEST );tlog.error(AT,##__VA_ARGS__);goto ERROR;}
+#define DPRINTF3(...)  message(AT,##__VA_ARGS__);
+#define DCHECK3(TEST,...)  if(!(TEST)) {error(AT,#TEST );error(AT,##__VA_ARGS__);goto ERROR;}
 #else
 #define DPRINTF3(...)
 #define DCHECK3(TEST,...)
 #endif
 
-#define ASSERT(TEST,...)  if(!(TEST)) {  tlog.error(AT,#TEST );tlog.error(AT, ##__VA_ARGS__);goto ERROR;}
-
-#define MACRO_MIN(a,b)          (((a)<(b))?(a):(b))
-#define MACRO_MAX(a,b)          (((a)>(b))?(a):(b))
-
 #define LOGSUM_SIZE 1600000
-
-
 #define SCALE 100000.0
 
 #define DECLARE_TIMER(n) clock_t _start_##n; clock_t _stop_##n;
@@ -161,7 +456,7 @@
                                            RUN(EXP);                    \
                                            RUN(set_checkpoint_file(chk_##n,TOSTRING(EXP),AT,CMD)); \
                                    }else{                               \
-                                           tlog.log_message("Skipping over: %s (%s)",TOSTRING(EXP),AT); \
+                                           log_message("Skipping over: %s (%s)",TOSTRING(EXP),AT); \
                                    }                                    \
                                    chk_##n->test_num += 1;              \
                            }while (0)
@@ -180,27 +475,26 @@
                                    int test_num;
                            };
 
-        typedef struct {
-                void (*log_message )(const char *format, ...);
-                void (*message)(const char *location, const char *format, ...);
-                void (*warning)(const char *location, const char *format, ...);
-                void (*error)(const char *location, const char *format, ...);
-                void (*unformatted) ( const char *format, ...);
-                void (*echo_build_config) (void);
-                void (*print_program_description) (char *const argv[],const char* description);
-                int (*  set_logfile)(char* logfilename);
-        } tlog_namespace;
+        /* typedef struct { */
+        /*         void (*log_message )(const char *format, ...); */
+        /*         void (*message)(const char *location, const char *format, ...); */
+        /*         void (*warning)(const char *location, const char *format, ...); */
+        /*         void (*error)(const char *location, const char *format, ...); */
+        /*         void (*unformatted) ( const char *format, ...); */
+        /*         void (*echo_build_config) (void); */
+        /*         void (*print_program_description) (char *const argv[],const char* description); */
+        /*         int (*  set_logfile)(char* logfilename); */
+        /* } tlog_namespace; */
 
-        extern tlog_namespace  tlog;
+        /* extern tlog_namespace  tlog; */
 
-        extern char build_config[];
+        /* extern char build_config[]; */
 
         float logsum_lookup[LOGSUM_SIZE];
 
 
         extern int print_program_header(char * const argv[],const char* description);
-        extern int log_command_line(const int argc,char* const argv[]);
-        extern char* make_cmd_line(const int argc,char* const argv[]);
+
 
         extern int get_time(char* time_ptr, int size);
         extern int my_file_exists(char* name);
