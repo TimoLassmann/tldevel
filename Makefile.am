@@ -29,7 +29,7 @@ AM_LDFLAGS = @DEAD_STRIP@
 AM_LDFLAGS += -Wno-undef
 
 
-TESTS= libtldevel_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST  libpwrite_ITEST pwrite_test.sh
+TESTS= libtldevel_ITEST mem_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST  libpwrite_ITEST pwrite_test.sh
 
 TESTS_ENVIRONMENT = \
 	$(VALGRIND)
@@ -42,7 +42,7 @@ libtldevel_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DITEST
 libtldevel_ITEST_LDADD =
 
 mem_ITEST_SOURCES = mem_itest.c
-mem_ITEST_CPPFLAGS  = $(AM_CPPFLAGS) 
+mem_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)
 mem_ITEST_LDADD = libtldevel.a
 
 
