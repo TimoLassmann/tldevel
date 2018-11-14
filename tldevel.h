@@ -217,7 +217,7 @@ typedef struct {
         extern type *alloc_1D_array_size_ ##type (type *array, int dim1);
 
 #define ALLOC_2D_ARRAY_DEF(type)                                            \
-extern type **alloc_2D_array_size_ ##type (type **array, int dim1,int dim2);
+        extern type **alloc_2D_array_size_ ##type (type **array, int dim1,int dim2);
 
 
 #define FREE_1D_ARRAY_DEF(type)                          \
@@ -226,21 +226,25 @@ extern type **alloc_2D_array_size_ ##type (type **array, int dim1,int dim2);
 #define FREE_2D_ARRAY_DEF(type)                         \
         extern void free_2d_array_ ##type(type **array);
 
+FREE_1D_ARRAY_DEF(char)
 FREE_1D_ARRAY_DEF(int)
 FREE_1D_ARRAY_DEF(float)
 FREE_1D_ARRAY_DEF(double)
 FREE_1D_ARRAY_DEF(int_fast32_t)
 
+FREE_2D_ARRAY_DEF(char)
 FREE_2D_ARRAY_DEF(int)
 FREE_2D_ARRAY_DEF(float)
 FREE_2D_ARRAY_DEF(double)
 FREE_2D_ARRAY_DEF(int_fast32_t)
 
+ALLOC_1D_ARRAY_DEF(char)
 ALLOC_1D_ARRAY_DEF(int)
 ALLOC_1D_ARRAY_DEF(float)
 ALLOC_1D_ARRAY_DEF(double)
 ALLOC_1D_ARRAY_DEF(int_fast32_t)
 
+ALLOC_2D_ARRAY_DEF(char)
 ALLOC_2D_ARRAY_DEF(int)
 ALLOC_2D_ARRAY_DEF(float)
 ALLOC_2D_ARRAY_DEF(double)
@@ -263,25 +267,29 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t)
                 )
 
 #define SELECTGALLOC_2(_1, _2) _Generic((_1),                           \
-                                  int*: alloc_1D_array_size_int,        \
-                                  float*:  alloc_1D_array_size_float,   \
-                                  double*:alloc_1D_array_size_double,   \
-                                  int_fast32_t*: alloc_1D_array_size_int_fast32_t \
+                                        char*: alloc_1D_array_size_char, \
+                                        int*: alloc_1D_array_size_int,  \
+                                        float*:  alloc_1D_array_size_float, \
+                                        double*:alloc_1D_array_size_double, \
+                                        int_fast32_t*: alloc_1D_array_size_int_fast32_t \
                 )
 
 #define SELECTGALLOC_3(_1, _2, _3) _Generic((_1),                       \
-                                      int**: _Generic((_2),              \
-                                                     int: alloc_2D_array_size_int \
-                                              ),                        \
-                                      float**: _Generic((_2),            \
-                                                       int: alloc_2D_array_size_float \
-                                              ),                        \
-                                      double**: _Generic((_2),           \
-                                                        int: alloc_2D_array_size_double \
-                                              ),                        \
-                                      int_fast32_t**:  _Generic((_2),    \
-                                                               int: alloc_2D_array_size_int_fast32_t \
-                                              )                         \
+                                            char**: _Generic((_2),      \
+                                                             int: alloc_2D_array_size_char \
+                                                    ),                  \
+                                            int**: _Generic((_2),       \
+                                                            int: alloc_2D_array_size_int \
+                                                    ),                  \
+                                            float**: _Generic((_2),     \
+                                                              int: alloc_2D_array_size_float \
+                                                    ),                  \
+                                            double**: _Generic((_2),    \
+                                                               int: alloc_2D_array_size_double \
+                                                    ),                  \
+                                            int_fast32_t**:  _Generic((_2), \
+                                                                      int: alloc_2D_array_size_int_fast32_t \
+                                                    )                   \
                 )
 
 
@@ -291,27 +299,29 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t)
 /* All the free functions */
 /**************************/
 
-#define FREE_1D_ARRAY(type)                          \
-        void free_1d_array_ ##type(type *array){     \
+#define FREE_1D_ARRAY(type)                           \
+        void free_1d_array_ ##type(type *array){      \
                 MFREE((void*)array - sizeof(mem_i));  \
         }
 
 
 #define FREE_2D_ARRAY(type)                         \
         void free_2d_array_ ##type(type **array){   \
-                 MFREE(array[0]);                     \
-                 MFREE((void*)array- sizeof(mem_i));  \
+                MFREE(array[0]);                    \
+                MFREE((void*)array- sizeof(mem_i)); \
         }
 
-#define gfree(X) _Generic((X),                                          \
-                          int*: free_1d_array_int,                      \
-                          float*: free_1d_array_float,                  \
-                          double*: free_1d_array_double,                \
-                          int_fast32_t*: free_1d_array_int_fast32_t,    \
-                          int**: free_2d_array_int,                     \
-                          float**: free_2d_array_float,                 \
-                          double**: free_2d_array_double,               \
-                          int_fast32_t**: free_2d_array_int_fast32_t   \
+#define gfree(X) _Generic((X),                                        \
+                          char*: free_1d_array_char,                  \
+                          int*: free_1d_array_int,                    \
+                          float*: free_1d_array_float,                \
+                          double*: free_1d_array_double,              \
+                          int_fast32_t*: free_1d_array_int_fast32_t,  \
+                          char**: free_2d_array_char,                 \
+                          int**: free_2d_array_int,                   \
+                          float**: free_2d_array_float,               \
+                          double**: free_2d_array_double,             \
+                          int_fast32_t**: free_2d_array_int_fast32_t  \
                 )(X)
 
 

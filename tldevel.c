@@ -12,19 +12,23 @@ static void vmessage(FILE* f_ptr,const char *location, const char *format,  va_l
 static void print_program_description(char * const argv[],const char* description);
 static void echo_build_config (void);
 
+FREE_1D_ARRAY(char)
 FREE_1D_ARRAY(int)
 FREE_1D_ARRAY(float)
 FREE_1D_ARRAY(double)
 FREE_1D_ARRAY(int_fast32_t)
+FREE_2D_ARRAY(char)
 FREE_2D_ARRAY(int)
 FREE_2D_ARRAY(float)
 FREE_2D_ARRAY(double)
 FREE_2D_ARRAY(int_fast32_t)
 
+ALLOC_1D_ARRAY(char)
 ALLOC_1D_ARRAY(int)
 ALLOC_1D_ARRAY(float)
 ALLOC_1D_ARRAY(double)
 ALLOC_1D_ARRAY(int_fast32_t)
+ALLOC_2D_ARRAY(char)
 ALLOC_2D_ARRAY(int)
 ALLOC_2D_ARRAY(float)
 ALLOC_2D_ARRAY(double)
