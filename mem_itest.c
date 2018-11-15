@@ -32,7 +32,7 @@ int main(int argc, char** argv)
         gfree(tmp);
 
         int** aligator = NULL;
-        int i,j;
+        int i,j,c =0;
 
         fprintf(stdout,"%ld %ld\n", sizeof *aligator, sizeof **aligator);
         aligator = galloc(aligator, 4,4,0);
@@ -40,20 +40,48 @@ int main(int argc, char** argv)
         fprintf(stdout,"len: %d\n", DIM2(aligator));
         for(i = 0; i < DIM1(aligator);i++){
                 for(j = 0; j < DIM2(aligator);j++){
-                        aligator[i][j] = i*j + j;
+                        aligator[i][j] = c;
+                        fprintf(stdout,"%*d ",3,aligator[i][j]);
+                        c++;
                 }
+                fprintf(stdout,"\n");
         }
-        aligator = galloc(aligator, 8,8,3);
+        fprintf(stdout,"\n");
+        fprintf(stdout,"\n");
+        aligator = galloc(aligator, 4,6,3);
         fprintf(stdout,"len: %d\n", DIM1(aligator));
         fprintf(stdout,"len: %d\n", DIM2(aligator));
         for(i = 0; i < DIM1(aligator);i++){
                 for(j = 0; j < DIM2(aligator);j++){
-                        fprintf(stdout,"%d ",aligator[i][j]);
+                        fprintf(stdout,"%*d ",3,aligator[i][j]);
+                }
+                fprintf(stdout,"\n");
+        }
+        fprintf(stdout,"\n");
+
+        aligator = galloc(aligator, 6,6,8);
+        fprintf(stdout,"len: %d\n", DIM1(aligator));
+        fprintf(stdout,"len: %d\n", DIM2(aligator));
+        for(i = 0; i < DIM1(aligator);i++){
+                for(j = 0; j < DIM2(aligator);j++){
+                        fprintf(stdout,"%*d ",3,aligator[i][j]);
+                }
+                fprintf(stdout,"\n");
+        }
+        fprintf(stdout,"\n");
+
+        aligator = galloc(aligator, 5,7,9);
+        fprintf(stdout,"len: %d\n", DIM1(aligator));
+        fprintf(stdout,"len: %d\n", DIM2(aligator));
+        for(i = 0; i < DIM1(aligator);i++){
+                for(j = 0; j < DIM2(aligator);j++){
+                        fprintf(stdout,"%*d ",3,aligator[i][j]);
                 }
                 fprintf(stdout,"\n");
         }
         fprintf(stdout,"\n");
         gfree(aligator);
+
         return 0;
 ERROR:
         return 1;

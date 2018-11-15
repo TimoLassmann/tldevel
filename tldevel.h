@@ -364,12 +364,13 @@ FREE_1D_ARRAY_DEF(char)
 
 #define ALLOC_2D_ARRAY(type)                                            \
         type **alloc_2D_array_size_ ##type (type **array, int dim1,int dim2,type fill_value) { \
-                int i;                                                  \
+                int i,j,c;                                              \
                 mem_i* h = NULL;                                        \
                 type** ptr_t = NULL;                                    \
                 type* ptr_tt = NULL;                                    \
                 void* tmp = NULL;                                       \
                 int max1, max2;                                         \
+                int o1, o2;                                             \
                 ASSERT((dim1 > 0), "Malloc 2D double failed: dim1:%d\n",dim1); \
                 ASSERT((dim2 > 0), "Malloc 2D double failed: dim2:%d\n",dim2); \
                 if(array == NULL){                                      \
@@ -389,15 +390,35 @@ FREE_1D_ARRAY_DEF(char)
                         ptr_tt = array[0];                              \
                         tmp = (void*)(array) -sizeof(mem_i) ;           \
                         h = (mem_i*)tmp;                                \
-                        max1 = MACRO_MAX(dim1,h->dim1);                 \
-                        max2 = MACRO_MAX(dim2,h->dim2);                 \
-                        if(dim1 > h->dim1){                             \
+                        o1 = h->dim1;                                   \
+                        o2 = h->dim2;                                   \
+                        max1 = MACRO_MAX(dim1,o1);                      \
+                        max2 = MACRO_MAX(dim2,o2);                      \
+                        if(dim1 > o1){                                  \
                                 MREALLOC(tmp,(dim1  * sizeof *array+ sizeof(mem_i))); \
                                 MREALLOC(ptr_tt,((dim1* max2)  * sizeof **array )); \
-                        }else if(dim2 > h->dim2){                       \
+                        }else if(dim2 > o2){                            \
                                 MREALLOC(ptr_tt,((max1 * dim2) * sizeof **array )); \
                         }else{                                          \
                                 return array;                           \
+                        }                                               \
+                        if(dim2 > o2){                                  \
+                                for(i = o1-1; i >= 0;i-- ){             \
+                                        c =  i* max2;                   \
+                                        for(j = o2-1;j >=0;j--){        \
+                                                *(ptr_tt + c + j) =*(ptr_tt + i*o2 + j); \
+                                        }                               \
+                                        for(j = dim2-1;j >= o2;j--){    \
+                                                *(ptr_tt + c + j) = fill_value; \
+                                        }                               \
+                                }                                       \
+                        }                                               \
+                        if(dim1 > o1){                                  \
+                                for(i = o1; i < dim1;i++){              \
+                                        for(j = 0; j < max2;j++){       \
+                                                *(ptr_tt + i* max2 + j) = fill_value; \
+                                        }                               \
+                                }                                       \
                         }                                               \
                         h = (mem_i*)tmp;                                \
                         h->dim1 = max1;                                 \
@@ -407,10 +428,6 @@ FREE_1D_ARRAY_DEF(char)
                                 ptr_t[i] = ptr_tt + i * max2;           \
                         }                                               \
                         array = ptr_t;                                  \
-                }                                                       \
-                max1 = max1 * max2;                                     \
-                for(i = max1-1;i >= 0;i--){                             \
-                        ptr_tt[i] = fill_value;                         \
                 }                                                       \
                 return array;                                           \
         ERROR:                                                          \
