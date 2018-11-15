@@ -19,6 +19,10 @@
 #include <math.h>
 #include <ctype.h>
 
+/* typedef  */
+typedef unsigned long ulong;
+
+
 /* Basic stuff */
 #define OK              0
 #define FAIL            1
@@ -229,24 +233,28 @@ typedef struct {
 
 FREE_1D_ARRAY_DEF(char)
         FREE_1D_ARRAY_DEF(int)
+        FREE_1D_ARRAY_DEF(ulong);
         FREE_1D_ARRAY_DEF(float)
         FREE_1D_ARRAY_DEF(double)
         FREE_1D_ARRAY_DEF(int_fast32_t)
 
         FREE_2D_ARRAY_DEF(char)
         FREE_2D_ARRAY_DEF(int)
+        FREE_2D_ARRAY_DEF(ulong)
         FREE_2D_ARRAY_DEF(float)
         FREE_2D_ARRAY_DEF(double)
         FREE_2D_ARRAY_DEF(int_fast32_t)
 
         ALLOC_1D_ARRAY_DEF(char)
         ALLOC_1D_ARRAY_DEF(int)
+        ALLOC_1D_ARRAY_DEF(ulong)
         ALLOC_1D_ARRAY_DEF(float)
         ALLOC_1D_ARRAY_DEF(double)
         ALLOC_1D_ARRAY_DEF(int_fast32_t)
 
         ALLOC_2D_ARRAY_DEF(char)
         ALLOC_2D_ARRAY_DEF(int)
+        ALLOC_2D_ARRAY_DEF(ulong)
         ALLOC_2D_ARRAY_DEF(float)
         ALLOC_2D_ARRAY_DEF(double)
         ALLOC_2D_ARRAY_DEF(int_fast32_t)
@@ -270,6 +278,7 @@ FREE_1D_ARRAY_DEF(char)
 #define SELECTGALLOC_2(_1, _2) _Generic((_1),                           \
                                         char*: alloc_1D_array_size_char, \
                                         int*: alloc_1D_array_size_int,  \
+                                        ulong*: alloc_1D_array_size_ulong,  \
                                         float*:  alloc_1D_array_size_float, \
                                         double*:alloc_1D_array_size_double, \
                                         int_fast32_t*: alloc_1D_array_size_int_fast32_t \
@@ -281,6 +290,9 @@ FREE_1D_ARRAY_DEF(char)
                                                         ),              \
                                                 int**: _Generic((_2),   \
                                                                 int: alloc_2D_array_size_int \
+                                                        ),              \
+                                                ulong**: _Generic((_2), \
+                                                                  int: alloc_2D_array_size_ulong \
                                                         ),              \
                                                 float**: _Generic((_2), \
                                                                   int: alloc_2D_array_size_float \
@@ -317,11 +329,13 @@ FREE_1D_ARRAY_DEF(char)
 #define gfree(X) _Generic((X),                                        \
                           char*: free_1d_array_char,                  \
                           int*: free_1d_array_int,                    \
+                          ulong*: free_1d_array_ulong,                    \
                           float*: free_1d_array_float,                \
                           double*: free_1d_array_double,              \
                           int_fast32_t*: free_1d_array_int_fast32_t,  \
                           char**: free_2d_array_char,                 \
                           int**: free_2d_array_int,                   \
+                          ulong**: free_2d_array_ulong,                   \
                           float**: free_2d_array_float,               \
                           double**: free_2d_array_double,             \
                           int_fast32_t**: free_2d_array_int_fast32_t  \

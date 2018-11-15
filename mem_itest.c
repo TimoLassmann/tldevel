@@ -31,11 +31,11 @@ int main(int argc, char** argv)
         fprintf(stdout,"len: %d\n", DIM2(tmp));
         gfree(tmp);
 
-        int** aligator = NULL;
+        ulong** aligator = NULL;
         int i,j,c =0;
 
         fprintf(stdout,"%ld %ld\n", sizeof *aligator, sizeof **aligator);
-        aligator = galloc(aligator, 4,4,-5);
+        aligator = galloc(aligator, 4,4,0);
         fprintf(stdout,"len: %d\n", DIM1(aligator));
         fprintf(stdout,"len: %d\n", DIM2(aligator));
         for(i = 0; i < DIM1(aligator);i++){
