@@ -113,27 +113,27 @@ extern int print_program_header(char* const argv[],const char* description);
 
 
 #define ERROR_MSG(...) do {                     \
-                error(AT, __VA_ARGS__ );   \
+                error(AT, __VA_ARGS__ );        \
                 goto ERROR;                     \
         }while (0)
 
 #define WARNING_MSG(...) do {                   \
-                warning(AT, __VA_ARGS__ );	\
+                warning(AT, __VA_ARGS__ );      \
         }while (0)
 
 
-#define LOG_MSG(...) do {                         \
-                log_message( __VA_ARGS__ );	\
+#define LOG_MSG(...) do {                       \
+                log_message( __VA_ARGS__ );     \
         }while (0)
 
-#define CODE_MSG(...) do {                       \
+#define CODE_MSG(...) do {                      \
                 message(AT, __VA_ARGS__ );      \
         }while (0)
 
 
 #define ASSERT(TEST,...)  if(!(TEST)) {         \
-                error(AT,#TEST );          \
-                error(AT, ##__VA_ARGS__);  \
+                error(AT,#TEST );               \
+                error(AT, ##__VA_ARGS__);       \
                 goto ERROR;                     \
         }
 
@@ -192,7 +192,7 @@ typedef struct {
 
 #define MREALLOC(p, size) do {                                          \
                 void *tmpp;                                             \
-                if(size == 0){                                       \
+                if(size == 0){                                          \
                         ERROR_MSG("malloc of size %d failed", size);    \
                         goto ERROR;                                     \
                 }                                                       \
@@ -204,7 +204,7 @@ typedef struct {
                 if (tmpp != NULL){                                      \
                         p = tmpp;                                       \
                 }else {                                                 \
-                        ERROR_MSG("realloc for size %d failed", size); \
+                        ERROR_MSG("realloc for size %d failed", size);  \
                         goto ERROR;                                     \
                 }} while (0)
 
@@ -213,42 +213,42 @@ typedef struct {
 
 
 
-#define ALLOC_1D_ARRAY_DEF(type)                                            \
+#define ALLOC_1D_ARRAY_DEF(type)                                        \
         extern type *alloc_1D_array_size_ ##type (type *array, int dim1);
 
-#define ALLOC_2D_ARRAY_DEF(type)                                            \
+#define ALLOC_2D_ARRAY_DEF(type)                                        \
         extern type **alloc_2D_array_size_ ##type (type **array, int dim1,int dim2, type fill_value);
 
 
-#define FREE_1D_ARRAY_DEF(type)                          \
+#define FREE_1D_ARRAY_DEF(type)                         \
         extern void free_1d_array_ ##type(type *array);
 
-#define FREE_2D_ARRAY_DEF(type)                         \
+#define FREE_2D_ARRAY_DEF(type)                           \
         extern void free_2d_array_ ##type(type **array);
 
 FREE_1D_ARRAY_DEF(char)
-FREE_1D_ARRAY_DEF(int)
-FREE_1D_ARRAY_DEF(float)
-FREE_1D_ARRAY_DEF(double)
-FREE_1D_ARRAY_DEF(int_fast32_t)
+        FREE_1D_ARRAY_DEF(int)
+        FREE_1D_ARRAY_DEF(float)
+        FREE_1D_ARRAY_DEF(double)
+        FREE_1D_ARRAY_DEF(int_fast32_t)
 
-FREE_2D_ARRAY_DEF(char)
-FREE_2D_ARRAY_DEF(int)
-FREE_2D_ARRAY_DEF(float)
-FREE_2D_ARRAY_DEF(double)
-FREE_2D_ARRAY_DEF(int_fast32_t)
+        FREE_2D_ARRAY_DEF(char)
+        FREE_2D_ARRAY_DEF(int)
+        FREE_2D_ARRAY_DEF(float)
+        FREE_2D_ARRAY_DEF(double)
+        FREE_2D_ARRAY_DEF(int_fast32_t)
 
-ALLOC_1D_ARRAY_DEF(char)
-ALLOC_1D_ARRAY_DEF(int)
-ALLOC_1D_ARRAY_DEF(float)
-ALLOC_1D_ARRAY_DEF(double)
-ALLOC_1D_ARRAY_DEF(int_fast32_t)
+        ALLOC_1D_ARRAY_DEF(char)
+        ALLOC_1D_ARRAY_DEF(int)
+        ALLOC_1D_ARRAY_DEF(float)
+        ALLOC_1D_ARRAY_DEF(double)
+        ALLOC_1D_ARRAY_DEF(int_fast32_t)
 
-ALLOC_2D_ARRAY_DEF(char)
-ALLOC_2D_ARRAY_DEF(int)
-ALLOC_2D_ARRAY_DEF(float)
-ALLOC_2D_ARRAY_DEF(double)
-ALLOC_2D_ARRAY_DEF(int_fast32_t)
+        ALLOC_2D_ARRAY_DEF(char)
+        ALLOC_2D_ARRAY_DEF(int)
+        ALLOC_2D_ARRAY_DEF(float)
+        ALLOC_2D_ARRAY_DEF(double)
+        ALLOC_2D_ARRAY_DEF(int_fast32_t)
 
 
 
@@ -262,8 +262,8 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t)
 
 #define SELECTGALLOC_0()
 
-#define SELECTGALLOC_1(_1) _Generic ((_1),          \
-                               default: galloc_void \
+#define SELECTGALLOC_1(_1) _Generic ((_1),                \
+                                     default: galloc_void \
                 )
 
 #define SELECTGALLOC_2(_1, _2) _Generic((_1),                           \
@@ -274,22 +274,22 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t)
                                         int_fast32_t*: alloc_1D_array_size_int_fast32_t \
                 )
 
-#define SELECTGALLOC_4(_1, _2, _3, _4) _Generic((_1),                      \
-                                            char**: _Generic((_2),      \
-                                                             int: alloc_2D_array_size_char \
-                                                    ),                  \
-                                            int**: _Generic((_2),       \
-                                                            int: alloc_2D_array_size_int \
-                                                    ),                  \
-                                            float**: _Generic((_2),     \
-                                                              int: alloc_2D_array_size_float \
-                                                    ),                  \
-                                            double**: _Generic((_2),    \
-                                                               int: alloc_2D_array_size_double \
-                                                    ),                  \
-                                            int_fast32_t**:  _Generic((_2), \
-                                                                      int: alloc_2D_array_size_int_fast32_t \
-                                                    )                   \
+#define SELECTGALLOC_4(_1, _2, _3, _4) _Generic((_1),                   \
+                                                char**: _Generic((_2),  \
+                                                                 int: alloc_2D_array_size_char \
+                                                        ),              \
+                                                int**: _Generic((_2),   \
+                                                                int: alloc_2D_array_size_int \
+                                                        ),              \
+                                                float**: _Generic((_2), \
+                                                                  int: alloc_2D_array_size_float \
+                                                        ),              \
+                                                double**: _Generic((_2), \
+                                                                   int: alloc_2D_array_size_double \
+                                                        ),              \
+                                                int_fast32_t**:  _Generic((_2), \
+                                                                          int: alloc_2D_array_size_int_fast32_t \
+                                                        )               \
                 )
 
 
@@ -468,14 +468,14 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t)
 #define DECLARE_CHK(n,dir) struct checkpoint* chk_##n = NULL;  RUNP( chk_##n =  init_checkpoint(TOSTRING(n),dir));
 
 #define RUN_CHECKPOINT(n,EXP,CMD) do {                                  \
-                                   if(test_for_checkpoint_file(chk_##n,TOSTRING(EXP),AT,CMD) ==0 ){ \
-                                           RUN(EXP);                    \
-                                           RUN(set_checkpoint_file(chk_##n,TOSTRING(EXP),AT,CMD)); \
-                                   }else{                               \
-                                           log_message("Skipping over: %s (%s)",TOSTRING(EXP),AT); \
-                                   }                                    \
-                                   chk_##n->test_num += 1;              \
-                           }while (0)
+                if(test_for_checkpoint_file(chk_##n,TOSTRING(EXP),AT,CMD) ==0 ){ \
+                        RUN(EXP);                                       \
+                        RUN(set_checkpoint_file(chk_##n,TOSTRING(EXP),AT,CMD)); \
+                }else{                                                  \
+                        log_message("Skipping over: %s (%s)",TOSTRING(EXP),AT); \
+                }                                                       \
+                chk_##n->test_num += 1;                                 \
+        }while (0)
 
 #ifndef MAXMEM
 #define MAXMEM 4
@@ -485,94 +485,94 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t)
 
 #define DESTROY_CHK(n) if(chk_##n){free_checkpoint( chk_##n);};
 
-                           struct checkpoint{
-                                   char* base_dir;
-                                   char* base_name;
-                                   int test_num;
-                           };
+struct checkpoint{
+        char* base_dir;
+        char* base_name;
+        int test_num;
+};
 
-        /* typedef struct { */
-        /*         void (*log_message )(const char *format, ...); */
-        /*         void (*message)(const char *location, const char *format, ...); */
-        /*         void (*warning)(const char *location, const char *format, ...); */
-        /*         void (*error)(const char *location, const char *format, ...); */
-        /*         void (*unformatted) ( const char *format, ...); */
-        /*         void (*echo_build_config) (void); */
-        /*         void (*print_program_description) (char *const argv[],const char* description); */
-        /*         int (*  set_logfile)(char* logfilename); */
-        /* } tlog_namespace; */
+/* typedef struct { */
+/*         void (*log_message )(const char *format, ...); */
+/*         void (*message)(const char *location, const char *format, ...); */
+/*         void (*warning)(const char *location, const char *format, ...); */
+/*         void (*error)(const char *location, const char *format, ...); */
+/*         void (*unformatted) ( const char *format, ...); */
+/*         void (*echo_build_config) (void); */
+/*         void (*print_program_description) (char *const argv[],const char* description); */
+/*         int (*  set_logfile)(char* logfilename); */
+/* } tlog_namespace; */
 
-        /* extern tlog_namespace  tlog; */
+/* extern tlog_namespace  tlog; */
 
-        /* extern char build_config[]; */
+/* extern char build_config[]; */
 
-        float logsum_lookup[LOGSUM_SIZE];
-
-
-        extern int print_program_header(char * const argv[],const char* description);
+float logsum_lookup[LOGSUM_SIZE];
 
 
-        extern int get_time(char* time_ptr, int size);
-        extern int my_file_exists(char* name);
+extern int print_program_header(char * const argv[],const char* description);
 
-        extern char** malloc_2d_char(char**m,int newdim1, int newdim2, char fill_value);
-        extern int** malloc_2d_int(int**m,int newdim1, int newdim2, int fill_value);
-        extern float** malloc_2d_float(float**m,int newdim1, int newdim2, float fill_value);
-        extern float*** malloc_3d_float(int dim1, int dim2, int dim3, float fill_value);
-        extern float**** malloc_4d_float(int dim1, int dim2, int dim3,int dim4, float fill_value);
 
-        extern double** malloc_2d_double(double**m,int newdim1, int newdim2, double fill_value);
+extern int get_time(char* time_ptr, int size);
+extern int my_file_exists(char* name);
 
-        extern void free_2d(void** m);
-        extern void free_3d(void*** m);
-        extern void free_4d(void**** m);
+extern char** malloc_2d_char(char**m,int newdim1, int newdim2, char fill_value);
+extern int** malloc_2d_int(int**m,int newdim1, int newdim2, int fill_value);
+extern float** malloc_2d_float(float**m,int newdim1, int newdim2, float fill_value);
+extern float*** malloc_3d_float(int dim1, int dim2, int dim3, float fill_value);
+extern float**** malloc_4d_float(int dim1, int dim2, int dim3,int dim4, float fill_value);
 
-        extern uint32_t* make_bitvector(uint32_t num_elem);
-        extern int clear_bitvector(uint32_t* array,uint32_t num_elem);
-        extern void bit_set(uint32_t* array, uint32_t i);
-        extern void bit_clr(uint32_t* array, uint32_t i);
-        extern int bit_test(uint32_t* array, uint32_t i);
+extern double** malloc_2d_double(double**m,int newdim1, int newdim2, double fill_value);
+
+extern void free_2d(void** m);
+extern void free_3d(void*** m);
+extern void free_4d(void**** m);
+
+extern uint32_t* make_bitvector(uint32_t num_elem);
+extern int clear_bitvector(uint32_t* array,uint32_t num_elem);
+extern void bit_set(uint32_t* array, uint32_t i);
+extern void bit_clr(uint32_t* array, uint32_t i);
+extern int bit_test(uint32_t* array, uint32_t i);
 
 //Hash function
 
-        uint32_t adler(const void* buf, size_t len);
-        extern int ulltoa(uint64_t value, char *buf, int radix);
+uint32_t adler(const void* buf, size_t len);
+extern int ulltoa(uint64_t value, char *buf, int radix);
 
-        extern struct checkpoint* init_checkpoint(char* base_name,char* target_dir);
+extern struct checkpoint* init_checkpoint(char* base_name,char* target_dir);
 
-        extern int test_for_checkpoint_file(struct checkpoint* chk,char* function,char* location, char* cmd);
+extern int test_for_checkpoint_file(struct checkpoint* chk,char* function,char* location, char* cmd);
 
-        extern int set_checkpoint_file(struct checkpoint* chk,char* function,char* location,char* cmd);
-        extern void free_checkpoint(struct checkpoint* chk);
+extern int set_checkpoint_file(struct checkpoint* chk,char* function,char* location,char* cmd);
+extern void free_checkpoint(struct checkpoint* chk);
 
 
-        extern char* shorten_pathname(char* p);
-        extern char* basename(const char* name);
+extern char* shorten_pathname(char* p);
+extern char* basename(const char* name);
 
-        extern int replace_punctuation_with_underscore(char* p);
+extern int replace_punctuation_with_underscore(char* p);
 
 /* misc math functions */
-        extern void init_logsum();
+extern void init_logsum();
 
 
-        extern uint16_t prob_to_uint16(float x);
-        extern float uint16_to_prob(uint16_t a);
+extern uint16_t prob_to_uint16(float x);
+extern float uint16_to_prob(uint16_t a);
 
-        extern uint32_t prob_to_uint32(float x);
-        extern float uint32_to_prob(uint32_t a);
-
-
-
-        extern float logsum(const float a,const float b);
-        extern float prob2scaledprob(float p);
-        extern float scaledprob2prob(float p);
-
-        extern float random_float_zero_to_x(const float x);
-        extern uint32_t random_int_zero_to_x(const uint32_t x);
+extern uint32_t prob_to_uint32(float x);
+extern float uint32_to_prob(uint32_t a);
 
 
-        extern float random_float_zero_to_x_thread(const float x, unsigned int* seed);
-        extern uint32_t random_int_zero_to_x_thread(const uint32_t x, unsigned int* seed);
+
+extern float logsum(const float a,const float b);
+extern float prob2scaledprob(float p);
+extern float scaledprob2prob(float p);
+
+extern float random_float_zero_to_x(const float x);
+extern uint32_t random_int_zero_to_x(const uint32_t x);
+
+
+extern float random_float_zero_to_x_thread(const float x, unsigned int* seed);
+extern uint32_t random_int_zero_to_x_thread(const uint32_t x, unsigned int* seed);
 
 
 #endif

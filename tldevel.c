@@ -3,8 +3,6 @@
 #endif
 #include "tldevel.h"
 
-
-
 static void verror(FILE* f_ptr, const char *location, const char *format,  va_list argp);
 static void vwarning(FILE* f_ptr,const char *location, const char *format,  va_list argp);
 static void vlog(FILE* f_ptr,const char *format,  va_list argp);
@@ -147,16 +145,13 @@ void log_message( const char *format, ...)
         va_end(argp);
 }
 
-
 void message(const char *location, const char *format, ...)
 {
         va_list argp;
-
         va_start(argp, format);
         vmessage(stdout,location,format,argp);
         va_end(argp);
 }
-
 
 int get_time(char* time_ptr, int size)
 {
@@ -168,7 +163,6 @@ int get_time(char* time_ptr, int size)
 ERROR:
         return FAIL;
 }
-
 
 void verror(FILE* f_ptr, const char *location, const char *format,  va_list argp)
 {
