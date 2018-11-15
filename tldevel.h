@@ -384,6 +384,9 @@ FREE_1D_ARRAY_DEF(char)
                         ptr_t =(type**) (tmp + sizeof(mem_i));          \
                         for(i = 0;i< dim1;i++){                         \
                                 ptr_t[i] = ptr_tt + i * dim2;           \
+                                for(j = 0; j < dim2;j++){               \
+                                        ptr_t[i][j] = fill_value;         \
+                                }                                       \
                         }                                               \
                         array = ptr_t;                                  \
                 }else{                                                  \

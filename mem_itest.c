@@ -35,12 +35,12 @@ int main(int argc, char** argv)
         int i,j,c =0;
 
         fprintf(stdout,"%ld %ld\n", sizeof *aligator, sizeof **aligator);
-        aligator = galloc(aligator, 4,4,0);
+        aligator = galloc(aligator, 4,4,-5);
         fprintf(stdout,"len: %d\n", DIM1(aligator));
         fprintf(stdout,"len: %d\n", DIM2(aligator));
         for(i = 0; i < DIM1(aligator);i++){
                 for(j = 0; j < DIM2(aligator);j++){
-                        aligator[i][j] = c;
+                        //aligator[i][j] = c;
                         fprintf(stdout,"%*d ",3,aligator[i][j]);
                         c++;
                 }
