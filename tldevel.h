@@ -170,6 +170,7 @@ typedef struct {
 #define MFREE(p) do {                                           \
                 if(p){                                          \
                         free(p);                                \
+                        p = NULL;                               \
                 }else{                                          \
                         WARNING_MSG("free on a null pointer");  \
                 }                                               \
@@ -301,14 +302,16 @@ FREE_1D_ARRAY_DEF(char)
 
 #define FREE_1D_ARRAY(type)                           \
         void free_1d_array_ ##type(type *array){      \
-                MFREE((void*)array - sizeof(mem_i));  \
+                void* ptr = (void*)array - sizeof(mem_i); \
+                MFREE(ptr);                               \
         }
 
 
-#define FREE_2D_ARRAY(type)                         \
-        void free_2d_array_ ##type(type **array){   \
-                MFREE(array[0]);                    \
-                MFREE((void*)array- sizeof(mem_i)); \
+#define FREE_2D_ARRAY(type)                               \
+        void free_2d_array_ ##type(type **array){         \
+                MFREE(array[0]);                          \
+                void* ptr = (void*)array- sizeof(mem_i);  \
+                MFREE(ptr);                               \
         }
 
 #define gfree(X) _Generic((X),                                        \
