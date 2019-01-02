@@ -37,6 +37,9 @@ AC_CHECK_FUNCS([clock_gettime memset pow sqrt])
 AC_CHECK_FUNCS([arc4random arc4random_uniform])
 
 
+AC_CHECK_FUNCS([strdup])
+AC_CHECK_FUNCS([strtol]) 
+
 # non-standard stuff
 
 

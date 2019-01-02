@@ -1,15 +1,5 @@
 #include "hash_table.h"
-
-HT_GLOBAL_INIT(TEST, char*);
-
-HT_GLOBAL_INIT(TEST_DOUBLE, double);
-
-
-int search_hash_table_linked_list(struct hash_table_node* n, int key);
-
-
-struct hash_table_node* get_entry_hash_table_linked_list(struct hash_table_node* n, int pos);
-
+/* print commands */
 int print_int(int a)
 {
         fprintf(stdout,"%d ",a);
@@ -34,13 +24,15 @@ int print_string(char* a)
         return OK;
 }
 
+
+/* compare commands */
+
 int ht_compare_key_int(int a, int b)
 {
         if(a == b){
                 return 1;
         }
         return 0;
-
 }
 
 int ht_compare_key_strings(char* a, char* b)
@@ -50,9 +42,7 @@ int ht_compare_key_strings(char* a, char* b)
                 return 1;
         }
         return 0;
-
 }
-
 
 int ht_compare_key_int_star(int* a, int* b)
 {
@@ -60,7 +50,6 @@ int ht_compare_key_int_star(int* a, int* b)
                 return 1;
         }
         return 0;
-
 }
 
 int ht_compare_key_double(double a, double b)
@@ -72,6 +61,9 @@ int ht_compare_key_double(double a, double b)
 
 }
 
+
+
+/* Hash variable commands  */
 uint32_t get_hash_value_double(double x,int table_size)
 {
         ASSERT(table_size != 0, "Table size cannot be 0!");
@@ -121,143 +113,10 @@ ERROR:
         return 0;
 }
 
-int insert(struct hash_table* ht, int key, void* data)
-{
-        struct hash_table_node* n = NULL;
-        struct hash_table_node* new = NULL;
-        uint32_t index;
+#ifdef HTITEST
+HT_GLOBAL_INIT(TEST, char*);
 
-        index = get_hash_value(key,ht->table_size);
-
-        n = ht->table[index]->head;
-
-        MMALLOC(new, sizeof(struct hash_table_node));
-        new->key = key;
-        new->data = data;
-        new->count = 1;
-        new->next = NULL;
-
-        if(n == NULL){          /*  Empty entry in hashtable  */
-                ht->table[index]->head = new;
-                ht->table[index]->tail = new;
-                ht->num_items++;
-        }else{
-                int pos = search_hash_table_linked_list(n, key);
-                if (pos == -1){
-                        ht->table[index]->tail->next = new;
-                        ht->table[index]->tail = new;
-                        ht->num_items++;
-                }else{
-                        MFREE(new);
-                        new = get_entry_hash_table_linked_list(n, pos);
-                        new->count++;
-                }
-        }
-
-        return OK;
-ERROR:
-        return FAIL;
-}
-
-struct hash_table_node* get_entry_hash_table_linked_list(struct hash_table_node* n, int pos)
-{
-        int i = 0;
-        struct hash_table_node* tmp = n;
-        while (i != pos){
-                tmp = tmp->next;
-                i++;
-        }
-        return tmp;
-}
-
-int search_hash_table_linked_list(struct hash_table_node* n, int key)
-{
-        int ret = 0;
-
-        struct hash_table_node* tmp = n;
-        while (tmp != NULL){
-                if (tmp->key == key){
-                        return ret;
-                }
-                tmp = tmp->next;
-                ret++;
-        }
-        return -1;
-}
-
-
-struct hash_table* init_hash_table(int size)
-{
-
-        struct hash_table* ht = NULL;
-        int i;
-
-        MMALLOC(ht, sizeof(struct hash_table));
-
-        ht->num_items = 0;
-        ht->table = NULL;
-        ht->table_size = size;
-
-        MMALLOC(ht->table, sizeof(struct hash_table_item*) * ht->table_size);
-        for(i =0; i < ht->table_size;i++){
-                ht->table[i] = NULL;
-                MMALLOC(ht->table[i], sizeof( struct hash_table_item));
-                ht->table[i]->head = NULL;
-                ht->table[i]->tail = NULL;
-
-        }
-        return ht;
-ERROR:
-        free_hash_table(ht);
-        return NULL;
-}
-
-void free_hash_table(struct hash_table* ht)
-{
-        struct hash_table_node* n = NULL;
-        struct hash_table_node* tmp = NULL;
-        int i;
-        if(ht){
-                if(ht->table){
-                        for(i =0; i < ht->table_size;i++){
-                                n = ht->table[i]->head;
-
-                                while(n){
-                                        tmp = n;
-                                        n = n->next;
-                                        MFREE(tmp);
-                                }
-                                MFREE(ht->table[i]);
-                        }
-                        MFREE(ht->table);
-                }
-                MFREE(ht);
-        }
-}
-
-
-int print_hash_table(struct hash_table* ht)
-{
-        struct hash_table_node* n = NULL;
-        int i;
-        for (i = 0; i < ht->table_size;i++){
-                n = ht->table[i]->head;
-
-                if(n == NULL){
-                        fprintf(stdout,"%d\tno entry\n",i);
-
-                }else{
-                        fprintf(stdout,"%d\t",i);
-                        while(n){
-                                fprintf(stdout,"%d ",n->key);
-                                n = n->next;
-                        }
-                        fprintf(stdout,"\n");
-                }
-        }
-        return OK;
-}
-
+HT_GLOBAL_INIT(TEST_DOUBLE, double);
 int main (int argc,char * const argv[])
 {
 
@@ -332,3 +191,4 @@ ERROR:
         return EXIT_FAILURE;
 
 }
+#endif
