@@ -173,20 +173,29 @@ void galloc_void(void)
         fprintf(stdout,"void placeholder called");
 }
 
+void gfree_void(type a)
+{
+        fprintf(stdout,"void placeholder called");
+}
 
-#define gfree(X) _Generic((X),                                          \
-                          int*: free_1d_array_int,                      \
-                          float*: free_1d_array_float,                  \
-                          double*: free_1d_array_double,                \
-                          int_fast32_t*: free_1d_array_int_fast32_t,    \
-                          int**: free_2d_array_int,                     \
-                          float**: free_2d_array_float,                 \
-                          double**: free_2d_array_double,               \
-                          int_fast32_t**: free_2d_array_int_fast32_t   \
+
+
+#define gfree(X) _Generic((X),                                        \
+                          int*: free_1d_array_int,                    \
+                          float*: free_1d_array_float,                \
+                          double*: free_1d_array_double,              \
+                          int_fast32_t*: free_1d_array_int_fast32_t,  \
+                          int**: free_2d_array_int,                   \
+                          float**: free_2d_array_float,               \
+                          double**: free_2d_array_double,             \
+                          int_fast32_t**: free_2d_array_int_fast32_t, \
+                          int: gfree_void,                            \
+                          double: gfree_void,                         \
+                          char*: gfree_void                           \
                 )(X)
 
-#define FREE_1D_ARRAY(type)                          \
-        void free_1d_array_ ##type(type *array){     \
+#define FREE_1D_ARRAY(type)                           \
+        void free_1d_array_ ##type(type *array){      \
                 MFREE((void*)array - sizeof(mem_i));  \
         }
 

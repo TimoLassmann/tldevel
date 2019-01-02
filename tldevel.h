@@ -37,6 +37,10 @@ typedef unsigned long ulong;
 #define MACRO_MIN(a,b)          (((a)<(b))?(a):(b))
 #define MACRO_MAX(a,b)          (((a)>(b))?(a):(b))
 
+#define CONCAT(X, Y) CONCAT_(X, Y)
+#define CONCAT_(X, Y) X ## Y
+
+
 #define ARGN(...) ARGN_(__VA_ARGS__)
 #define ARGN_(_0, _1, _2, _3 , N, ...) N
 
@@ -166,10 +170,6 @@ extern int print_program_header(char* const argv[],const char* description);
 /* Start of memory functions  */
 /******************************/
 
-typedef struct {
-        int dim1;
-        int dim2;
-} mem_i;
 
 #define MFREE(p) do {                                           \
                 if(p){                                          \
@@ -213,107 +213,88 @@ typedef struct {
                         goto ERROR;                                     \
                 }} while (0)
 
+#define MCALLOC(p,count,type) do {                                      \
+                if (p != NULL){                                         \
+                        ERROR_MSG( "calloc on a nun-null pointer");     \
+                        goto ERROR;                                     \
+                }                                                       \
+                if (((p) = calloc(count, sizeof(type))) == NULL) {      \
+                        ERROR_MSG("calloc of n=%d of type %s failed", count, #type); \
+                        goto ERROR;                                     \
+                }                                                       \
+        } while (0)
+
+
+typedef struct {
+        int dim1;
+        int dim2;
+} mem_i;
+
+
 #define DIM1(X) ((mem_i*)((void*)X - sizeof(mem_i)))->dim1
 #define DIM2(X) ((mem_i*)((void*)X - sizeof(mem_i)))->dim2
 
-
+/* declare free/alloc functions */
 
 #define ALLOC_1D_ARRAY_DEF(type)                                        \
-        extern type *alloc_1D_array_size_ ##type (type *array, int dim1);
+        extern type *alloc_1D_array_size_ ##type (type *array, int dim1)
 
 #define ALLOC_2D_ARRAY_DEF(type)                                        \
-        extern type **alloc_2D_array_size_ ##type (type **array, int dim1,int dim2, type fill_value);
+        extern type **alloc_2D_array_size_ ##type (type **array, int dim1,int dim2, type fill_value)
 
+#define FREE_VOID_DEF(type)                     \
+        extern void gfree_void_ ##type(type a)
 
 #define FREE_1D_ARRAY_DEF(type)                         \
-        extern void free_1d_array_ ##type(type *array);
+        extern void free_1d_array_ ##type(type *array)
 
 #define FREE_2D_ARRAY_DEF(type)                           \
-        extern void free_2d_array_ ##type(type **array);
-
-FREE_1D_ARRAY_DEF(char)
-        FREE_1D_ARRAY_DEF(int)
-        FREE_1D_ARRAY_DEF(ulong);
-        FREE_1D_ARRAY_DEF(float)
-        FREE_1D_ARRAY_DEF(double)
-        FREE_1D_ARRAY_DEF(int_fast32_t)
-
-        FREE_2D_ARRAY_DEF(char)
-        FREE_2D_ARRAY_DEF(int)
-        FREE_2D_ARRAY_DEF(ulong)
-        FREE_2D_ARRAY_DEF(float)
-        FREE_2D_ARRAY_DEF(double)
-        FREE_2D_ARRAY_DEF(int_fast32_t)
-
-        ALLOC_1D_ARRAY_DEF(char)
-        ALLOC_1D_ARRAY_DEF(int)
-        ALLOC_1D_ARRAY_DEF(ulong)
-        ALLOC_1D_ARRAY_DEF(float)
-        ALLOC_1D_ARRAY_DEF(double)
-        ALLOC_1D_ARRAY_DEF(int_fast32_t)
-
-        ALLOC_2D_ARRAY_DEF(char)
-        ALLOC_2D_ARRAY_DEF(int)
-        ALLOC_2D_ARRAY_DEF(ulong)
-        ALLOC_2D_ARRAY_DEF(float)
-        ALLOC_2D_ARRAY_DEF(double)
-        ALLOC_2D_ARRAY_DEF(int_fast32_t)
+        extern void free_2d_array_ ##type(type **array)
 
 
+FREE_VOID_DEF(int);
+FREE_VOID_DEF(double);
+FREE_VOID_DEF(char);
+FREE_1D_ARRAY_DEF(char);
+FREE_1D_ARRAY_DEF(int);
+FREE_1D_ARRAY_DEF(ulong);
+FREE_1D_ARRAY_DEF(float);
+FREE_1D_ARRAY_DEF(double);
+FREE_1D_ARRAY_DEF(int_fast32_t);
 
-//int  *alloc_1D_array_size_int (int *array, int dim1);
+FREE_2D_ARRAY_DEF(char);
+FREE_2D_ARRAY_DEF(int);
+FREE_2D_ARRAY_DEF(ulong);
+FREE_2D_ARRAY_DEF(float);
+FREE_2D_ARRAY_DEF(double);
+FREE_2D_ARRAY_DEF(int_fast32_t);
 
-#define galloc(...) SELECTGALLOC(__VA_ARGS__)(__VA_ARGS__)
+ALLOC_1D_ARRAY_DEF(char);
+ALLOC_1D_ARRAY_DEF(int);
+ALLOC_1D_ARRAY_DEF(ulong);
+ALLOC_1D_ARRAY_DEF(float);
+ALLOC_1D_ARRAY_DEF(double);
+ALLOC_1D_ARRAY_DEF(int_fast32_t);
 
-#define SELECTGALLOC(...) CONCAT(SELECTGALLOC_, NARG(__VA_ARGS__))(__VA_ARGS__)
-#define CONCAT(X, Y) CONCAT_(X, Y)
-#define CONCAT_(X, Y) X ## Y
-
-#define SELECTGALLOC_0()
-
-#define SELECTGALLOC_1(_1) _Generic ((_1),                \
-                                     default: galloc_void \
-                )
-
-#define SELECTGALLOC_2(_1, _2) _Generic((_1),                           \
-                                        char*: alloc_1D_array_size_char, \
-                                        int*: alloc_1D_array_size_int,  \
-                                        ulong*: alloc_1D_array_size_ulong,  \
-                                        float*:  alloc_1D_array_size_float, \
-                                        double*:alloc_1D_array_size_double, \
-                                        int_fast32_t*: alloc_1D_array_size_int_fast32_t \
-                )
-
-#define SELECTGALLOC_4(_1, _2, _3, _4) _Generic((_1),                   \
-                                                char**: _Generic((_2),  \
-                                                                 int: alloc_2D_array_size_char \
-                                                        ),              \
-                                                int**: _Generic((_2),   \
-                                                                int: alloc_2D_array_size_int \
-                                                        ),              \
-                                                ulong**: _Generic((_2), \
-                                                                  int: alloc_2D_array_size_ulong \
-                                                        ),              \
-                                                float**: _Generic((_2), \
-                                                                  int: alloc_2D_array_size_float \
-                                                        ),              \
-                                                double**: _Generic((_2), \
-                                                                   int: alloc_2D_array_size_double \
-                                                        ),              \
-                                                int_fast32_t**:  _Generic((_2), \
-                                                                          int: alloc_2D_array_size_int_fast32_t \
-                                                        )               \
-                )
-
-
+ALLOC_2D_ARRAY_DEF(char);
+ALLOC_2D_ARRAY_DEF(int);
+ALLOC_2D_ARRAY_DEF(ulong);
+ALLOC_2D_ARRAY_DEF(float);
+ALLOC_2D_ARRAY_DEF(double);
+ALLOC_2D_ARRAY_DEF(int_fast32_t);
 
 
 /**************************/
-/* All the free functions */
+/* The gfree functions    */
 /**************************/
 
-#define FREE_1D_ARRAY(type)                           \
-        void free_1d_array_ ##type(type *array){      \
+#define FREE_VOID(type)                         \
+        void gfree_void_ ##type(type a){}
+
+
+
+#define FREE_1D_ARRAY(type)                               \
+        void free_1d_array_ ##type(type *array){          \
                 void* ptr = (void*)array - sizeof(mem_i); \
                 MFREE(ptr);                               \
         }
@@ -327,15 +308,18 @@ FREE_1D_ARRAY_DEF(char)
         }
 
 #define gfree(X) _Generic((X),                                        \
+                          int: gfree_void_int,                        \
+                          double: gfree_void_double,                  \
+                          char: gfree_void_char,                      \
                           char*: free_1d_array_char,                  \
                           int*: free_1d_array_int,                    \
-                          ulong*: free_1d_array_ulong,                    \
+                          ulong*: free_1d_array_ulong,                \
                           float*: free_1d_array_float,                \
                           double*: free_1d_array_double,              \
                           int_fast32_t*: free_1d_array_int_fast32_t,  \
                           char**: free_2d_array_char,                 \
                           int**: free_2d_array_int,                   \
-                          ulong**: free_2d_array_ulong,                   \
+                          ulong**: free_2d_array_ulong,               \
                           float**: free_2d_array_float,               \
                           double**: free_2d_array_double,             \
                           int_fast32_t**: free_2d_array_int_fast32_t  \
@@ -343,8 +327,9 @@ FREE_1D_ARRAY_DEF(char)
 
 
 
-
-
+/**************************/
+/* The galloc functions   */
+/**************************/
 
 /***************************************************************/
 /* Mildely more clever versions for allocing 1D and 2d arrays. */
@@ -452,23 +437,64 @@ FREE_1D_ARRAY_DEF(char)
         }
 
 
+#define galloc(...) SELECTGALLOC(__VA_ARGS__)(__VA_ARGS__)
+
+#define SELECTGALLOC(...) CONCAT(SELECTGALLOC_, NARG(__VA_ARGS__))(__VA_ARGS__)
+
+
+#define SELECTGALLOC_0()
+
+#define SELECTGALLOC_1(_1) _Generic ((_1),                \
+                                     default: galloc_void \
+                )
+
+#define SELECTGALLOC_2(_1, _2) _Generic((_1),                           \
+                                        char*: alloc_1D_array_size_char, \
+                                        int*: alloc_1D_array_size_int,  \
+                                        ulong*: alloc_1D_array_size_ulong,  \
+                                        float*:  alloc_1D_array_size_float, \
+                                        double*:alloc_1D_array_size_double, \
+                                        int_fast32_t*: alloc_1D_array_size_int_fast32_t \
+                )
+
+#define SELECTGALLOC_4(_1, _2, _3, _4) _Generic((_1),                   \
+                                                char**: _Generic((_2),  \
+                                                                 int: alloc_2D_array_size_char \
+                                                        ),              \
+                                                int**: _Generic((_2),   \
+                                                                int: alloc_2D_array_size_int \
+                                                        ),              \
+                                                ulong**: _Generic((_2), \
+                                                                  int: alloc_2D_array_size_ulong \
+                                                        ),              \
+                                                float**: _Generic((_2), \
+                                                                  int: alloc_2D_array_size_float \
+                                                        ),              \
+                                                double**: _Generic((_2), \
+                                                                   int: alloc_2D_array_size_double \
+                                                        ),              \
+                                                int_fast32_t**:  _Generic((_2), \
+                                                                          int: alloc_2D_array_size_int_fast32_t \
+                                                        )               \
+                )
+
+
+
+
+
+
+
+
+
+
+
 
 /******************************/
 /* End of memory functions  */
 /******************************/
 
 
-/* Logging DONE */
-#define MCALLOC(p,count,type) do {                                      \
-                if (p != NULL){                                         \
-                        ERROR_MSG( "calloc on a nun-null pointer");     \
-                        goto ERROR;                                     \
-                }                                                       \
-                if (((p) = calloc(count, sizeof(type))) == NULL) {      \
-                        ERROR_MSG("calloc of n=%d of type %s failed", count, #type); \
-                        goto ERROR;                                     \
-                }                                                       \
-        } while (0)
+
 
 #if (DEBUGLEVEL >= 1)
 #define DPRINTF1(...)  message(AT,##__VA_ARGS__);
@@ -493,7 +519,6 @@ FREE_1D_ARRAY_DEF(char)
 #define DPRINTF3(...)
 #define DCHECK3(TEST,...)
 #endif
-
 #define LOGSUM_SIZE 1600000
 #define SCALE 100000.0
 
@@ -613,4 +638,3 @@ extern uint32_t random_int_zero_to_x_thread(const uint32_t x, unsigned int* seed
 
 
 #endif
-
