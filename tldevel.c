@@ -1916,8 +1916,8 @@ int main (int argc,char * const argv[])
 
         MFREE(p);
         float* fffffflf = NULL;
-fffffflf= galloc(fffffflf,10);
-
+        fffffflf= galloc(fffffflf,10);
+        gfree(fffffflf);
         MCALLOC(my_str, 1,struct char_struct);
 
         fprintf(stderr,"%d %s\n",	my_str->len,my_str->seq);
@@ -1938,9 +1938,12 @@ fffffflf= galloc(fffffflf,10);
 
         char* cmd = NULL;
         RUNP(cmd =  make_cmd_line(argc,argv));
-        DECLARE_CHK(MAIN,".")
+        DECLARE_CHK(MAIN,".");
 
-                RUN_CHECKPOINT(MAIN,float_4d_test(),cmd);
+        RUN_CHECKPOINT(MAIN,float_4d_test(),cmd);
+
+        DESTROY_CHK(MAIN);
+        MFREE(cmd);
 
         return EXIT_SUCCESS;
 ERROR:

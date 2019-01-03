@@ -1,4 +1,8 @@
 #include "hash_table.h"
+
+
+
+
 /* print commands */
 int print_int(int a)
 {
@@ -24,40 +28,33 @@ int print_string(char* a)
         return OK;
 }
 
-
-/* compare commands */
-
 int ht_compare_key_int(int a, int b)
 {
-        if(a == b){
-                return 1;
+        if(a > b){
+                return -1;
         }
-        return 0;
+        if(a == b){
+                return 0;
+        }
+        return 1;
 }
 
 int ht_compare_key_strings(char* a, char* b)
 {
-
-        if(!strcmp(a,b)){
-                return 1;
-        }
-        return 0;
+        return strcmp(a,b);
 }
 
-int ht_compare_key_int_star(int* a, int* b)
-{
-        if(*a == *b){
-                return 1;
-        }
-        return 0;
-}
 
 int ht_compare_key_double(double a, double b)
 {
-        if(a == b){
-                return 1;
+        if(a > b){
+                return -1;
         }
-        return 0;
+
+        if(a == b){
+                return 0;
+        }
+        return 1;
 
 }
 
@@ -82,14 +79,6 @@ ERROR:
         return 0;
 }
 
-uint32_t get_hash_value_int_star(int* x, int table_size)
-{
-
-        ASSERT(table_size != 0, "Table size cannot be 0!");
-        return *x % table_size;
-ERROR:
-        return 0;
-}
 
 uint32_t get_hash_value_string(char* s, int table_size)
 {
@@ -117,6 +106,27 @@ ERROR:
 HT_GLOBAL_INIT(TEST, char*);
 
 HT_GLOBAL_INIT(TEST_DOUBLE, double);
+int double_cmp(const void *a, const void *b);
+
+struct hash_table_node_TEST_DOUBLE_t;
+int double_cmp(const void *a, const void *b)
+{
+        hash_table_node_TEST_DOUBLE_t* const *ia = a;
+        hash_table_node_TEST_DOUBLE_t* const *ib = b;
+        if((*ia)->key  > (*ib)->key){
+                return 1;
+        }
+        if((*ia)->key  > (*ib)->key){
+                return 0;
+        }
+        return -1;
+
+/* integer comparison: returns negative if b > a
+   and positive if a > b */
+}
+
+
+
 int main (int argc,char * const argv[])
 {
 
@@ -184,6 +194,12 @@ int main (int argc,char * const argv[])
 
         }
         HT_PRINT(TEST_DOUBLE,my_htt);
+        HT_FLATTEN(TEST_DOUBLE,my_htt);
+
+        qsort(my_htt->flat,my_htt->num_items, sizeof(hash_table_node_TEST_DOUBLE_t*), double_cmp);
+        for(i = 0; i < my_htt->num_items;i++){
+                fprintf(stdout,"%d %f\n", i, my_htt->flat[i]->key);
+        }
         HT_FREE(TEST_DOUBLE,my_htt);
 
         return EXIT_SUCCESS;

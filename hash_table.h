@@ -6,35 +6,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-
-struct hash_table_node{
-        int key;
-        int count;
-        void* data;
-        struct hash_table_node *next;
-};
-
-struct hash_table_item{
-        struct hash_table_node* head;
-        struct hash_table_node* tail;
-
-};
-
-struct hash_table{
-        struct hash_table_item** table;
-        int num_items;
-        int table_size;
-};
-
-
-extern struct hash_table* init_hash_table(int size);
-extern void free_hash_table(struct hash_table* ht);
-
-
-
-
-
-#define HT_GLOBAL_INIT(name, type)                                     \
+#define HT_GLOBAL_INIT(name, type)                                      \
                                                                         \
         typedef struct hash_table_node_##name{                          \
                 type key;                                               \
@@ -51,6 +23,7 @@ extern void free_hash_table(struct hash_table* ht);
                                                                         \
         typedef struct{                                                 \
                 hash_table_item_##name##_t** table;                     \
+                struct hash_table_node_##name** flat;                   \
                 int num_items;                                          \
                 int table_size;                                         \
         } hash_table_##name##_t;                                        \
@@ -69,6 +42,7 @@ extern void free_hash_table(struct hash_table* ht);
                 ht->num_items = 0;                                      \
                 ht->table = NULL;                                       \
                 ht->table_size = size;                                  \
+                ht->flat = NULL;                                        \
                 MMALLOC(ht->table, sizeof(hash_table_item_##name##_t*) * ht->table_size); \
                 for(i =0; i < ht->table_size;i++){                      \
                         ht->table[i] = NULL;                            \
@@ -84,114 +58,136 @@ extern void free_hash_table(struct hash_table* ht);
                                                                         \
         void free_hash_table_##name(hash_table_##name##_t* ht)          \
         {                                                               \
-        hash_table_node_##name##_t* n = NULL;                           \
-        hash_table_node_##name##_t* tmp = NULL;                         \
-        int i;                                                          \
-        if(ht){                                                         \
-                if(ht->table){                                          \
-                        for(i =0; i < ht->table_size;i++){              \
-                                n = ht->table[i]->head;                 \
-                                while(n){                               \
-                                        tmp = n;                        \
-                                        n = n->next;                    \
-                                        gfree(tmp->key);                \
-                                        MFREE(tmp);                     \
+                hash_table_node_##name##_t* n = NULL;                   \
+                hash_table_node_##name##_t* tmp = NULL;                 \
+                int i;                                                  \
+                if(ht){                                                 \
+                        if(ht->table){                                  \
+                                for(i =0; i < ht->table_size;i++){      \
+                                        n = ht->table[i]->head;         \
+                                        while(n){                       \
+                                                tmp = n;                \
+                                                n = n->next;            \
+                                                gfree(tmp->key);        \
+                                                MFREE(tmp);             \
                                         }                               \
                                         MFREE(ht->table[i]);            \
                                 }                                       \
                                 MFREE(ht->table);                       \
                         }                                               \
+                        if(ht->flat){                                   \
+                                MFREE(ht->flat);                        \
+                        }                                               \
                         MFREE(ht);                                      \
                 }                                                       \
         }                                                               \
                                                                         \
-        hash_table_node_##name##_t* get_entry_hash_table_linked_list_##name(hash_table_node_##name##_t* n, int pos) \
+        int hash_table_flat__##name(hash_table_##name##_t* ht)          \
         {                                                               \
-                int i = 0;                                              \
-                hash_table_node_##name##_t* tmp = n;                    \
-                while (i != pos){                                       \
-                        tmp = tmp->next;                                \
-                        i++;                                            \
+                int i,j;                                                \
+        hash_table_node_##name##_t* n = NULL;                           \
+        MMALLOC(ht->flat, sizeof(hash_table_node_##name##_t*) * ht->num_items); \
+        j = 0;                                                          \
+        for(i = 0; i < ht->table_size;i++){                             \
+                n = ht->table[i]->head;                                 \
+                while(n){                                               \
+                        ht->flat[j] = n;                                \
+                        j++;                                            \
+                        n = n->next;                                    \
                 }                                                       \
-                return tmp;                                             \
         }                                                               \
+        return OK;                                                      \
+ERROR:                                                                  \
+return FAIL;                                                            \
+}                                                                       \
                                                                         \
-        int search_hash_table_linked_list_##name(hash_table_node_##name##_t* n, type key) \
-        {                                                               \
-        int ret = 0;                                                    \
-        hash_table_node_##name##_t* tmp = n;                            \
-        while (tmp != NULL){                                            \
-                if (ht_compare_key(key,tmp->key)){                      \
-                        return ret;                                     \
-                }                                                       \
-                tmp = tmp->next;                                        \
-                ret++;                                                  \
-        }                                                               \
-        return -1;                                                      \
-        }                                                               \
+ hash_table_node_##name##_t* get_entry_hash_table_linked_list_##name(hash_table_node_##name##_t* n, int pos) \
+ {                                                                      \
+         int i = 0;                                                     \
+         hash_table_node_##name##_t* tmp = n;                           \
+         while (i != pos){                                              \
+                 tmp = tmp->next;                                       \
+                 i++;                                                   \
+         }                                                              \
+         return tmp;                                                    \
+ }                                                                      \
+                                                                        \
+ int search_hash_table_linked_list_##name(hash_table_node_##name##_t* n, type key) \
+ {                                                                      \
+         int ret = 0;                                                   \
+         hash_table_node_##name##_t* tmp = n;                           \
+         while (tmp != NULL){                                           \
+                 if (!ht_compare_key(key,tmp->key)){                    \
+                         return ret;                                    \
+                 }                                                      \
+                 tmp = tmp->next;                                       \
+                 ret++;                                                 \
+         }                                                              \
+         return -1;                                                     \
+ }                                                                      \
                                                                         \
                                                                         \
-        int insert_##name(hash_table_##name##_t* ht, type key, void* data) \
-        {                                                               \
-                hash_table_node_##name##_t* n = NULL;                   \
-                hash_table_node_##name##_t* new = NULL;                 \
-                uint32_t index;                                         \
-                index = get_hash_value(key,ht->table_size);             \
-                n = ht->table[index]->head;                             \
-                RUNP(new = alloc_hash_table_node_##name(key,data));     \
-                if(n == NULL){                                          \
-                        ht->table[index]->head = new;                   \
-                        ht->table[index]->tail = new;                   \
-                        ht->num_items++;                                \
-                }else{                                                  \
-                        int pos = search_hash_table_linked_list_##name(n, key); \
-                        if (pos == -1){                                 \
-                                ht->table[index]->tail->next = new;     \
-                                ht->table[index]->tail = new;           \
-                                ht->num_items++;                        \
-                        }else{                                          \
-                                MFREE(new);                             \
-                                new = get_entry_hash_table_linked_list_##name(n, pos); \
-                                new->count++;                           \
-                        }                                               \
-                }                                                       \
-                return OK;                                              \
-        ERROR:                                                          \
-                return FAIL;                                            \
-        }                                                               \
+ int insert_##name(hash_table_##name##_t* ht, type key, void* data)     \
+ {                                                                      \
+         hash_table_node_##name##_t* n = NULL;                          \
+         hash_table_node_##name##_t* new = NULL;                        \
+         uint32_t index;                                                \
+         index = get_hash_value(key,ht->table_size);                    \
+         n = ht->table[index]->head;                                    \
+         RUNP(new = alloc_hash_table_node_##name(key,data));            \
+         if(n == NULL){                                                 \
+                 ht->table[index]->head = new;                          \
+                 ht->table[index]->tail = new;                          \
+                 ht->num_items++;                                       \
+         }else{                                                         \
+                 int pos = search_hash_table_linked_list_##name(n, key); \
+                 if (pos == -1){                                        \
+                         ht->table[index]->tail->next = new;            \
+                         ht->table[index]->tail = new;                  \
+                         ht->num_items++;                               \
+                 }else{                                                 \
+                         MFREE(new);                                    \
+                         new = get_entry_hash_table_linked_list_##name(n, pos); \
+                         new->count++;                                  \
+                 }                                                      \
+         }                                                              \
+         return OK;                                                     \
+ ERROR:                                                                 \
+         return FAIL;                                                   \
+ }                                                                      \
                                                                         \
-        int print_hash_table_##name(hash_table_##name##_t* ht)   \
-        {                                                               \
-                hash_table_node_##name##_t* n = NULL;                   \
-                int i;                                                  \
-                for (i = 0; i < ht->table_size;i++){                    \
-                        n = ht->table[i]->head;                         \
-                        if(n == NULL){                                  \
-                                fprintf(stdout,"%d\tno entry\n",i);     \
-                        }else{                                          \
-                                fprintf(stdout,"%d\t",i);               \
-                                while(n){                               \
-                                        ht_print_key(n->key);           \
-                                        n = n->next;                    \
-                                }                                       \
-                                fprintf(stdout,"\n");                   \
-                        }                                               \
-                }                                                       \
-                return OK;                                              \
-        }                                                               \
+ int print_hash_table_##name(hash_table_##name##_t* ht)                 \
+ {                                                                      \
+         hash_table_node_##name##_t* n = NULL;                          \
+         int i;                                                         \
+         for (i = 0; i < ht->table_size;i++){                           \
+                 n = ht->table[i]->head;                                \
+                 if(n == NULL){                                         \
+                         fprintf(stdout,"%d\tno entry\n",i);            \
+                 }else{                                                 \
+                         fprintf(stdout,"%d\t",i);                      \
+                         while(n){                                      \
+                                 ht_print_key(n->key);                  \
+                                 n = n->next;                           \
+                         }                                              \
+                         fprintf(stdout,"\n");                          \
+                 }                                                      \
+         }                                                              \
+         return OK;                                                     \
+ }                                                                      \
                                                                         \
-        hash_table_node_##name##_t* alloc_hash_table_node_##name (type key, void* data) \
-        {                                                               \
-                hash_table_node_##name##_t* n = NULL;                   \
-                MMALLOC(n, sizeof(hash_table_node_##name##_t));         \
-                n->key = key;                                           \
-                n->data = data;                                         \
-                n->count = 1;                                           \
-                n->next = NULL;                                         \
-                return n;                                               \
-        ERROR:                                                          \
-                return NULL;                                            \
-        }                                                               \
+ hash_table_node_##name##_t* alloc_hash_table_node_##name (type key, void* data) \
+ {                                                                      \
+         hash_table_node_##name##_t* n = NULL;                          \
+         MMALLOC(n, sizeof(hash_table_node_##name##_t));                \
+         n->key = key;                                                  \
+         n->data = data;                                                \
+         n->count = 1;                                                  \
+         n->next = NULL;                                                \
+         return n;                                                      \
+ ERROR:                                                                 \
+         return NULL;                                                   \
+ }                                                                      \
 
 
 uint32_t get_hash_value_int(int x, int table_size);
@@ -202,34 +198,28 @@ uint32_t get_hash_value_int_star(int* x, int table_size);
 #define get_hash_value(type, size) _Generic ((type),                    \
                                              char*: get_hash_value_string, \
                                              int: get_hash_value_int,   \
-                                             double: get_hash_value_double  \
+                                             double: get_hash_value_double \
                 )(type, size)
 
 int ht_compare_key_int(int a, int b);
-int ht_compare_key_int_star(int* a, int* b);
 int ht_compare_key_double(double a, double b);
 int ht_compare_key_strings(char* a, char* b);
 
 #define ht_compare_key(a, b) _Generic ((a),                           \
                                        double: ht_compare_key_double, \
                                        int: ht_compare_key_int,       \
-                                       int*: ht_compare_key_int_star, \
                                        char*: ht_compare_key_strings  \
                 )(a, b)
 
 int print_int(int a);
-int print_int_star(int* a);
 int print_double(double a);
 int print_string(char* a);
 
 #define ht_print_key(a) _Generic ((a),                  \
                                   int: print_int,       \
                                   double: print_double, \
-                                  int*: print_int_star, \
                                   char*: print_string   \
                 )(a)
-
-
 
 
 
@@ -239,6 +229,7 @@ int print_string(char* a);
 #define HT_TYPE(name) hash_table_##name##_t
 #define HT_INIT(name,size) init_hash_table_##name(size)
 #define HT_INSERT(name,ht,key,data) insert_##name(ht,key,data)
+#define HT_FLATTEN(name,ht)  hash_table_flat__##name(ht);
 #define HT_PRINT(name,ht)  print_hash_table_##name(ht)
 #define HT_FREE(name,ht) free_hash_table_##name(ht)
 #endif

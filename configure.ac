@@ -5,7 +5,7 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_RANLIB
 AM_SILENT_RULES([no])
-
+AC_CONFIG_MACRO_DIR([m4])
 
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-lm':
@@ -38,7 +38,7 @@ AC_CHECK_FUNCS([arc4random arc4random_uniform])
 
 
 AC_CHECK_FUNCS([strdup])
-AC_CHECK_FUNCS([strtol]) 
+AC_CHECK_FUNCS([strtol])
 
 # non-standard stuff
 
@@ -72,29 +72,16 @@ esac
 
 if test "$enable_debugging" != "no"; then
         AC_DEFINE(DEBUG,1,[Defines debugging .])
-        CFLAGS="-pg -ggdb -Wall -m64 -std=gnu11 -fdata-sections -ffunction-sections"
+        CFLAGS="-ggdb -Wall -m64 -std=gnu11 -fdata-sections -ffunction-sections"
 else
         CFLAGS="-O3 -funroll-loops -Wall -std=gnu11 -fdata-sections -ffunction-sections"
         DEBUG=0
 fi
 
-AC_ARG_ENABLE(valgrind-tests,
-    [  --enable-valgrind-tests run self tests under valgrind],
-    opt_valgrind_tests="$enableval", opt_valgrind_tests="no")
 
+AX_VALGRIND_DFLT([memcheck], [on])
+AX_VALGRIND_CHECK
 
-OPTS="-q --trace-children=no --error-exitcode=1 --leak-check=yes"
-  # Run self-tests under valgrind?
-if test "$opt_valgrind_tests" = "yes"; then
-        AC_DEFINE(DEBUG,1,[Defines debugging .])
-        CFLAGS="-pg -ggdb -pedantic -Wall -m64 -std=gnu11"
-	AC_CHECK_PROGS(VALGRIND, valgrind)
-	VALGRIND="$VALGRIND $OPTS"
-else
-	VALGRIND=
-fi
-AC_MSG_CHECKING([whether self tests are run under valgrind])
-AC_MSG_RESULT($opt_valgrind_tests)
 
 AC_CANONICAL_HOST
 

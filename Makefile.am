@@ -2,6 +2,8 @@
 SUBDIRS = helper
 
 
+
+
 EXTRA_DIST=pwrite_test.sh
 
 noinst_LIBRARIES = libtldevel.a
@@ -31,9 +33,6 @@ AM_LDFLAGS += -Wno-undef
 
 
 TESTS= libtldevel_ITEST  ht_ITEST mem_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST  libpwrite_ITEST pwrite_test.sh
-
-TESTS_ENVIRONMENT = \
-	$(VALGRIND)
 
 
 check_PROGRAMS =  libtldevel_ITEST  ht_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST libpwrite_ITEST mem_ITEST
@@ -86,3 +85,4 @@ CLEANFILES = \
 	testlog.txt \
 	pwtest_t*
 
+@VALGRIND_CHECK_RULES@
