@@ -182,6 +182,22 @@ int main (int argc,char * const argv[])
                 RUN(HT_INSERT(TEST,my_ht,test,NULL));
 
         }
+
+        for(i = 0; i < 2000;i++){
+                char* test = NULL;
+                //MMALLOC(test, sizeof(char)*100);
+                test = galloc(test,100);
+                int j,c;
+                c = i;
+                for(j = 0; j < 10;j++){
+                        test[j] = (c & 0x3) +65;
+                        c = c >> 2;
+                }
+                test[10] = 0;
+
+                RUN(HT_INSERT(TEST,my_ht,test,NULL));
+
+        }
         HT_PRINT(TEST,my_ht);
         HT_FREE(TEST,my_ht);
 
@@ -193,12 +209,16 @@ int main (int argc,char * const argv[])
                 RUN(HT_INSERT(TEST_DOUBLE,my_htt,(double)i,NULL));
 
         }
+         for(i = 0; i < 2000;i++){
+                RUN(HT_INSERT(TEST_DOUBLE,my_htt,(double)i,NULL));
+
+        }
         HT_PRINT(TEST_DOUBLE,my_htt);
         HT_FLATTEN(TEST_DOUBLE,my_htt);
 
         qsort(my_htt->flat,my_htt->num_items, sizeof(hash_table_node_TEST_DOUBLE_t*), double_cmp);
         for(i = 0; i < my_htt->num_items;i++){
-                fprintf(stdout,"%d %f\n", i, my_htt->flat[i]->key);
+                fprintf(stdout,"%d %f %d \n", i, my_htt->flat[i]->key,my_htt->flat[i]->count);
         }
         HT_FREE(TEST_DOUBLE,my_htt);
 
