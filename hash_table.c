@@ -220,6 +220,7 @@ int main (int argc,char * const argv[])
         for(i = 0; i < my_htt->num_items;i++){
                 fprintf(stdout,"%d %f %d \n", i, my_htt->flat[i]->key,my_htt->flat[i]->count);
         }
+        fprintf(stdout,"Hash table has %d entries, %d nodes and %d item counts\n", my_htt->table_size, my_htt->num_items, my_htt->total_count);
         HT_FREE(TEST_DOUBLE,my_htt);
 
         return EXIT_SUCCESS;
