@@ -129,69 +129,85 @@
         }                                                               \
                                                                         \
                                                                         \
-        int insert_##name(hash_table_##name##_t* ht, type key, void* data) \
+        hash_table_node_##name##_t* search_##name(hash_table_##name##_t* ht, type key) \
         {                                                               \
-                hash_table_node_##name##_t* n = NULL;                   \
-                hash_table_node_##name##_t* new = NULL;                 \
-                uint32_t index;                                         \
-                index = get_hash_value(key,ht->table_size);             \
-                n = ht->table[index]->head;                             \
-                RUNP(new = alloc_hash_table_node_##name(key,data));     \
-                if(n == NULL){                                          \
-                        ht->table[index]->head = new;                   \
-                        ht->table[index]->tail = new;                   \
-                        ht->num_items++;                                \
-                }else{                                                  \
-                        int pos = search_hash_table_linked_list_##name(n, key); \
-                        if (pos == -1){                                 \
-                                ht->table[index]->tail->next = new;     \
-                                ht->table[index]->tail = new;           \
-                                ht->num_items++;                        \
-                        }else{                                          \
-                                gfree(new->key);                        \
-                                MFREE(new);                             \
-                                new = get_entry_hash_table_linked_list_##name(n, pos); \
-                                new->count++;                           \
-                        }                                               \
+        hash_table_node_##name##_t* n = NULL;                           \
+        hash_table_node_##name##_t* ret = NULL;                         \
+        uint32_t index;                                                 \
+        index = get_hash_value(key,ht->table_size);                     \
+        n = ht->table[index]->head;                                     \
+        if(n){                                                          \
+                int pos = search_hash_table_linked_list_##name(n, key); \
+                if(pos != -1){                                          \
+                        ret = get_entry_hash_table_linked_list_##name(n, pos); \
+                        return ret;                                     \
                 }                                                       \
-                ht->total_count++;                                      \
-                return OK;                                              \
-        ERROR:                                                          \
-                return FAIL;                                            \
         }                                                               \
+        return NULL;                                                    \
+        }                                                               \
+         int insert_##name(hash_table_##name##_t* ht, type key, void* data) \
+         {                                                              \
+                 hash_table_node_##name##_t* n = NULL;                  \
+                 hash_table_node_##name##_t* new = NULL;                \
+                 uint32_t index;                                        \
+                 index = get_hash_value(key,ht->table_size);            \
+                 n = ht->table[index]->head;                            \
+                 RUNP(new = alloc_hash_table_node_##name(key,data));    \
+                 if(n == NULL){                                         \
+                         ht->table[index]->head = new;                  \
+                         ht->table[index]->tail = new;                  \
+                         ht->num_items++;                               \
+                 }else{                                                 \
+                         int pos = search_hash_table_linked_list_##name(n, key); \
+                         if (pos == -1){                                \
+                                 ht->table[index]->tail->next = new;    \
+                                 ht->table[index]->tail = new;          \
+                                 ht->num_items++;                       \
+                         }else{                                         \
+                                 gfree(new->key);                       \
+                                 MFREE(new);                            \
+                                 new = get_entry_hash_table_linked_list_##name(n, pos); \
+                                 new->count++;                          \
+                         }                                              \
+                 }                                                      \
+                 ht->total_count++;                                     \
+                 return OK;                                             \
+         ERROR:                                                         \
+                 return FAIL;                                           \
+         }                                                              \
                                                                         \
-        int print_hash_table_##name(hash_table_##name##_t* ht)          \
-        {                                                               \
-                hash_table_node_##name##_t* n = NULL;                   \
-                int i;                                                  \
-                for (i = 0; i < ht->table_size;i++){                    \
-                        n = ht->table[i]->head;                         \
-                        if(n == NULL){                                  \
-                                fprintf(stdout,"%d\tno entry\n",i);     \
-                        }else{                                          \
-                                fprintf(stdout,"%d\t",i);               \
-                                while(n){                               \
-                                        ht_print_key(n->key);           \
-                                        n = n->next;                    \
-                                }                                       \
-                                fprintf(stdout,"\n");                   \
-                        }                                               \
-                }                                                       \
-                return OK;                                              \
-        }                                                               \
+         int print_hash_table_##name(hash_table_##name##_t* ht)         \
+         {                                                              \
+                 hash_table_node_##name##_t* n = NULL;                  \
+                 int i;                                                 \
+                 for (i = 0; i < ht->table_size;i++){                   \
+                         n = ht->table[i]->head;                        \
+                         if(n == NULL){                                 \
+                                 fprintf(stdout,"%d\tno entry\n",i);    \
+                         }else{                                         \
+                                 fprintf(stdout,"%d\t",i);              \
+                                 while(n){                              \
+                                         ht_print_key(n->key);          \
+                                         n = n->next;                   \
+                                 }                                      \
+                                 fprintf(stdout,"\n");                  \
+                         }                                              \
+                 }                                                      \
+                 return OK;                                             \
+         }                                                              \
                                                                         \
-        hash_table_node_##name##_t* alloc_hash_table_node_##name (type key, void* data) \
-        {                                                               \
-                hash_table_node_##name##_t* n = NULL;                   \
-                MMALLOC(n, sizeof(hash_table_node_##name##_t));         \
-                n->key = key;                                           \
-                n->data = data;                                         \
-                n->count = 1;                                           \
-                n->next = NULL;                                         \
-                return n;                                               \
-        ERROR:                                                          \
-                return NULL;                                            \
-        }                                                               \
+         hash_table_node_##name##_t* alloc_hash_table_node_##name (type key, void* data) \
+         {                                                              \
+                 hash_table_node_##name##_t* n = NULL;                  \
+                 MMALLOC(n, sizeof(hash_table_node_##name##_t));        \
+                 n->key = key;                                          \
+                 n->data = data;                                        \
+                 n->count = 1;                                          \
+                 n->next = NULL;                                        \
+                 return n;                                              \
+         ERROR:                                                         \
+                 return NULL;                                           \
+         }                                                              \
 
 
 uint32_t get_hash_value_int(int x, int table_size);
@@ -233,6 +249,9 @@ int print_string(char* a);
 #define HT_TYPE(name) hash_table_##name##_t
 #define HT_INIT(name,size) init_hash_table_##name(size)
 #define HT_INSERT(name,ht,key,data) insert_##name(ht,key,data)
+
+#define HT_SEARCH(name,ht,key)  search_##name(ht,key);
+
 #define HT_FLATTEN(name,ht)  hash_table_flat__##name(ht);
 #define HT_PRINT(name,ht)  print_hash_table_##name(ht)
 #define HT_FREE(name,ht) free_hash_table_##name(ht)

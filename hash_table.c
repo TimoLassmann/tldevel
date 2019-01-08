@@ -209,10 +209,14 @@ int main (int argc,char * const argv[])
                 RUN(HT_INSERT(TEST_DOUBLE,my_htt,(double)i,NULL));
 
         }
-         for(i = 0; i < 2000;i++){
+        for(i = 0; i < 2000;i++){
                 RUN(HT_INSERT(TEST_DOUBLE,my_htt,(double)i,NULL));
 
         }
+        hash_table_node_TEST_DOUBLE_t* hashnode = NULL;
+
+
+
         HT_PRINT(TEST_DOUBLE,my_htt);
         HT_FLATTEN(TEST_DOUBLE,my_htt);
 
@@ -221,6 +225,13 @@ int main (int argc,char * const argv[])
                 fprintf(stdout,"%d %f %d \n", i, my_htt->flat[i]->key,my_htt->flat[i]->count);
         }
         fprintf(stdout,"Hash table has %d entries, %d nodes and %d item counts\n", my_htt->table_size, my_htt->num_items, my_htt->total_count);
+
+        LOG_MSG("searching for %f", (double) 42);
+
+        hashnode = HT_SEARCH(TEST_DOUBLE, my_htt, 42);
+        if(hashnode){
+                LOG_MSG("Found:%f %d %p\n", hashnode->key,hashnode->count, hashnode->data);
+        }
         HT_FREE(TEST_DOUBLE,my_htt);
 
         return EXIT_SUCCESS;
