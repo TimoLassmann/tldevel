@@ -21,6 +21,9 @@ THRPOOLSOURCES = thr_pool.h thr_pool.c
 PWRITESOURCES  = pwrite.h   pwrite.c
 HASHTABLESOURCES = hash_table.h hash_table.c
 
+TAVLSOURCES = tavl.h tavl.c
+
+
 libtldevel_a_SOURCES = $(TLDEVELSOURCES) $(HASHTABLESOURCES)   $(RBTREESOURCES) $(RTRTREESOURCES) $(THRPOOLSOURCES) $(PWRITESOURCES)
 
 
@@ -32,10 +35,14 @@ AM_LDFLAGS = @DEAD_STRIP@
 AM_LDFLAGS += -Wno-undef
 
 
-TESTS= libtldevel_ITEST  ht_ITEST mem_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST  libpwrite_ITEST pwrite_test.sh
+TESTS= libtldevel_ITEST  ht_ITEST mem_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST  libpwrite_ITEST pwrite_test.sh tavl_ITEST
 
 
-check_PROGRAMS =  libtldevel_ITEST  ht_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST libpwrite_ITEST mem_ITEST
+check_PROGRAMS =  libtldevel_ITEST  ht_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST libpwrite_ITEST mem_ITEST tavl_ITEST
+
+tavl_ITEST_SOURCES = tavl_itest.c $(TAVLSOURCES)
+tavl_ITESTCPPFLAGS = $(AM_CPPFLAGS)
+tavl_ITEST_LDADD = libtldevel.a
 
 libtldevel_ITEST_SOURCES = $(TLDEVELSOURCES)
 libtldevel_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DITEST
