@@ -93,7 +93,7 @@ int main (int argc,char * argv[])
         fprintf(stdout,"DONE\n");
 
 
-        for(i = 0; i < 16777216;i++){
+        for(i = 0; i < 1024;i++){
                 r = random_float_zero_to_x_thread(1.0, &seed);
                 //fprintf(stdout,"%f\n",r);
                 data= NULL;
