@@ -46,28 +46,37 @@ int compare_test_data_d (const void *pa, const void *pb, void *param)
         const struct test_data *a = pa;
         const struct test_data *b = pb;
 
+        fprintf(stdout,"%p %p\n", a,b);
 
         double a_d,b_d;
         a_d = a->d_key;
         b_d = b->d_key;
+        fprintf(stdout,"%f\n", a_d);
+        fprintf(stdout,"%f\n", b_d);
+
         if(a_d < b_d){
                 return -1;
         }else if(a_d > b_d){
                 return 1;
         }else{
                 int a_i,b_i;
+                LOG_MSG("Oh Oh duplicated item?");
+                LOG_MSG("%f %f", a_d,b_d);
+
                 a_i = a->i_key;
                 b_i = b->i_key;
+                LOG_MSG("%d %d", a_i,b_i);
                 if(a_i < b_i){
+                        LOG_MSG("a < b");
                         return -1;
                 }else if(a_i > b_i){
+                        LOG_MSG("a > b");
                         return 1;
                 }else{
+                        LOG_MSG("a == b");
                         return 0;
                 }
-                return 0;
         }
-
 }
 
 void free_test_data_node(void* item,void *param)
@@ -139,31 +148,53 @@ int main (int argc,char * argv[])
         int i;
         double r = 0;
         unsigned seed = time(0);
-        MMALLOC(data,sizeof(struct test_data));
 
+
+        fprintf(stdout,"Create table\n");
         RUNP(table_double = tavl_create(compare_test_data_d,NULL,&tavl_allocator_tldevel));
+        fprintf(stdout,"DONE\n");
 
-        for(i = 0; i < 100;i++){
+        fprintf(stdout,"root:%p\n",table_double->tavl_root);
+
+
+        fprintf(stdout,"MAX:height%d\n", TAVL_MAX_HEIGHT);
+        for(i = 0; i < 5;i++){
+                fprintf(stdout,"ITER:%d\n",i);
                 r = random_float_zero_to_x_thread(1.0, &seed);
+                fprintf(stdout,"%f\n",r);
+                data= NULL;
+                MMALLOC(data,sizeof(struct test_data));
                 data->c_key = NULL;
                 data->i_key = i;
                 data->d_key = r;
-                data = tavl_insert(table_double, (void*) data);
-                if(data == NULL){
-                        /* all good */
-                        MMALLOC(data,sizeof(struct test_data));
-                }
+                fprintf(stdout,"KEY: %f %d\n",data->d_key,data->i_key);
+
+
+                fprintf(stdout,"data pointer: %p\n", data);
+
+                data = tavl_insert(table_double, data);
+
+                 fprintf(stdout,"data pointer: %p\n", data);
+
+                //if(data != NULL){
+
+                //        ERROR_MSG("Insert failed");
+
+                //}
+                /*MMALLOC(data,sizeof(struct test_data));
                 data->c_key = NULL;
                 data->i_key = i+100;
                 data->d_key = r;
+                fprintf(stdout,"%f %d ",data->d_key,data->i_key);
                 data = tavl_insert(table_double, (void*) data);
-                if(data == NULL){
-                        /* all good */
-                        MMALLOC(data,sizeof(struct test_data));
-                }
+                if(data != NULL){
+                        ERROR_MSG("Insert failed");
+
+
+                }*/
 
         }
-        print_whole_tree (table_double, "Double tree");
+        //print_whole_tree (table_double, "Double tree");
         struct tavl_traverser* tmp = NULL;
 
         fprintf(stdout,"Count: %ld\n",tavl_count(table_double));
@@ -171,29 +202,28 @@ int main (int argc,char * argv[])
         MMALLOC(tmp, sizeof(struct tavl_traverser));
         /* init traverser */
         tavl_t_init (tmp , table_double);
-        if(data){
-                MFREE(data);
-        }
+
         data = tavl_t_first (tmp, table_double);
-        fprintf(stdout,"FIRST: %f \n",data->d_key);
-        while((data = tavl_t_next(tmp))){
+        if(data){
+                fprintf(stdout,"FIRST: %f \n",data->d_key);
+                while((data = tavl_t_next(tmp))){
 
 
 
-                fprintf(stdout,"next: %f \n",data->d_key);
+                        fprintf(stdout,"next: %f \n",data->d_key);
+                }
+
+                data = tavl_t_last(tmp, table_double);
+                fprintf(stdout,"LAST: %f \n",data->d_key);
+                while((data= tavl_t_prev(tmp))){
+
+
+
+                        fprintf(stdout,"prev: %f \n",data->d_key);
+                }
+
+
         }
-
-        data = tavl_t_last(tmp, table_double);
-        fprintf(stdout,"LAST: %f \n",data->d_key);
-        while((data= tavl_t_prev(tmp))){
-
-
-
-                fprintf(stdout,"prev: %f \n",data->d_key);
-        }
-
-
-
 
         tavl_destroy(table_double,free_test_data_node );
 
