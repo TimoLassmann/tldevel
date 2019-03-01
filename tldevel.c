@@ -370,7 +370,7 @@ void bit_clr(uint32_t* array, uint32_t i)
 
 int bit_test(uint32_t* array, uint32_t i)
 {
-        return array[i >> 5] & (1 << (i & 0x1F));
+        return (array[i >> 5] & (1 << (i & 0x1F))) != 0 ;
 }
 
 int my_file_exists(char* name)
