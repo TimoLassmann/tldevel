@@ -1,111 +1,11 @@
 #include "minhash.h"
 
+int shuffle_arr_minhash(int* arr,int n, struct drand48_data* randBuffer);
 
 
 
-static struct Boolean_matrix* init_random_Bmatrix(int columns,int rows,  double alpha,struct drand48_data *rd);
-static int print_Boolean_matrix(struct Boolean_matrix* bm);
-static int print_minhash_signatures(struct minhash* min_h);
-static int shuffle_arr(int* arr,int n);
 
-int main (int argc,char * const argv[])
-{
-        fprintf(stdout,"Hello world\n");
-
-        struct Boolean_matrix* bm = NULL;
-        struct minhash* min_h = NULL;
-        double sim;
-        double sim_min;
-        int num_samples = 1000;
-        int i,j;
-        int trials = 100;
-        double s1 = 0.0;
-        double s2 = 0.0;
-        double s1_p = 0.0;
-        double s2_p= 0.0;
-
-        double diff;
-        double diff_p;
-        double p_S_in_X;
-        double alpha = 0.999;
-        double min_avg_sig_diff;
-        int num_hash_functions = 100;
-        int iter;
-        struct drand48_data randBuffer;
-        int* index =NULL;
-        int S_size = 30;
-
-        MMALLOC(index, sizeof(int) * S_size);
-        for(i = 0; i < S_size;i++){
-                index[i] = i;
-        }
-
-
-        srand48_r(time(NULL), &randBuffer);
-
-        for(iter = 0; iter < trials;iter++){
-                /* S_size is just for simulation - this should be the number of variables... */
-                RUNP(bm = init_random_Bmatrix(S_size,num_samples,alpha, &randBuffer));
-                //RUN(print_Boolean_matrix(bm));
-                min_h = create_min_hash(bm, num_hash_functions, &randBuffer);
-                RUN(jaccard_sim(bm,index, S_size, &sim));
-                jaccard_sim_min_multihash(min_h, index, S_size, &sim_min,&min_avg_sig_diff);
-
-
-                p_S_in_X = sim_min* (((double)(num_samples+1) /(double) num_samples) *(  1.0 / min_avg_sig_diff) -(1.0/(double)(num_samples +1)));
-                diff = fabs(sim-sim_min);
-                s1 += diff;
-                s2 += diff * diff;
-                diff_p = fabs(p_S_in_X-  pow(alpha,(double)S_size));
-                s1_p += diff_p;
-                s2_p += diff_p * diff_p;
-                fprintf(stdout,"%f %f delta: %f\t",sim,sim_min, diff);
-                fprintf(stdout,"P seeing: %f (%f) delta: %f\n",p_S_in_X,   pow(alpha, (double)S_size),diff_p);
-
-
-                //RUN(print_Boolean_matrix(bm));
-                //RUN(print_minhash_signatures(min_h));
-                /*for(i = 0; i < 2;i++){
-                  for(j = i+1; j < 2;j++){
-                  RUN(jaccard_sim(bm, i, j, &sim));
-                  RUN(jaccard_sim_min_hash(min_h, i, j, &sim_min,&min_avg_sig_diff));
-                  diff = fabs(sim-sim_min);
-                  fprintf(stdout,"%d %d: %f %f delta: %f\n",i,j,sim,sim_min, diff);
-
-                  // P(1 & 2 in data)
-                  fprintf(stdout,"P seeing %d and %d: %f (%f)\n", i,j,sim_min* ((double)(num_samples+1) /(double) num_samples *(  1.0 / min_avg_sig_diff) -1.0/(double)(num_samples+1)), alpha * alpha);
-
-                  s1 += diff;
-                  s2 += diff * diff;
-                  jaccard_sim_min_multihash(min_h, index, 2, &sim_min,&min_avg_sig_diff);
-                  diff = fabs(sim-sim_min);
-                  fprintf(stdout,"%d %d: %f %f delta: %f\n",i,j,sim,sim_min, diff);
-
-
-                  }
-                  }*/
-
-
-                free_minhash(min_h);
-                free_Boolean_matrix(bm);
-        }
-
-        s2 = sqrt(((double) trials * s2 - s1 * s1)/ ((double) trials * ((double) trials -1.0)));
-        s1 = s1 / (double) trials;
-        fprintf(stdout,"mean: %f stdev:%f\n", s1,s2);
-
-s2_p = sqrt(((double) trials * s2_p - s1_p * s1_p)/ ((double) trials * ((double) trials -1.0)));
-        s1_p = s1_p / (double) trials;
-        fprintf(stdout,"mean: %f stdev:%f\n", s1_p,s2_p);
-
-        return EXIT_SUCCESS;
-ERROR:
-        return EXIT_FAILURE;
-}
-
-
-
-struct minhash* create_min_hash(struct Boolean_matrix* bm, int num_sig,struct drand48_data* rd)
+struct minhash* create_min_hash(struct Boolean_matrix* bm, int num_sig,long int seed)
 {
         struct minhash* min_h = NULL;
         uint32_t* col = NULL;
@@ -113,9 +13,20 @@ struct minhash* create_min_hash(struct Boolean_matrix* bm, int num_sig,struct dr
         int i,j,c;
         int n,m;
         //int hash_val;
-        long int r = 0;
+        struct drand48_data randBuffer;
+
+
+
+
+
         ASSERT(bm!= NULL, "No matrix");
 
+
+        if(seed){
+                srand48_r(seed, &randBuffer);
+        }else{
+                srand48_r(time(NULL), &randBuffer);
+        }
 
 
         MMALLOC(min_h, sizeof(struct minhash));
@@ -152,8 +63,15 @@ struct minhash* create_min_hash(struct Boolean_matrix* bm, int num_sig,struct dr
 
         /*for(i = 0; i < min_h->n_signatures;i++){
                RUN(lrand48_r(rd, &r));
+mean: 0.014800 stdev:0.011909
+mean: 0.016269 stdev:0.013425
+mean: 0.014800 stdev:0.011909
+mean: 0.016269 stdev:0.013425
 
-
+mean: 0.013800 stdev:0.012060
+mean: 0.014203 stdev:0.013525
+mean: 0.013800 stdev:0.012060
+mean: 0.014203 stdev:0.013525
 
                min_h->a[i] = r ;// (uint32_t) lrand48() % (n-1);
                 RUN(lrand48_r(rd, &r));
@@ -168,7 +86,7 @@ struct minhash* create_min_hash(struct Boolean_matrix* bm, int num_sig,struct dr
         /* Apply has functions  */
         for(c = 0;c < min_h->n_signatures;c++){
 
-                shuffle_arr(list, n);
+                shuffle_arr_minhash(list, n ,&randBuffer);
                 for(i = 0; i < m;i++){
                         col = bm->m[i];
                         for(j = 0; j < n;j++){
@@ -233,7 +151,7 @@ ERROR:
 
 
 
-int jaccard_sim_min_multihash(struct minhash* min_h , int* S, int n, double* jac_sim, double *avg_min_sig_diff)
+int jaccard_sim_min_multihash(struct minhash* min_h , int* S, int n,int num_samples, double* jac_sim, double *p_S_in_X)
 {
         int i,j;
         int** m = NULL;
@@ -261,10 +179,13 @@ int jaccard_sim_min_multihash(struct minhash* min_h , int* S, int n, double* jac
                 //fprintf(stdout,"%d %d : %f\n",col_a[i],col_b[i],(double)MACRO_MIN(col_a[i],col_b[i]));
                 min_stuff += min;
         }
-        *avg_min_sig_diff =        (min_stuff /= (double)  min_h->n_signatures);
+        min_stuff = min_stuff / (double)  min_h->n_signatures;
+        *jac_sim = set_intersection / (double) (min_h->n_signatures);
+
+        *p_S_in_X = *jac_sim *  (((double)(num_samples+1) /(double) num_samples) *(  1.0 /min_stuff) -(1.0/(double)(num_samples +1)));
         //fprintf(stdout,"%d %d %f %f\n",a,b,set_intersection,  *avg_min_sig_diff);
 
-        *jac_sim = set_intersection / (double) (min_h->n_signatures);
+
 
         return OK;
 ERROR:
@@ -368,6 +289,69 @@ ERROR:
 }
 
 
+
+void free_minhash(struct minhash* min_h)
+{
+        int i;
+        if(min_h){
+                if(min_h->sig){
+                        for(i = 0; i < min_h->n_columns;i++){
+                                MFREE(min_h->sig[i]);
+                        }
+                        MFREE(min_h->sig);
+                }
+                MFREE(min_h->a);
+                MFREE(min_h->b);
+                MFREE(min_h);
+        }
+}
+
+void free_Boolean_matrix(struct Boolean_matrix* bm)
+{
+        int i;
+        if(bm){
+
+                if(bm->m){
+                        for(i = 0; i < bm->n_column;i++){
+                                MFREE(bm->m[i]);
+                        }
+                        MFREE(bm->m);
+                }
+                MFREE(bm);
+        }
+}
+
+
+int shuffle_arr_minhash(int* arr,int n, struct drand48_data* randBuffer)
+{
+        int i,j;
+        int tmp;
+        long int r;
+
+
+        for (i = 0; i < n - 1; i++) {
+                RUN(lrand48_r(randBuffer,&r));
+                //int lrand48_r(struct drand48_data *buffer, long int *result);
+                j = i +  ((int) r % (int) (n-i));
+                tmp = arr[j];
+                arr[j] = arr[i];
+                arr[i] = tmp;
+        }
+        return OK;
+ERROR:
+        return FAIL;
+}
+
+
+#ifdef MINITEST
+int jaccard_sim(struct Boolean_matrix* bm, int*S , int n, double* jac_sim);
+int jaccard_sim_min_hash(struct minhash* min_h , int a, int b, double* jac_sim, double *avg_min_sig_diff);
+
+static struct Boolean_matrix* init_random_Bmatrix(int columns,int rows,  double alpha,struct drand48_data *rd);
+int print_Boolean_matrix(struct Boolean_matrix* bm);
+int print_minhash_signatures(struct minhash* min_h);
+
+
 struct Boolean_matrix* init_random_Bmatrix( int columns,int rows, double alpha,struct drand48_data* rd)
 {
         struct Boolean_matrix* bm = NULL;
@@ -445,47 +429,73 @@ int print_minhash_signatures(struct minhash* min_h)
         return OK;
 }
 
-void free_minhash(struct minhash* min_h)
+int main (int argc,char * const argv[])
 {
+        fprintf(stdout,"Hello world\n");
+
+        struct Boolean_matrix* bm = NULL;
+        struct minhash* min_h = NULL;
+        double sim;
+        double sim_min;
+        int num_samples = 1000;
         int i;
-        if(min_h){
-                if(min_h->sig){
-                        for(i = 0; i < min_h->n_columns;i++){
-                                MFREE(min_h->sig[i]);
-                        }
-                        MFREE(min_h->sig);
-                }
-                MFREE(min_h->a);
-                MFREE(min_h->b);
-                MFREE(min_h);
+        int trials = 100;
+        double s1 = 0.0;
+        double s2 = 0.0;
+        double s1_p = 0.0;
+        double s2_p= 0.0;
+
+        double diff;
+        double diff_p;
+        double p_S_in_X;
+        double alpha = 0.999;
+
+        int num_hash_functions = 100;
+        int iter;
+        struct drand48_data randBuffer;
+        int* index =NULL;
+        int S_size = 30;
+
+        MMALLOC(index, sizeof(int) * S_size);
+        for(i = 0; i < S_size;i++){
+                index[i] = i;
         }
+
+
+        srand48_r(42, &randBuffer);
+
+        for(iter = 0; iter < trials;iter++){
+                /* S_size is just for simulation - this should be the number of variables... */
+                RUNP(bm = init_random_Bmatrix(S_size,num_samples,alpha, &randBuffer));
+                //RUN(print_Boolean_matrix(bm));
+                min_h = create_min_hash(bm, num_hash_functions, 42);
+                RUN(jaccard_sim(bm,index, S_size, &sim));
+                jaccard_sim_min_multihash(min_h, index, S_size,num_samples, &sim_min,&p_S_in_X);
+
+                diff = fabs(sim-sim_min);
+                s1 += diff;
+                s2 += diff * diff;
+                diff_p = fabs(p_S_in_X-  pow(alpha,(double)S_size));
+                s1_p += diff_p;
+                s2_p += diff_p * diff_p;
+                fprintf(stdout,"%f %f delta: %f\t",sim,sim_min, diff);
+                fprintf(stdout,"P seeing: %f (%f) delta: %f\n",p_S_in_X,   pow(alpha, (double)S_size),diff_p);
+                free_minhash(min_h);
+                free_Boolean_matrix(bm);
+        }
+
+        s2 = sqrt(((double) trials * s2 - s1 * s1)/ ((double) trials * ((double) trials -1.0)));
+        s1 = s1 / (double) trials;
+        fprintf(stdout,"mean: %f stdev:%f\n", s1,s2);
+
+s2_p = sqrt(((double) trials * s2_p - s1_p * s1_p)/ ((double) trials * ((double) trials -1.0)));
+        s1_p = s1_p / (double) trials;
+        fprintf(stdout,"mean: %f stdev:%f\n", s1_p,s2_p);
+
+        return EXIT_SUCCESS;
+ERROR:
+        return EXIT_FAILURE;
 }
 
-void free_Boolean_matrix(struct Boolean_matrix* bm)
-{
-        int i;
-        if(bm){
 
-                if(bm->m){
-                        for(i = 0; i < bm->n_column;i++){
-                                MFREE(bm->m[i]);
-                        }
-                        MFREE(bm->m);
-                }
-                MFREE(bm);
-        }
-}
-
-
-int shuffle_arr(int* arr,int n)
-{
-        int i,j;
-        int tmp;
-        for (i = 0; i < n - 1; i++) {
-                j = i +  (int) (lrand48() % (int) (n-i));
-                tmp = arr[j];
-                arr[j] = arr[i];
-                arr[i] = tmp;
-        }
-        return OK;
-}
+#endif

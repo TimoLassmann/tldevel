@@ -27,15 +27,6 @@ RBSOURCES = rb.h rb.c
 
 libtldevel_a_SOURCES = $(TLDEVELSOURCES) $(HASHTABLESOURCES)   $(RBTREESOURCES) $(RTRTREESOURCES) $(THRPOOLSOURCES) $(PWRITESOURCES) $(RBSOURCES)
 
-bin_PROGRAMS = minhash
-
-
-minhash_SOURCES = $(TLDEVELSOURCES) $(MINHASHSOURCES)
-minhash_CPPFLAGS  = $(AM_CPPFLAGS)  -DMINITEST
-minhash_LDADD =
-
-
-
 # libhtsglue_a_SOURCES =  \
 htsglue.h \
 htsglue.c
@@ -45,7 +36,7 @@ AM_LDFLAGS += -Wno-undef
 
 
 
-TESTS= libtldevel_ITEST  ht_ITEST mem_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST  libpwrite_ITEST pwrite_test.sh  libavlrb_ITEST
+TESTS= libtldevel_ITEST  ht_ITEST mem_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST  libpwrite_ITEST pwrite_test.sh  libavlrb_ITEST minhash_ITEST
 
 
 check_PROGRAMS =  libtldevel_ITEST  ht_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST libpwrite_ITEST mem_ITEST libavlrb_ITEST minhash_ITEST
@@ -82,7 +73,7 @@ libthrpool_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DITEST
 libthrpool_ITEST_LDADD =
 
 
-minhash_ITEST_SOURCES = $(MINHASHSOURCES)
+minhash_ITEST_SOURCES =  $(TLDEVELSOURCES) $(MINHASHSOURCES)
 minhash_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DMINITEST
 minhash_ITEST_LDADD =
 
