@@ -64,7 +64,7 @@ int compare_test_data_d (const void *pa, const void *pb, void *param)
                 }else if(a_i > b_i){
                         return 1;
                 }else{
-                        LOG_MSG("a == b");
+                        //LOG_MSG("a == b");
                         return 0;
                 }
         }
@@ -83,6 +83,7 @@ int main (int argc,char * argv[])
 
         struct rb_table* table_double = NULL;
         struct test_data* data = NULL;
+        struct test_data* ret = NULL;
         int i;
         double r = 0;
         unsigned seed = time(0);
@@ -99,12 +100,25 @@ int main (int argc,char * argv[])
                 data= NULL;
                 MMALLOC(data,sizeof(struct test_data));
                 data->c_key = NULL;
-                data->i_key = i;
+                data->i_key = 1;
                 data->d_key = r;
 
                 data = rb_insert(table_double, data);
                 if(data){
                         ERROR_MSG("Insert failed");
+                }
+                data= NULL;
+                MMALLOC(data,sizeof(struct test_data));
+                data->c_key = NULL;
+                data->i_key = 1;
+                data->d_key = r;
+
+                ret = rb_insert(table_double, data);
+                if(ret){
+                        //  probe(struct rb_table *, void *)
+                        ret->i_key++;
+                        //ERROR_MSG("Insert failed");
+                        MFREE(data);
                 }
 
         }
@@ -119,21 +133,21 @@ int main (int argc,char * argv[])
 
         data = rb_t_first (tmp, table_double);
         if(data){
-                fprintf(stdout,"FIRST: %f \n",data->d_key);
+                fprintf(stdout,"FIRST: %f %d\n",data->d_key, data->i_key);
                 while((data = rb_t_next(tmp))){
 
 
 
-                        //fprintf(stdout,"next: %f \n",data->d_key);
+                        fprintf(stdout,"next: %f %d \n",data->d_key, data->i_key);
                 }
 
                 data = rb_t_last(tmp, table_double);
-                fprintf(stdout,"LAST: %f \n",data->d_key);
+                fprintf(stdout,"LAST: %f %d\n",data->d_key, data->i_key);
                 while((data= rb_t_prev(tmp))){
 
 
 
-                        //fprintf(stdout,"prev: %f \n",data->d_key);
+                        fprintf(stdout,"prev: %f %d\n",data->d_key, data->i_key);
                 }
 
 
