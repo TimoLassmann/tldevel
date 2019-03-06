@@ -2,9 +2,6 @@
 
 int shuffle_arr_minhash(int* arr,int n, struct drand48_data* randBuffer);
 
-
-
-
 struct minhash* create_min_hash(struct Boolean_matrix* bm, int num_sig,long int seed)
 {
         struct minhash* min_h = NULL;
@@ -12,11 +9,7 @@ struct minhash* create_min_hash(struct Boolean_matrix* bm, int num_sig,long int 
         int* list = NULL;
         int i,j,c;
         int n,m;
-        //int hash_val;
         struct drand48_data randBuffer;
-
-
-
 
 
         ASSERT(bm!= NULL, "No matrix");
@@ -62,25 +55,55 @@ struct minhash* create_min_hash(struct Boolean_matrix* bm, int num_sig,long int 
         }
 
         /*for(i = 0; i < min_h->n_signatures;i++){
-               RUN(lrand48_r(rd, &r));
-mean: 0.014800 stdev:0.011909
-mean: 0.016269 stdev:0.013425
-mean: 0.014800 stdev:0.011909
-mean: 0.016269 stdev:0.013425
 
-mean: 0.013800 stdev:0.012060
-mean: 0.014203 stdev:0.013525
-mean: 0.013800 stdev:0.012060
-mean: 0.014203 stdev:0.013525
+                c = 1;
+                while(c){
+                        c = 0;
+                        RUN(lrand48_r(&randBuffer, &r));
 
-               min_h->a[i] = r ;// (uint32_t) lrand48() % (n-1);
-                RUN(lrand48_r(rd, &r));
-                min_h->b[i] = r;//(uint32_t) lrand48() % (n-1);
+                        min_h->a[i] = (r  %  (PRIME_P-1u)) +1u ;
+                }
+
+
+        }
+        c = 1;
+        while (c == 1){
+                c = 0;
+                for(i = 0;i < min_h->n_signatures-1;i++){
+                        for(j = i+1;j < min_h->n_signatures;j++){
+                                if(min_h->a[i] == min_h->a[j]){
+                                        RUN(lrand48_r(&randBuffer, &r));
+
+                                        min_h->a[i] = (r  %  (PRIME_P-1u)) +1u ;
+
+                                        c = 1;
+                                        break;
+                                }
+                        }
+                }
+        }
+        for(i = 0; i < min_h->n_signatures;i++){
+                RUN(lrand48_r(&randBuffer, &r));
+                min_h->b[i] = (r  %  (PRIME_P-1u));//r % max_item_id;//(MAXITEMID + 1000);
+        }
+        c = 1;
+        while (c == 1){
+                c = 0;
+                for(i = 0;i < min_h->n_signatures-1;i++){
+                        for(j = i+1;j < min_h->n_signatures;j++){
+                                if(min_h->b[i] == min_h->b[j]){
+                                        RUN(lrand48_r(&randBuffer, &r));
+                                        min_h->b[j] =(r  %  (PRIME_P-1u));//r  % max_item_id;
+                                        c = 1;
+                                        break;
+                                }
+                        }
+                }
                 }*/
 
-        //for(i = 0; i < 10;i++){
-        //        fprintf(stdout,"%d %d\n", min_h->a[i],min_h->b[i]);
 
+        //for(i = 0; i < min_h->n_signatures;i++){
+                //       fprintf(stdout,"%d %d %d %d\n",i, min_h->a[i],min_h->b[i], prime);
         //}
         //exit(0);
         /* Apply has functions  */
@@ -90,59 +113,50 @@ mean: 0.014203 stdev:0.013525
                 for(i = 0; i < m;i++){
                         col = bm->m[i];
                         for(j = 0; j < n;j++){
-                                if(bit_test(col,list[j])){
-                                        if(j < min_h->sig[i][c]){
-                                                min_h->sig[i][c] = j+1;
+                                if(bit_test(col,j)){
+                                        if(list[j]+1 < min_h->sig[i][c]){
+                                                min_h->sig[i][c] = list[j]+1;
                                         }
                                 }
                         }
                 }
         }
         MFREE(list);
-
+        //fprintf(stdout,"PRIME: %d",prime);
         /*for(i =0; i < m;i++){
                 col = bm->m[i];
-                fprintf(stdout,"COLUMN:%d\n",i);
-                for(j = 0; j < n;j++){
-
-                        //c = 1;
-                        //               hash_val = (min_h->a[c] * j + min_h->b[c]) % n ;
-                        //         fprintf(stdout,"HASH:%d %d %d %d\n",i,j,c,hash_val);
-                        //fprintf(stdout,"%d",bit_test(col, j));
-
-                        fprintf(stdout,"item: %d ", bit_test(col, j));
-                        for(c = 0; c < min_h->n_signatures;c++){
-                                hash_val = (min_h->a[c] * (j+1) + min_h->b[c])  % n;//4294967311;
-                                fprintf(stdout,"%d ",hash_val);
+                //fprintf(stdout,"COLUMN:%d\n",i);
+                for(c = 0; c < min_h->n_signatures;c++){
+                        if(!i){
+                                  fprintf(stdout,"%d\t",c);
+                        }
+                        min_h->sig[i][c] = PRIME_P + 1;
+                        for(j = 0; j < n;j++){
+                                if(!i){
+                                                       fprintf(stdout,"%u\t",( (min_h->a[c] * (j) + min_h->b[c]) % PRIME_P ) );
+                                }
                                 if(bit_test(col, j)){
-                                        //fprintf(stdout,"comparing: %d %d\n",hash_val , min_h->sig[i][c]);
-                                        if(hash_val <  min_h->sig[i][c]){
+                                        hash_val = ( (min_h->a[c] * (unsigned int)(j+1) + min_h->b[c]) % PRIME_P ) ;
+                                        if(hash_val < min_h->sig[i][c]){
                                                 min_h->sig[i][c] = hash_val;
                                         }
                                 }
                         }
-                        fprintf(stdout,"\n");
-
+                        if(!i){
+                                      fprintf(stdout,"\n");
+                        }
                 }
-                //fprintf(stdout,"\t");
-                //for(i = 0; i < min_h->n_columns;i++){
+                }
+        // exit(0);
+//(size_t) (a*x+b) >> (w-M)
+//(size_t) (a*x+b) >> (w-M)*/
+        /*for(i = 0; i < min_h->n_columns;i++){
 
-                //        for(c = 0; c < min_h->n_signatures;c++){
-                                //      fprintf(stdout,"%d ", min_h->sig[i][c]);
-                //        }
-                        // fprintf(stdout,"\t");
-                //}
-                //   fprintf(stdout,"\n");
-
+                for(j = 0; j < min_h->n_signatures;j++){
+                               fprintf(stdout,"%d ", min_h->sig[i][j]);
+                }
+                fprintf(stdout,"\n");
                 }*/
-
-        //for(i = 0; i < min_h->n_columns;i++){
-
-        //        for(j = 0; j < min_h->n_signatures;j++){
-                        //       fprintf(stdout,"%d ", min_h->sig[i][j]);
-        //        }
-                //fprintf(stdout,"\n");
-        //}
 
         return min_h;
 ERROR:
@@ -154,7 +168,7 @@ ERROR:
 int jaccard_sim_min_multihash(struct minhash* min_h , int* S, int n,int num_samples, double* jac_sim, double *p_S_in_X)
 {
         int i,j;
-        int** m = NULL;
+        unsigned int** m = NULL;
         double set_intersection = 0.0;
         double c,min;
 
@@ -170,7 +184,7 @@ int jaccard_sim_min_multihash(struct minhash* min_h , int* S, int n,int num_samp
                         min = MACRO_MIN(min, m[S[j]][i]);
                         if(m[S[j]][i] != m[S[0]][i]){
                                 c =0.0;
-                                break;
+                                //break;
                         }
                 }
 
@@ -179,12 +193,13 @@ int jaccard_sim_min_multihash(struct minhash* min_h , int* S, int n,int num_samp
                 //fprintf(stdout,"%d %d : %f\n",col_a[i],col_b[i],(double)MACRO_MIN(col_a[i],col_b[i]));
                 min_stuff += min;
         }
+        //fprintf(stdout,"%f\n",min_stuff);
         min_stuff = min_stuff / (double)  min_h->n_signatures;
         *jac_sim = set_intersection / (double) (min_h->n_signatures);
+        //fprintf(stdout,"%f\n",min_stuff);
 
         *p_S_in_X = *jac_sim *  (((double)(num_samples+1) /(double) num_samples) *(  1.0 /min_stuff) -(1.0/(double)(num_samples +1)));
         //fprintf(stdout,"%d %d %f %f\n",a,b,set_intersection,  *avg_min_sig_diff);
-
 
 
         return OK;
@@ -199,8 +214,8 @@ int jaccard_sim_min_hash(struct minhash* min_h , int a, int b, double* jac_sim, 
         double set_intersection = 0.0;
 
 
-        int* col_a = NULL;
-        int* col_b = NULL;
+        unsigned int* col_a = NULL;
+        unsigned int* col_b = NULL;
         double min_stuff = 0.0;
         ASSERT(min_h != NULL, "No minhash");
         col_a = min_h->sig[a];
@@ -437,9 +452,9 @@ int main (int argc,char * const argv[])
         struct minhash* min_h = NULL;
         double sim;
         double sim_min;
-        int num_samples = 1000;
+        int num_samples = 100000;
         int i;
-        int trials = 100;
+        int trials = 10;
         double s1 = 0.0;
         double s2 = 0.0;
         double s1_p = 0.0;
@@ -448,13 +463,13 @@ int main (int argc,char * const argv[])
         double diff;
         double diff_p;
         double p_S_in_X;
-        double alpha = 0.999;
+        double alpha = 0.3;
 
-        int num_hash_functions = 100;
+        int num_hash_functions = 1000;
         int iter;
         struct drand48_data randBuffer;
         int* index =NULL;
-        int S_size = 30;
+        int S_size = 2;
 
         MMALLOC(index, sizeof(int) * S_size);
         for(i = 0; i < S_size;i++){
@@ -468,7 +483,7 @@ int main (int argc,char * const argv[])
                 /* S_size is just for simulation - this should be the number of variables... */
                 RUNP(bm = init_random_Bmatrix(S_size,num_samples,alpha, &randBuffer));
                 //RUN(print_Boolean_matrix(bm));
-                min_h = create_min_hash(bm, num_hash_functions, 42);
+                min_h = create_min_hash(bm, num_hash_functions, 0);
                 RUN(jaccard_sim(bm,index, S_size, &sim));
                 jaccard_sim_min_multihash(min_h, index, S_size,num_samples, &sim_min,&p_S_in_X);
 

@@ -14,9 +14,9 @@ struct Boolean_matrix{
 
 
 struct minhash{
-        int** sig;
-        int* a;
-        int* b;
+        unsigned int** sig;
+        unsigned int* a;
+        unsigned int* b;
         int n_signatures;
         int n_columns;
 };
