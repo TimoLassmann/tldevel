@@ -24,12 +24,13 @@ struct minhash* create_min_hash(struct Boolean_matrix* bm, int num_sig,long int 
 
         MMALLOC(min_h, sizeof(struct minhash));
         min_h->sig = NULL;
-        min_h->a = NULL;
-        min_h->b = NULL;
+        //min_h->a = NULL;
+        //min_h->b = NULL;
 
 
         min_h->n_signatures = num_sig;
         min_h->n_columns = bm->n_column;
+        min_h->n_samples = bm->n_row;
 
         MMALLOC( min_h->sig, sizeof(uint32_t*) * bm->n_column);
 
@@ -40,8 +41,8 @@ struct minhash* create_min_hash(struct Boolean_matrix* bm, int num_sig,long int 
                         min_h->sig[i][j] = INT_MAX;
                 }
         }
-        MMALLOC(min_h->a, sizeof(uint32_t)* min_h->n_signatures);
-        MMALLOC(min_h->b, sizeof(uint32_t)* min_h->n_signatures);
+        //MMALLOC(min_h->a, sizeof(uint32_t)* min_h->n_signatures);
+        //MMALLOC(min_h->b, sizeof(uint32_t)* min_h->n_signatures);
 
 
 
@@ -165,17 +166,18 @@ ERROR:
 
 
 
-int jaccard_sim_min_multihash(struct minhash* min_h , int* S, int n,int num_samples, double* jac_sim, double *p_S_in_X)
+int jaccard_sim_min_multihash(struct minhash* min_h , int* S, int n, double* jac_sim, double *p_S_in_X)
 {
         int i,j;
         unsigned int** m = NULL;
         double set_intersection = 0.0;
         double c,min;
-
+        int num_samples;
 
         double min_stuff = 0.0;
         ASSERT(min_h != NULL, "No minhash");
         m = min_h->sig;
+        num_samples = min_h->n_samples;
 
         for(i = 0; i < min_h->n_signatures;i++){
                 min =  m[S[0]][i];
@@ -200,7 +202,7 @@ int jaccard_sim_min_multihash(struct minhash* min_h , int* S, int n,int num_samp
 
         *p_S_in_X = *jac_sim *  (((double)(num_samples+1) /(double) num_samples) *(  1.0 /min_stuff) -(1.0/(double)(num_samples +1)));
         //fprintf(stdout,"%d %d %f %f\n",a,b,set_intersection,  *avg_min_sig_diff);
-
+        //LOG_MSG("samples:%d %d", num_samples,min_h->n_samples);
 
         return OK;
 ERROR:
@@ -315,8 +317,8 @@ void free_minhash(struct minhash* min_h)
                         }
                         MFREE(min_h->sig);
                 }
-                MFREE(min_h->a);
-                MFREE(min_h->b);
+                //MFREE(min_h->a);
+                //MFREE(min_h->b);
                 MFREE(min_h);
         }
 }
@@ -452,7 +454,7 @@ int main (int argc,char * const argv[])
         struct minhash* min_h = NULL;
         double sim;
         double sim_min;
-        int num_samples = 100000;
+        int num_samples = 1000;
         int i;
         int trials = 10;
         double s1 = 0.0;
@@ -465,7 +467,7 @@ int main (int argc,char * const argv[])
         double p_S_in_X;
         double alpha = 0.3;
 
-        int num_hash_functions = 1000;
+        int num_hash_functions = 200;
         int iter;
         struct drand48_data randBuffer;
         int* index =NULL;
@@ -485,7 +487,7 @@ int main (int argc,char * const argv[])
                 //RUN(print_Boolean_matrix(bm));
                 min_h = create_min_hash(bm, num_hash_functions, 0);
                 RUN(jaccard_sim(bm,index, S_size, &sim));
-                jaccard_sim_min_multihash(min_h, index, S_size,num_samples, &sim_min,&p_S_in_X);
+                jaccard_sim_min_multihash(min_h, index, S_size, &sim_min,&p_S_in_X);
 
                 diff = fabs(sim-sim_min);
                 s1 += diff;

@@ -15,10 +15,12 @@ struct Boolean_matrix{
 
 struct minhash{
         unsigned int** sig;
-        unsigned int* a;
-        unsigned int* b;
+        //unsigned int* a;
+        //unsigned int* b;
         int n_signatures;
         int n_columns;
+        int n_samples;
+
 };
 
 /* allocate and free Boolean matrix */
@@ -31,5 +33,5 @@ void free_minhash(struct minhash* min_h);
 
 /* calculate jaccard index for set S in based on the minhash and the probability of finding set S in n samples  */
 
-int jaccard_sim_min_multihash(struct minhash* min_h , int* S, int n,int num_samples, double* jac_sim, double *p_S_in_X);
+int jaccard_sim_min_multihash(struct minhash* min_h , int* S, int n,double* jac_sim, double *p_S_in_X);
 #endif
