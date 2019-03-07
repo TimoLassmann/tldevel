@@ -177,7 +177,7 @@ int jaccard_sim_min_multihash(struct minhash* min_h , int* S, int n, double* jac
         double min_stuff = 0.0;
         ASSERT(min_h != NULL, "No minhash");
         m = min_h->sig;
-        num_samples = min_h->n_samples;
+        num_samples = min_h->n_columns;
 
         for(i = 0; i < min_h->n_signatures;i++){
                 min =  m[S[0]][i];
