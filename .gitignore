@@ -1,0 +1,6 @@
+*.in
+*~
+*.tar.gz
+*.a
+*.log
+config.*
