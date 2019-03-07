@@ -177,7 +177,7 @@ int jaccard_sim_min_multihash(struct minhash* min_h , int* S, int n, double* jac
         double min_stuff = 0.0;
         ASSERT(min_h != NULL, "No minhash");
         m = min_h->sig;
-        num_samples = min_h->n_columns;
+        num_samples = min_h->n_samples;
 
         for(i = 0; i < min_h->n_signatures;i++){
                 min =  m[S[0]][i];
@@ -405,6 +405,7 @@ struct Boolean_matrix* init_random_Bmatrix( int columns,int rows, double alpha,s
                         RUN(drand48_r(rd, &r));
                         if(r <= alpha){
                                 bit_set(bm->m[i], j);
+
                         }
                 }
         }
@@ -465,13 +466,13 @@ int main (int argc,char * const argv[])
         double diff;
         double diff_p;
         double p_S_in_X;
-        double alpha = 0.3;
+        double alpha = 0.999;
 
         int num_hash_functions = 200;
         int iter;
         struct drand48_data randBuffer;
         int* index =NULL;
-        int S_size = 2;
+        int S_size = 6;
 
         MMALLOC(index, sizeof(int) * S_size);
         for(i = 0; i < S_size;i++){
