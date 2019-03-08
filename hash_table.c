@@ -61,7 +61,7 @@ int ht_compare_key_int_star(const int* a, const int* b)
                 return -1;
         }
 
-        return 1;
+        return 0;
 }
 
 int ht_compare_key_strings(const char* a, const char* b)
