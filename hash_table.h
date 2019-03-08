@@ -235,7 +235,7 @@ int ht_compare_key_strings(const char* a, const char* b);
                 )(a, b)
 
 int print_int(const int a);
-int print_int_array(const int* a);
+int print_int_star(const int* a);
 int print_double(const double a);
 int print_string(const char* a);
 
