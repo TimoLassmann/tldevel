@@ -210,35 +210,40 @@
          }                                                              \
 
 
-uint32_t get_hash_value_int(int x, int table_size);
-uint32_t get_hash_value_double(double x,int table_size);
-uint32_t get_hash_value_string(char* s, int table_size);
-uint32_t get_hash_value_int_star(int* x, int table_size);
+uint32_t get_hash_value_int(const int x, const int table_size);
+uint32_t get_hash_value_double(const double x,const int table_size);
+uint32_t get_hash_value_string(const char* s, const int table_size);
+uint32_t get_hash_value_int_array(const int* x,const int table_size);
 
-#define get_hash_value(type, size) _Generic ((type),                    \
+#define get_hash_value(type, size) _Generic ((type),                \
                                              char*: get_hash_value_string, \
+                                             int*: get_hash_value_int_array, \
                                              int: get_hash_value_int,   \
                                              double: get_hash_value_double \
                 )(type, size)
 
-int ht_compare_key_int(int a, int b);
-int ht_compare_key_double(double a, double b);
-int ht_compare_key_strings(char* a, char* b);
+int ht_compare_key_int(const int a, const int b);
+int ht_compare_key_int_star(const int* a, const int* b);
+int ht_compare_key_double(const double a, const double b);
+int ht_compare_key_strings(const char* a, const char* b);
 
 #define ht_compare_key(a, b) _Generic ((a),                           \
                                        double: ht_compare_key_double, \
                                        int: ht_compare_key_int,       \
-                                       char*: ht_compare_key_strings  \
+                                       char*: ht_compare_key_strings, \
+                                       int*: ht_compare_key_int_star       \
                 )(a, b)
 
-int print_int(int a);
-int print_double(double a);
-int print_string(char* a);
+int print_int(const int a);
+int print_int_array(const int* a);
+int print_double(const double a);
+int print_string(const char* a);
 
 #define ht_print_key(a) _Generic ((a),                  \
                                   int: print_int,       \
                                   double: print_double, \
-                                  char*: print_string   \
+                                  char*: print_string,  \
+                                  int*: print_int_star  \
                 )(a)
 
 

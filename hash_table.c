@@ -4,31 +4,36 @@
 
 
 /* print commands */
-int print_int(int a)
+int print_int(const int a)
 {
         fprintf(stdout,"%d ",a);
         return OK;
 }
 
-int print_int_star(int* a)
+int print_int_star(const int* a)
 {
-        fprintf(stdout,"%d ",*a);
+        int len = DIM1(a);
+        int i;
+        for(i = 0; i < len;i++){
+                fprintf(stdout,"%d,",a[i]);
+        }
+        fprintf(stdout,"\n");
         return OK;
 }
 
-int print_double(double a)
+int print_double(const double a)
 {
         fprintf(stdout,"%f ",a);
         return OK;
 }
 
-int print_string(char* a)
+int print_string(const char* a)
 {
         fprintf(stdout,"%s ",a);
         return OK;
 }
 
-int ht_compare_key_int(int a, int b)
+int ht_compare_key_int(const int a, const int b)
 {
         if(a > b){
                 return -1;
@@ -39,13 +44,33 @@ int ht_compare_key_int(int a, int b)
         return 1;
 }
 
-int ht_compare_key_strings(char* a, char* b)
+int ht_compare_key_int_star(const int* a, const int* b)
+{
+        int len_a = DIM1(a);
+        int len_b = DIM1(b);
+        int min_l = MACRO_MIN(len_a, len_b);
+        int i;
+        for(i = 0.; i < min_l;i++){
+                if(a[i] > b[i]){
+                        return -1;
+                }else if(a[i] < b[i]){
+                        return 1;
+                }
+        }
+        if(len_a > len_b){
+                return -1;
+        }
+
+        return 1;
+}
+
+int ht_compare_key_strings(const char* a, const char* b)
 {
         return strcmp(a,b);
 }
 
 
-int ht_compare_key_double(double a, double b)
+int ht_compare_key_double(const double a, const double b)
 {
         if(a > b){
                 return -1;
@@ -61,7 +86,7 @@ int ht_compare_key_double(double a, double b)
 
 
 /* Hash variable commands  */
-uint32_t get_hash_value_double(double x,int table_size)
+uint32_t get_hash_value_double(const double x,const int table_size)
 {
         ASSERT(table_size != 0, "Table size cannot be 0!");
 
@@ -70,7 +95,7 @@ ERROR:
         return 0;
 }
 
-uint32_t get_hash_value_int(int x, int table_size)
+uint32_t get_hash_value_int(const int x,const int table_size)
 {
 
         ASSERT(table_size != 0, "Table size cannot be 0!");
@@ -80,7 +105,7 @@ ERROR:
 }
 
 
-uint32_t get_hash_value_string(char* s, int table_size)
+uint32_t get_hash_value_string(const char* s,const int table_size)
 {
         ASSERT(table_size != 0, "Table size cannot be 0!");
         uint32_t hash = 0;
@@ -102,9 +127,24 @@ ERROR:
         return 0;
 }
 
+
+uint32_t get_hash_value_int_array(const int* x,const int table_size)
+{
+        ASSERT(table_size != 0, "Table size cannot be 0!");
+        uint32_t hash = 0;
+        int len = DIM1(x);
+        int i;
+        for(i = 0; i < len;i++){
+                hash += x[i];
+        }
+        return hash % table_size;
+ERROR:
+        return 0;
+}
+
 #ifdef HTITEST
 HT_GLOBAL_INIT(TEST, char*);
-
+HT_GLOBAL_INIT(TESTINT, int*);
 HT_GLOBAL_INIT(TEST_DOUBLE, double);
 int double_cmp(const void *a, const void *b);
 
@@ -130,7 +170,7 @@ int double_cmp(const void *a, const void *b)
 int main (int argc,char * const argv[])
 {
 
-        int i;
+        int i,j;
         fprintf(stdout,"Hello world\n");
         char* f = NULL;
 
@@ -234,9 +274,27 @@ int main (int argc,char * const argv[])
         }
         HT_FREE(TEST_DOUBLE,my_htt);
 
+        HT_TYPE(TESTINT )* int_array_table = NULL;
+        int_array_table = HT_INIT(TESTINT,123);
+        int* tmp = NULL;
+        for(i = 0; i < 200;i++){
+                tmp = NULL;
+                tmp= galloc(tmp,10);
+                for(j = 0 ; j < 10;j++){
+                        tmp[j] = rand() % 151;
+                }
+
+                RUN(HT_INSERT(TESTINT,int_array_table,tmp,NULL));
+
+        }
+        HT_PRINT(TESTINT,int_array_table);
+
+        HT_FREE(TESTINT,int_array_table);
         return EXIT_SUCCESS;
 ERROR:
         return EXIT_FAILURE;
 
 }
+
+
 #endif
