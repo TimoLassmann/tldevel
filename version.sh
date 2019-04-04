@@ -1,19 +1,23 @@
 #!/bin/bash
 
+VERSION=
+inside_git_repo=
 
-if [[ ! $RRIDTT_VERSION ]]; then
-    if git rev-parse --git-dir > /dev/null 2>&1; then
-        RRIDTT_VERSION=`git describe --always > /dev/null`
+inside_git_repo="$(git rev-parse --is-inside-work-tree 2>/dev/null)"
+
+if [ "$inside_git_repo" ]; then
+
+    VERSION=`git describe --always`
+else
+
+    if [ -f VERSION ]; then
+        if [[ ! $VERSION ]]; then
+            VERSION=`cat VERSION`
+        fi
+    else
+        VERSION="[na]"
     fi
 fi
 
-if [[ ! $RRIDTT_VERSION ]]; then
-    RRIDTT_VERSION=`cat VERSION`
-fi
-
-
-if [[ ! $RRIDTT_VERSION ]]; then
-    RRIDTT_VERSION="[na]"
-fi
-echo $RRIDTT_VERSION
+echo $VERSION
 
