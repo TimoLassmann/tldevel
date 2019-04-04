@@ -99,9 +99,21 @@ ac_configure_args="$ac_configure_args PACKAGE_VERSION=$PACKAGE_VERSION   PACKAGE
 
 
 AC_CONFIG_FILES([Makefile
-		 env_settings
-                 helper/Makefile])
+env_settings
+helper/Makefile])
 AC_OUTPUT
+
+AC_MSG_NOTICE([---------------------------------------------------------])
+AC_MSG_NOTICE([Configuration complete - $PACKAGE_NAME-$PACKAGE_VERSION])
+AC_MSG_NOTICE([])
+AC_MSG_NOTICE([General Information:])
+AC_MSG_NOTICE([               Version: $VERSION])
+AC_MSG_NOTICE([         Configured on: $DATE])
+AC_MSG_NOTICE([         Configured by: $USER])
+AC_MSG_NOTICE([           Host system: $host_cpu-$host_vendor-$host_os])
+AC_MSG_NOTICE([     Uname information: $UNAME_INFO])
+AC_MSG_NOTICE([    Installation point: $prefix])
+AC_MSG_NOTICE([---------------------------------------------------------])
 
 
 
