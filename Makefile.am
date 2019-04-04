@@ -4,7 +4,7 @@ SUBDIRS = helper
 
 
 
-EXTRA_DIST=pwrite_test.sh
+EXTRA_DIST=pwrite_test.sh version.sh autogen.sh
 
 noinst_LIBRARIES = libtldevel.a
 
