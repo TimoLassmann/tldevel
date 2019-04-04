@@ -41,7 +41,7 @@ int main(int argc, char** argv)
         for(i = 0; i < DIM1(aligator);i++){
                 for(j = 0; j < DIM2(aligator);j++){
                         //aligator[i][j] = c;
-                        fprintf(stdout,"%*d ",3,aligator[i][j]);
+                        fprintf(stdout,"%*ld ",3,aligator[i][j]);
                         c++;
                 }
                 fprintf(stdout,"\n");
@@ -53,7 +53,7 @@ int main(int argc, char** argv)
         fprintf(stdout,"len: %d\n", DIM2(aligator));
         for(i = 0; i < DIM1(aligator);i++){
                 for(j = 0; j < DIM2(aligator);j++){
-                        fprintf(stdout,"%*d ",3,aligator[i][j]);
+                        fprintf(stdout,"%*ld ",3,aligator[i][j]);
                 }
                 fprintf(stdout,"\n");
         }
@@ -64,7 +64,7 @@ int main(int argc, char** argv)
         fprintf(stdout,"len: %d\n", DIM2(aligator));
         for(i = 0; i < DIM1(aligator);i++){
                 for(j = 0; j < DIM2(aligator);j++){
-                        fprintf(stdout,"%*d ",3,aligator[i][j]);
+                        fprintf(stdout,"%*ld ",3,aligator[i][j]);
                 }
                 fprintf(stdout,"\n");
         }
@@ -75,7 +75,7 @@ int main(int argc, char** argv)
         fprintf(stdout,"len: %d\n", DIM2(aligator));
         for(i = 0; i < DIM1(aligator);i++){
                 for(j = 0; j < DIM2(aligator);j++){
-                        fprintf(stdout,"%*d ",3,aligator[i][j]);
+                        fprintf(stdout,"%*ld ",3,aligator[i][j]);
                 }
                 fprintf(stdout,"\n");
         }

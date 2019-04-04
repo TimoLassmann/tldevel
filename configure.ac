@@ -15,8 +15,11 @@ AC_CHECK_LIB([pthread], [pthread_create])
 #AC_CHECK_LIB([hts],[fai_build])
 
 # Checks for header files.
-AC_CHECK_HEADERS([stdint.h stdlib.h string.h])
-
+AC_CHECK_HEADERS([stdlib.h])
+AC_CHECK_HEADERS([string.h])
+AC_CHECK_HEADERS([stdint.h])
+AC_CHECK_HEADERS([limits.h])
+AC_CHECK_HEADERS([stddef.h])
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
 AC_TYPE_INT8_T
@@ -39,6 +42,8 @@ AC_CHECK_FUNCS([arc4random arc4random_uniform])
 
 AC_CHECK_FUNCS([strdup])
 AC_CHECK_FUNCS([strtol])
+
+
 
 # non-standard stuff
 
