@@ -231,8 +231,8 @@ typedef struct {
 } mem_i;
 
 
-#define DIM1(X) ((mem_i*)((void*)X - sizeof(mem_i)))->dim1
-#define DIM2(X) ((mem_i*)((void*)X - sizeof(mem_i)))->dim2
+#define DIM1(X) ((mem_i*)((void*) ((char*)X - sizeof(mem_i))))->dim1
+#define DIM2(X) ((mem_i*)((void*) ((char*)X - sizeof(mem_i))))->dim2
 
 /* declare free/alloc functions */
 
@@ -295,7 +295,7 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t);
 
 #define FREE_1D_ARRAY(type)                               \
         void free_1d_array_ ##type(type *array){          \
-                void* ptr = (void*)array - sizeof(mem_i); \
+                void* ptr = (void*)((char*)array - sizeof(mem_i));  \
                 MFREE(ptr);                               \
         }
 
@@ -303,7 +303,7 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t);
 #define FREE_2D_ARRAY(type)                               \
         void free_2d_array_ ##type(type **array){         \
                 MFREE(array[0]);                          \
-                void* ptr = (void*)array- sizeof(mem_i);  \
+                void* ptr = (void*)((char*)array- sizeof(mem_i)); \
                 MFREE(ptr);                               \
         }
 
@@ -344,18 +344,18 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t);
                         MMALLOC(tmp,(dim1  * sizeof *array + sizeof(mem_i))); \
                 }else{                                                  \
                         tmp = array;                                    \
-                        tmp = tmp - sizeof(mem_i);                      \
+                        tmp = (void*) ((char*)tmp - sizeof(mem_i));     \
                         h = (mem_i*)(tmp);                              \
                         if(h->dim1 < dim1){                             \
                                 MREALLOC(tmp,(dim1  * sizeof *array + sizeof(mem_i))); \
                         }else{                                          \
-                                return tmp + sizeof(mem_i);             \
+                                return (void*) ((char*)tmp + sizeof(mem_i)); \
                         }                                               \
                 }                                                       \
                 h = (mem_i*)(tmp);                                      \
                 h->dim1  = dim1;                                        \
                 h->dim2  = 0;                                           \
-                return (type*)  (tmp + sizeof(mem_i));                  \
+                return (void*)  ((char*)tmp + sizeof(mem_i));           \
         ERROR:                                                          \
                 return NULL;                                            \
         }
@@ -380,7 +380,7 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t);
                         h->dim2  = dim2;                                \
                         max1 = dim1;                                    \
                         max2 = dim2;                                    \
-                        ptr_t =(type**) (tmp + sizeof(mem_i));          \
+                        ptr_t =(type**) ((char*)tmp + sizeof(mem_i));        \
                         for(i = 0;i< dim1;i++){                         \
                                 ptr_t[i] = ptr_tt + i * dim2;           \
                                 for(j = 0; j < dim2;j++){               \
@@ -390,7 +390,7 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t);
                         array = ptr_t;                                  \
                 }else{                                                  \
                         ptr_tt = array[0];                              \
-                        tmp = (void*)(array) -sizeof(mem_i) ;           \
+                        tmp = (void*)( (char*)array -sizeof(mem_i));    \
                         h = (mem_i*)tmp;                                \
                         o1 = h->dim1;                                   \
                         o2 = h->dim2;                                   \
@@ -425,7 +425,7 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t);
                         h = (mem_i*)tmp;                                \
                         h->dim1 = max1;                                 \
                         h->dim2 = max2;                                 \
-                        ptr_t = (type**) (tmp + sizeof(mem_i));         \
+                        ptr_t = (type**) ((char*)tmp + sizeof(mem_i));  \
                         for(i = 0; i < max1;i++){                       \
                                 ptr_t[i] = ptr_tt + i * max2;           \
                         }                                               \
@@ -543,7 +543,7 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t);
 #define MAXMEM 4
 #endif
 
-#define MAX_MEMORY_LIMIT (int64_t) MAXMEM * 1073741824LL
+
 
 #define DESTROY_CHK(n) if(chk_##n){free_checkpoint( chk_##n);};
 

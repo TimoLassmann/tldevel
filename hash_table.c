@@ -143,9 +143,9 @@ ERROR:
 }
 
 #ifdef HTITEST
-HT_GLOBAL_INIT(TEST, char*);
-HT_GLOBAL_INIT(TESTINT, int*);
-HT_GLOBAL_INIT(TEST_DOUBLE, double);
+HT_GLOBAL_INIT(TEST, char*)
+HT_GLOBAL_INIT(TESTINT, int*)
+HT_GLOBAL_INIT(TEST_DOUBLE, double)
 int double_cmp(const void *a, const void *b);
 
 struct hash_table_node_TEST_DOUBLE_t;

@@ -454,7 +454,7 @@ int main (int argc,char * const argv[])
         struct Boolean_matrix* bm = NULL;
         struct minhash* min_h = NULL;
         double sim;
-        double sim_min;
+        double sim_min = 0.0;
         int num_samples = 1000;
         int i;
         int trials = 10;
@@ -465,7 +465,7 @@ int main (int argc,char * const argv[])
 
         double diff;
         double diff_p;
-        double p_S_in_X;
+        double p_S_in_X = 0.0;
         double alpha = 0.999;
 
         int num_hash_functions = 200;
