@@ -1,5 +1,4 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
 inside_git_repo=
 
 inside_git_repo="$(git rev-parse --is-inside-work-tree 2>/dev/null)"
