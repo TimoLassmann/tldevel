@@ -19,26 +19,26 @@ FREE_1D_ARRAY(int)
 FREE_1D_ARRAY(ulong)
 FREE_1D_ARRAY(float)
 FREE_1D_ARRAY(double)
-FREE_1D_ARRAY(int_fast32_t)
+
 FREE_2D_ARRAY(char)
 FREE_2D_ARRAY(int)
 FREE_2D_ARRAY(ulong)
 FREE_2D_ARRAY(float)
 FREE_2D_ARRAY(double)
-FREE_2D_ARRAY(int_fast32_t)
+
 
 ALLOC_1D_ARRAY(char)
 ALLOC_1D_ARRAY(int)
 ALLOC_1D_ARRAY(ulong)
 ALLOC_1D_ARRAY(float)
 ALLOC_1D_ARRAY(double)
-ALLOC_1D_ARRAY(int_fast32_t)
+
 ALLOC_2D_ARRAY(char)
 ALLOC_2D_ARRAY(int)
 ALLOC_2D_ARRAY(ulong)
 ALLOC_2D_ARRAY(float)
 ALLOC_2D_ARRAY(double)
-ALLOC_2D_ARRAY(int_fast32_t)
+
 
 int print_program_header(char* const argv[],const char* description)
 {
@@ -1840,7 +1840,11 @@ int main (int argc,char * const argv[])
         //set_logfile("testxt");
 
         //et_logfile("00");
+        int** gaps = NULL;
 
+        gaps = galloc(gaps,10,10,0);
+
+        gfree(gaps);
         message(AT, "Here is a message %d", 666);
         log_message("TESTING TEE");
 

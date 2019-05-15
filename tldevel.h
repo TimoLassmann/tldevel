@@ -262,28 +262,26 @@ FREE_1D_ARRAY_DEF(int);
 FREE_1D_ARRAY_DEF(ulong);
 FREE_1D_ARRAY_DEF(float);
 FREE_1D_ARRAY_DEF(double);
-FREE_1D_ARRAY_DEF(int_fast32_t);
 
 FREE_2D_ARRAY_DEF(char);
 FREE_2D_ARRAY_DEF(int);
 FREE_2D_ARRAY_DEF(ulong);
 FREE_2D_ARRAY_DEF(float);
 FREE_2D_ARRAY_DEF(double);
-FREE_2D_ARRAY_DEF(int_fast32_t);
 
 ALLOC_1D_ARRAY_DEF(char);
 ALLOC_1D_ARRAY_DEF(int);
 ALLOC_1D_ARRAY_DEF(ulong);
 ALLOC_1D_ARRAY_DEF(float);
 ALLOC_1D_ARRAY_DEF(double);
-ALLOC_1D_ARRAY_DEF(int_fast32_t);
+
 
 ALLOC_2D_ARRAY_DEF(char);
 ALLOC_2D_ARRAY_DEF(int);
 ALLOC_2D_ARRAY_DEF(ulong);
 ALLOC_2D_ARRAY_DEF(float);
 ALLOC_2D_ARRAY_DEF(double);
-ALLOC_2D_ARRAY_DEF(int_fast32_t);
+
 
 
 /**************************/
@@ -318,13 +316,11 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t);
                           ulong*: free_1d_array_ulong,                \
                           float*: free_1d_array_float,                \
                           double*: free_1d_array_double,              \
-                          int_fast32_t*: free_1d_array_int_fast32_t,  \
                           char**: free_2d_array_char,                 \
                           int**: free_2d_array_int,                   \
                           ulong**: free_2d_array_ulong,               \
                           float**: free_2d_array_float,               \
-                          double**: free_2d_array_double,             \
-                          int_fast32_t**: free_2d_array_int_fast32_t  \
+                          double**: free_2d_array_double             \
                 )(X)
 
 
@@ -455,8 +451,7 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t);
                                         int*: alloc_1D_array_size_int,  \
                                         ulong*: alloc_1D_array_size_ulong,  \
                                         float*:  alloc_1D_array_size_float, \
-                                        double*:alloc_1D_array_size_double, \
-                                        int_fast32_t*: alloc_1D_array_size_int_fast32_t \
+                                        double*:alloc_1D_array_size_double \
                 )
 
 #define SELECTGALLOC_4(_1, _2, _3, _4) _Generic((_1),                   \
@@ -474,10 +469,7 @@ ALLOC_2D_ARRAY_DEF(int_fast32_t);
                                                         ),              \
                                                 double**: _Generic((_2), \
                                                                    int: alloc_2D_array_size_double \
-                                                        ),              \
-                                                int_fast32_t**:  _Generic((_2), \
-                                                                          int: alloc_2D_array_size_int_fast32_t \
-                                                        )               \
+                                                        )              \
                 )
 
 
