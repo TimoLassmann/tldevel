@@ -1,10 +1,10 @@
 AC_INIT([libtldevel], [m4_esyscmd_s([./version.sh])])
-AC_CONFIG_AUX_DIR([.])
+#AC_CONFIG_AUX_DIR([.])
 AM_INIT_AUTOMAKE
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_RANLIB
-AM_SILENT_RULES([no])
+#AM_SILENT_RULES([no])
 AC_CONFIG_MACRO_DIR([m4])
 
 # Checks for libraries.
