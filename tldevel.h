@@ -18,6 +18,8 @@
 #include <sys/stat.h>
 #include <math.h>
 #include <ctype.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 /* typedef  */
 typedef unsigned long ulong;

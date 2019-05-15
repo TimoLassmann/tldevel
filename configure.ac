@@ -36,7 +36,7 @@ AC_TYPE_UINT64_T
 AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
-AC_CHECK_FUNCS([clock_gettime memset pow sqrt])
+AC_CHECK_FUNCS([clock_gettime memset pow sqrt getpid])
 AC_CHECK_FUNCS([arc4random arc4random_uniform])
 
 

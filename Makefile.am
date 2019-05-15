@@ -40,14 +40,14 @@ AM_LDFLAGS += -Wno-undef
 
 
 
-TESTS= libtldevel_ITEST  ht_ITEST mem_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST  libpwrite_ITEST pwrite_test.sh  libavlrb_ITEST minhash_ITEST
+#TESTS= libtldevel_ITEST  ht_ITEST mem_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST  libpwrite_ITEST pwrite_test.sh  libavlrb_ITEST minhash_ITEST
 
 
 check_PROGRAMS =  libtldevel_ITEST  ht_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST libpwrite_ITEST mem_ITEST libavlrb_ITEST minhash_ITEST rng_ITEST
 
-rng_ITEST_SOURCES = $(RNGSOURCES) $(TLDEVELSOURCES)
-rng_ITEST_CPPFLAGS = $(AM_CPPFLAGS) -DITEST 
-rng_ITEST_LDADD = 
+rng_ITEST_SOURCES = $(RNGSOURCES)
+rng_ITEST_CPPFLAGS = $(AM_CPPFLAGS) -DITESTRNG
+rng_ITEST_LDADD = libtldevel.a
 
 libavlrb_ITEST_SOURCES = rb_itest.c $(RBSOURCES)
 libavlrb_ITESTCPPFLAGS = $(AM_CPPFLAGS)

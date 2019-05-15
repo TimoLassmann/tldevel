@@ -10,19 +10,45 @@
 /* Sebastiano Vigna (vigna@acm.org) */
 /* David Blackman */
 
-#ifdef ITEST
+#ifdef ITESTRNG
 int main(int argc, char *argv[])
 {
-
-        return 0;
+        struct rng_state* rng = NULL;
+        int i;
+        RUNP(rng = init_rng(0));
+        for(i = 0; i < 10;i++){
+                fprintf(stdout,"%f\t%d\n", tl_random_double(rng), tl_random_int(rng,10));
+        }
+        free_rng(rng);
+        return EXIT_SUCCESS;
+ERROR:
+        return EXIT_FAILURE;
 }
-
 #endif
+
 static inline uint64_t rotl(const uint64_t x, int k);
 uint64_t next(struct rng_state* s);
 void jump(struct rng_state* s);
 void long_jump(struct rng_state* s);
 
+static uint64_t choose_arbitrary_seed(void);
+static uint32_t jenkins_mix3(uint32_t a, uint32_t b, uint32_t c);
+
+double tl_random_double(struct rng_state* rng)
+{
+        uint64_t x;
+        double y;
+        do{
+                x = next(rng);
+                y = ((double) x / 18446744073709551616.0);
+        }while (y == 0.0);
+        return y;
+}
+
+int tl_random_int(struct rng_state* rng,int a)
+{
+        return (int) (tl_random_double(rng) * a);
+}
 
 struct rng_state* init_rng(uint64_t seed)
 {
@@ -32,7 +58,7 @@ struct rng_state* init_rng(uint64_t seed)
 
         MMALLOC(s, sizeof(struct rng_state));
         if(!seed){
-                seed = 42ULL;
+                seed = choose_arbitrary_seed();
         }
         sanity = 0;
         while(!sanity){
@@ -72,6 +98,47 @@ struct rng_state* init_rng(uint64_t seed)
 ERROR:
         return NULL;
 }
+
+void free_rng(struct rng_state* rng)
+{
+        if(rng){
+                MFREE(rng);
+        }
+}
+/* Taken from easel library (by Sean Eddy) */
+static uint64_t choose_arbitrary_seed(void)
+{
+        uint32_t a = (uint32_t) time ((time_t *) NULL);
+        uint32_t b = 87654321;	 // we'll use getpid() below, if we can
+        uint32_t c = (uint32_t) clock();  // clock() gives time since process invocation, in msec at least, if not usec
+        uint64_t seed;
+#ifdef HAVE_GETPID
+        b  = (uint32_t) getpid();	 // preferable b choice, if we have POSIX getpid()
+#endif
+        seed = jenkins_mix3(a,b,c);    // try to decorrelate closely spaced choices of pid/times
+        return (seed == 0) ? 42 : seed; /* 42 is entirely arbitrary, just to avoid seed==0. */
+}
+
+/* jenkins_mix3()
+ *
+ * from Bob Jenkins: given a,b,c, generate a number that's distributed
+ * reasonably uniformly on the interval 0..2^32-1 even for closely
+ * spaced choices of a,b,c.
+ */
+static uint32_t jenkins_mix3(uint32_t a, uint32_t b, uint32_t c)
+{
+        a -= b; a -= c; a ^= (c>>13);
+        b -= c; b -= a; b ^= (a<<8);
+        c -= a; c -= b; c ^= (b>>13);
+        a -= b; a -= c; a ^= (c>>12);
+        b -= c; b -= a; b ^= (a<<16);
+        c -= a; c -= b; c ^= (b>>5);
+        a -= b; a -= c; a ^= (c>>3);
+        b -= c; b -= a; b ^= (a<<10);
+        c -= a; c -= b; c ^= (b>>15);
+        return c;
+}
+
 
 static inline uint64_t rotl(const uint64_t x, int k) {
         return (x << k) | (x >> (64 - k));
