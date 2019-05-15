@@ -29,7 +29,7 @@ RNGSOURCES = rng.c rng.h
 
 RBSOURCES = rb.h rb.c
 
-libtldevel_a_SOURCES = $(TLDEVELSOURCES) $(HASHTABLESOURCES) $(MINHASHSOURCES)  $(RBTREESOURCES) $(RTRTREESOURCES) $(THRPOOLSOURCES) $(PWRITESOURCES) $(RBSOURCES) 
+libtldevel_a_SOURCES = $(TLDEVELSOURCES) $(HASHTABLESOURCES) $(MINHASHSOURCES)  $(RBTREESOURCES) $(RTRTREESOURCES) $(THRPOOLSOURCES) $(PWRITESOURCES) $(RBSOURCES) $(RNGSOURCES)
 
 # libhtsglue_a_SOURCES =  \
 htsglue.h \
@@ -40,7 +40,7 @@ AM_LDFLAGS += -Wno-undef
 
 
 
-#TESTS= libtldevel_ITEST  ht_ITEST mem_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST  libpwrite_ITEST pwrite_test.sh  libavlrb_ITEST minhash_ITEST
+TESTS= libtldevel_ITEST  ht_ITEST mem_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST  libpwrite_ITEST pwrite_test.sh  libavlrb_ITEST minhash_ITEST rng_ITEST
 
 
 check_PROGRAMS =  libtldevel_ITEST  ht_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST libpwrite_ITEST mem_ITEST libavlrb_ITEST minhash_ITEST rng_ITEST

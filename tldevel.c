@@ -1293,51 +1293,6 @@ float scaledprob2prob(float p)
 
 
 
-
-float random_float_zero_to_x_thread(const float x, unsigned int* seed)
-{
-#ifdef HAVE_ARC4RANDOM
-        return (float) arc4random() / (float) 0xFFFFFFFF *x;
-#else
-        return (float) rand_r(seed) / (float) RAND_MAX *x;
-#endif
-}
-
-uint32_t random_int_zero_to_x_thread(const uint32_t x, unsigned int* seed)
-{
-
-#ifdef HAVE_ARC4RANDOM_UNIFORM
-        return arc4random_uniform(x+1);
-#elif HAVE_ARC4RANDOM
-        return arc4random() % ( x+1);
-#else
-        return rand_r(seed) % (x+1);
-#endif
-}
-
-
-float random_float_zero_to_x(const float x)
-{
-#ifdef HAVE_ARC4RANDOM
-        return (float) arc4random() / (float) 0xFFFFFFFF *x;
-#else
-        return (float) drand48() * x;
-#endif // HAVE_ARC4RANDOM
-
-}
-
-uint32_t random_int_zero_to_x(const uint32_t x)
-{
-#ifdef HAVE_ARC4RANDOM_UNIFORM
-        return arc4random_uniform(x+1);
-#elif HAVE_ARC4RANDOM
-        return arc4random() % ( x+1);
-#else
-        return rand() % (x+1);
-#endif // HAVE_ARC4RANDOM
-}
-
-
 char* shorten_pathname(char* p)
 {
         int i;
@@ -1934,10 +1889,6 @@ int main (int argc,char * const argv[])
 
 
         log_message("Yes %s is ","it");
-        int i;
-        for(i = 0; i < 100;i++){
-                fprintf(stdout,"%d %d %f %f\n", random_int_zero_to_x(10), random_int_zero_to_x(10),random_float_zero_to_x(1.0), random_float_zero_to_x(1.0));
-        }
 
         char* cmd = NULL;
         RUNP(cmd =  make_cmd_line(argc,argv));

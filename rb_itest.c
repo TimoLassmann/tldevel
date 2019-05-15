@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "tldevel.h"
 #include "rb.h"
-
+#include "rng.h"
 /* I want to test:
    1) how to provide my own malloc wrapper; OK
    2) how to work with structs as data items; OK
@@ -86,16 +86,19 @@ int main (int argc,char * argv[])
         struct test_data* ret = NULL;
         int i;
         double r = 0;
+
         unsigned seed = time(0);
 
 
         fprintf(stdout,"Create table\n");
         RUNP(table_double = rb_create(compare_test_data_d,NULL,&rb_allocator_tldevel));
         fprintf(stdout,"DONE\n");
+        struct rng_state* rng = NULL;
 
+        RUNP(rng = init_rng(0));
 
         for(i = 0; i < 1024;i++){
-                r = random_float_zero_to_x_thread(1.0, &seed);
+                r = tl_random_double(rng);
                 //fprintf(stdout,"%f\n",r);
                 data= NULL;
                 MMALLOC(data,sizeof(struct test_data));
