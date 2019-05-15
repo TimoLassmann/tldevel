@@ -40,12 +40,12 @@ AM_LDFLAGS += -Wno-undef
 
 
 
-TESTS= libtldevel_ITEST  ht_ITEST mem_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST  libpwrite_ITEST pwrite_test.sh  libavlrb_ITEST minhash_ITEST rng_ITEST
+#TESTS= libtldevel_ITEST  ht_ITEST mem_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST  libpwrite_ITEST pwrite_test.sh  libavlrb_ITEST minhash_ITEST rng_ITEST
 
 
 check_PROGRAMS =  libtldevel_ITEST  ht_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST libpwrite_ITEST mem_ITEST libavlrb_ITEST minhash_ITEST rng_ITEST
 
-rng_ITEST_SOURCES = $(RNGSOURCES)
+rng_ITEST_SOURCES = $(RNGSOURCES)  
 rng_ITEST_CPPFLAGS = $(AM_CPPFLAGS) -DITESTRNG
 rng_ITEST_LDADD = libtldevel.a
 
@@ -79,7 +79,7 @@ libthrpool_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DITEST
 libthrpool_ITEST_LDADD =
 
 
-minhash_ITEST_SOURCES =  $(TLDEVELSOURCES) $(MINHASHSOURCES)
+minhash_ITEST_SOURCES =  $(TLDEVELSOURCES) $(MINHASHSOURCES)  $(RNGSOURCES)
 minhash_ITEST_CPPFLAGS  = $(AM_CPPFLAGS)  -DMINITEST
 minhash_ITEST_LDADD =
 

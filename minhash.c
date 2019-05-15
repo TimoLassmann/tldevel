@@ -1,6 +1,9 @@
+
+
 #include "minhash.h"
 
-int shuffle_arr_minhash(int* arr,int n, struct drand48_data* randBuffer);
+#include "rng.h"
+int shuffle_arr_minhash(int* arr,int n, struct rng_state* rng);
 
 struct minhash* create_min_hash(struct Boolean_matrix* bm, int num_sig,long int seed)
 {
@@ -9,17 +12,18 @@ struct minhash* create_min_hash(struct Boolean_matrix* bm, int num_sig,long int 
         int* list = NULL;
         int i,j,c;
         int n,m;
-        struct drand48_data randBuffer;
+        //struct drand48_data randBuffer;
 
-
+        struct rng_state* rng = NULL;
         ASSERT(bm!= NULL, "No matrix");
 
+        RUNP(rng = init_rng(seed));
 
-        if(seed){
+        /*if(seed){
                 srand48_r(seed, &randBuffer);
         }else{
                 srand48_r(time(NULL), &randBuffer);
-        }
+                }*/
 
 
         MMALLOC(min_h, sizeof(struct minhash));
@@ -110,7 +114,7 @@ struct minhash* create_min_hash(struct Boolean_matrix* bm, int num_sig,long int 
         /* Apply has functions  */
         for(c = 0;c < min_h->n_signatures;c++){
 
-                shuffle_arr_minhash(list, n ,&randBuffer);
+                shuffle_arr_minhash(list, n ,rng);
                 for(i = 0; i < m;i++){
                         col = bm->m[i];
                         for(j = 0; j < n;j++){
@@ -158,7 +162,7 @@ struct minhash* create_min_hash(struct Boolean_matrix* bm, int num_sig,long int 
                 }
                 fprintf(stdout,"\n");
                 }*/
-
+        MFREE(rng);
         return min_h;
 ERROR:
         return NULL;
@@ -339,7 +343,7 @@ void free_Boolean_matrix(struct Boolean_matrix* bm)
 }
 
 
-int shuffle_arr_minhash(int* arr,int n, struct drand48_data* randBuffer)
+int shuffle_arr_minhash(int* arr,int n, struct rng_state* rng)
 {
         int i,j;
         int tmp;
@@ -347,16 +351,16 @@ int shuffle_arr_minhash(int* arr,int n, struct drand48_data* randBuffer)
 
 
         for (i = 0; i < n - 1; i++) {
-                RUN(lrand48_r(randBuffer,&r));
+
+                r = tl_random_int(rng, n-i);
+                //RUN(lrand48_r(randBuffer,&r));
                 //int lrand48_r(struct drand48_data *buffer, long int *result);
-                j = i +  ((int) r % (int) (n-i));
+                j = i + r;// ((int) r % (int) (n-i));
                 tmp = arr[j];
                 arr[j] = arr[i];
                 arr[i] = tmp;
         }
         return OK;
-ERROR:
-        return FAIL;
 }
 
 
