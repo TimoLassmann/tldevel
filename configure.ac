@@ -5,7 +5,7 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_RANLIB
 #AM_SILENT_RULES([no])
-AC_CONFIG_MACRO_DIR([m4])
+#AC_CONFIG_MACRO_DIR([m4])
 
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-lm':
@@ -88,7 +88,7 @@ AX_VALGRIND_DFLT([memcheck], [on])
 AX_VALGRIND_CHECK
 
 
-AC_CANONICAL_HOST
+#AC_CANONICAL_HOST
 
 AC_SUBST([DATE]) DATE="`date`"
 

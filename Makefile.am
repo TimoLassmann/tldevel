@@ -1,6 +1,8 @@
 
 SUBDIRS = helper
 
+ACLOCAL_AMFLAGS = -I m4
+
 
 
 
@@ -102,4 +104,4 @@ CLEANFILES = \
 	testlog.txt \
 	pwtest_t*
 
-@VALGRIND_CHECK_RULES@
+
