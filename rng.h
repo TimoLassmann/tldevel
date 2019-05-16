@@ -13,7 +13,7 @@ struct rng_state{
 extern struct rng_state* init_rng(uint64_t seed);
 extern void free_rng(struct rng_state* rng);
 
-double tl_random_double(struct rng_state* rng);
-int tl_random_int(struct rng_state* rng,int a);
+extern double tl_random_double(struct rng_state* rng);
+extern int tl_random_int(struct rng_state* rng,int a);
 
 #endif
