@@ -147,7 +147,7 @@ uint32_t get_hash_value_int_array(const int* x,const int table_size)
 
         hash = hash ^  hash_uint32(x[0]);
         for(i = 1; i < len;i++){
-                hash = (hash << 10) ^ ( hash >> (32 - 10));
+                hash = (hash << 5) ^ ( hash >> (27));
                 hash ^= hash_uint32(x[i]);
         }
         return hash % table_size;
