@@ -134,8 +134,11 @@ uint32_t get_hash_value_int_array(const int* x,const int table_size)
         uint32_t hash = 0;
         int len = DIM1(x);
         int i;
-        for(i = 0; i < len;i++){
-                hash += x[i];
+
+        hash = hash ^ x[0];
+        for(i = 1; i < len;i++){
+                hash = (hash << 10) ^ ( hash >> (32 - 10));
+                hash ^= x[i];
         }
         return hash % table_size;
 ERROR:
