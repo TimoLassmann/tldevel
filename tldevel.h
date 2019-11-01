@@ -215,13 +215,13 @@ extern int print_program_header(char* const argv[],const char* description);
                         goto ERROR;                                     \
                 }} while (0)
 
-#define MCALLOC(p,count,type) do {                                      \
+#define MCALLOC(p,size) do {                                            \
                 if (p != NULL){                                         \
                         ERROR_MSG( "calloc on a nun-null pointer");     \
                         goto ERROR;                                     \
                 }                                                       \
-                if (((p) = calloc(count, sizeof(type))) == NULL) {      \
-                        ERROR_MSG("calloc of n=%d of type %s failed", count, #type); \
+                if (((p) = calloc(size)) == NULL) {                     \
+                        ERROR_MSG("calloc of size %d failed", size);    \
                         goto ERROR;                                     \
                 }                                                       \
         } while (0)
