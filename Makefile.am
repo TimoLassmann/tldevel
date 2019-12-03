@@ -29,6 +29,8 @@ RNGSOURCES = rng.c rng.h
 
 RBSOURCES = rb.h rb.c
 
+TLDEVSOURCES = tldev.h tldev.c
+
 libtldevel_a_SOURCES = $(TLDEVELSOURCES) $(HASHTABLESOURCES) $(MINHASHSOURCES)  $(RBTREESOURCES) $(RTRTREESOURCES) $(THRPOOLSOURCES) $(PWRITESOURCES) $(RBSOURCES) $(RNGSOURCES)
 
 # libhtsglue_a_SOURCES =  \
@@ -40,12 +42,16 @@ AM_LDFLAGS += -Wno-undef
 
 
 
-TESTS= libtldevel_ITEST  ht_ITEST mem_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST  libpwrite_ITEST pwrite_test.sh  libavlrb_ITEST minhash_ITEST rng_ITEST
+#TESTS= libtldevel_ITEST  ht_ITEST mem_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST  libpwrite_ITEST pwrite_test.sh  libavlrb_ITEST minhash_ITEST rng_ITEST
 
 
-check_PROGRAMS =  libtldevel_ITEST  ht_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST libpwrite_ITEST mem_ITEST libavlrb_ITEST minhash_ITEST rng_ITEST
+check_PROGRAMS = tldev_test #libtldevel_ITEST  ht_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST libpwrite_ITEST mem_ITEST libavlrb_ITEST minhash_ITEST rng_ITEST
 
-rng_ITEST_SOURCES = $(RNGSOURCES)  
+tldev_test_SOURCES = $(TLDEVSOURCES) tllogsum.h tllogsum.c test_tldev.c
+tldev_test_CPPFLAGS = $(AM_CPPFLAGS)
+tldev_test_LDADD =
+
+rng_ITEST_SOURCES = $(RNGSOURCES) 
 rng_ITEST_CPPFLAGS = $(AM_CPPFLAGS) -DITESTRNG
 rng_ITEST_LDADD = libtldevel.a
 
