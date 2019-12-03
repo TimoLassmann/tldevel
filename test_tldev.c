@@ -4,21 +4,22 @@
 
 int main(int argc, char *argv[])
 {
+        double** ga = NULL;
         int* blah = NULL;
 
-        RUNP(blah = galloc(blah,1));
-
+        galloc(&blah,-1);
+        LOG_MSG("%p",blah);
         gfree(blah);
 
 
         LOG_MSG("%p",blah);
         blah = NULL;
-        double** ga = NULL;
 
-        RUNP(ga = galloc(ga,19, 10));
+
+        RUN(galloc(&ga,19, 10));
         LOG_MSG("d1: %d", get_dim1(ga));
         LOG_MSG("d2: %d", get_dim2(ga));
-        RUNP(ga = galloc(ga,190, -100));
+        RUN(galloc(&ga,190, -100));
         LOG_MSG("d1: %d", get_dim1(ga));
         LOG_MSG("d2: %d", get_dim2(ga));
         gfree(ga);

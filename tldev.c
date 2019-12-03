@@ -42,28 +42,31 @@ int get_dim2(void* ptr)
 
 
 #define ALLOC_1D_ARRAY(type)                                            \
-        type *alloc_1D_array_size_ ##type (type *array, int dim1) {     \
+        int alloc_1D_array_size_ ##type (type **array, int dim1) {      \
                 mem_i* h = NULL;                                        \
                 void* tmp = NULL;                                       \
                 ASSERT(dim1 >= 1,"DIM1 is too small: %d",dim1);         \
                 if(array == NULL){                                      \
-                        MMALLOC(tmp,(dim1  * sizeof *array + sizeof(mem_i))); \
+                        MMALLOC(tmp,(dim1  * sizeof **array + sizeof(mem_i))); \
                 }else{                                                  \
-                        tmp = array;                                    \
+                        tmp = *array;                                   \
                         tmp = (void*) ((char*)tmp - sizeof(mem_i));     \
                         h = (mem_i*)(tmp);                              \
                         if(h->dim1 < dim1){                             \
-                                MREALLOC(tmp,(dim1  * sizeof *array + sizeof(mem_i))); \
+                                MREALLOC(tmp,(dim1  * sizeof **array + sizeof(mem_i))); \
                         }else{                                          \
-                                return (void*) ((char*)tmp + sizeof(mem_i)); \
+                                *array = (type*) ((char*)tmp + sizeof(mem_i)); \
+                                return OK;                              \
                         }                                               \
                 }                                                       \
                 h = (mem_i*)(tmp);                                      \
                 h->dim1  = dim1;                                        \
                 h->dim2  = 0;                                           \
-                return (void*)  ((char*)tmp + sizeof(mem_i));           \
+                *array= (type*)  ((char*)tmp + sizeof(mem_i));          \
+                return OK;                                              \
         ERROR:                                                          \
-                return NULL;                                            \
+                gfree(*array);                                           \
+                return FAIL;                                            \
         }
 
 
@@ -73,7 +76,7 @@ ALLOC_1D_ARRAY(float)
 ALLOC_1D_ARRAY(double)
 
 #define ALLOC_2D_ARRAY(type)                                            \
-        type **alloc_2D_array_size_ ##type (type **array, int dim1,int dim2) { \
+        int alloc_2D_array_size_ ##type (type ***array, int dim1,int dim2) { \
                 int i,j,c;                                              \
                 mem_i* h = NULL;                                        \
                 type** ptr_t = NULL;                                    \
@@ -83,9 +86,9 @@ ALLOC_1D_ARRAY(double)
                 int o1, o2;                                             \
                 ASSERT(dim1 >= 1,"DIM1 is too small: %d",dim1);         \
                 ASSERT(dim2 >= 1,"DIM1 is too small: %d",dim2);         \
-                if(array == NULL){                                      \
-                        MMALLOC(tmp,(dim1  * sizeof *array+ sizeof(mem_i))); \
-                        MMALLOC(ptr_tt,((dim1 * dim2)  * sizeof **array)); \
+                if(*array == NULL){                                      \
+                        MMALLOC(tmp,(dim1  * sizeof **array+ sizeof(mem_i))); \
+                        MMALLOC(ptr_tt,((dim1 * dim2)  * sizeof ***array)); \
                         h = (mem_i*)tmp;                                \
                         h->dim1  = dim1;                                \
                         h->dim2  = dim2;                                \
@@ -95,22 +98,22 @@ ALLOC_1D_ARRAY(double)
                         for(i = 0;i< dim1;i++){                         \
                                 ptr_t[i] = ptr_tt + i * dim2;           \
                                 }                                       \
-                        array = ptr_t;                                  \
+                        *array = ptr_t;                                  \
                 }else{                                                  \
-                        ptr_tt = array[0];                              \
-                        tmp = (void*)( (char*)array -sizeof(mem_i));    \
+                        ptr_tt = *array[0];                              \
+                        tmp = (void*)( (char*)*array -sizeof(mem_i));    \
                         h = (mem_i*)tmp;                                \
                         o1 = h->dim1;                                   \
                         o2 = h->dim2;                                   \
                         max1 = MACRO_MAX(dim1,o1);                      \
                         max2 = MACRO_MAX(dim2,o2);                      \
                         if(dim1 > o1){                                  \
-                                MREALLOC(tmp,(dim1  * sizeof *array+ sizeof(mem_i))); \
-                                MREALLOC(ptr_tt,((dim1* max2)  * sizeof **array )); \
+                                MREALLOC(tmp,(dim1  * sizeof **array+ sizeof(mem_i))); \
+                                MREALLOC(ptr_tt,((dim1* max2)  * sizeof ***array )); \
                         }else if(dim2 > o2){                            \
-                                MREALLOC(ptr_tt,((max1 * dim2) * sizeof **array )); \
+                                MREALLOC(ptr_tt,((max1 * dim2) * sizeof ***array )); \
                         }else{                                          \
-                                return array;                           \
+                                return OK;                              \
                         }                                               \
                         if(dim2 > o2){                                  \
                                 for(i = o1-1; i >= 0;i-- ){             \
@@ -127,12 +130,12 @@ ALLOC_1D_ARRAY(double)
                         for(i = 0; i < max1;i++){                       \
                                 ptr_t[i] = ptr_tt + i * max2;           \
                         }                                               \
-                        array = ptr_t;                                  \
+                        *array = ptr_t;                                  \
                 }                                                       \
-                return array;                                           \
+                return OK;                                           \
         ERROR:                                                          \
-                gfree(array);                                           \
-                return NULL;                    \
+                gfree(*array);                                           \
+                return FAIL;                    \
         }
 
 ALLOC_2D_ARRAY(char)

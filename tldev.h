@@ -162,7 +162,7 @@ EXTERN int get_dim2(void* ptr);
 #define COMMA_11111 ,
 
 #define ALLOC_1D_ARRAY_DEF(type)                                  \
-        type *alloc_1D_array_size_ ##type (type *array, int dim1)
+        EXTERN int alloc_1D_array_size_ ##type (type **array, int dim1)
 
 ALLOC_1D_ARRAY_DEF(char);
 ALLOC_1D_ARRAY_DEF(int);
@@ -170,7 +170,7 @@ ALLOC_1D_ARRAY_DEF(float);
 ALLOC_1D_ARRAY_DEF(double);
 
 #define ALLOC_2D_ARRAY_DEF(type)                                        \
-        extern type **alloc_2D_array_size_ ##type (type **array, int dim1,int dim2)
+        EXTERN int alloc_2D_array_size_ ##type (type ***array, int dim1,int dim2)
 
 ALLOC_2D_ARRAY_DEF(char);
 ALLOC_2D_ARRAY_DEF(int);
@@ -212,28 +212,28 @@ FREE_2D_ARRAY_DEF(double);
 
 #define SELECTGALLOC_0()
 
-#define SELECTGALLOC_1(_1) _Generic ((_1),                \
+#define SELECTGALLOC_1(_1) _Generic ((_1),             \
                                      default: galloc_void \
                 )
 
-#define SELECTGALLOC_2(_1, _2) _Generic((_1),                           \
-                                        char*: alloc_1D_array_size_char, \
-                                        int*: alloc_1D_array_size_int,  \
-                                        float*:  alloc_1D_array_size_float, \
-                                        double*:alloc_1D_array_size_double \
+#define SELECTGALLOC_2(_1, _2) _Generic((_1),                        \
+                                        char**: alloc_1D_array_size_char, \
+                                        int**: alloc_1D_array_size_int,  \
+                                        float**:  alloc_1D_array_size_float, \
+                                        double**:alloc_1D_array_size_double \
                 )
 
-#define SELECTGALLOC_3(_1, _2, _3) _Generic((_1),                       \
-                                                char**: _Generic((_2),  \
+#define SELECTGALLOC_3(_1, _2, _3) _Generic((_1),                    \
+                                                char***: _Generic((_2),  \
                                                                  int: alloc_2D_array_size_char \
                                                         ),              \
-                                                int**: _Generic((_2),   \
+                                                int***: _Generic((_2),   \
                                                                 int: alloc_2D_array_size_int \
                                                         ),              \
-                                                float**: _Generic((_2), \
+                                                float***: _Generic((_2), \
                                                                   int: alloc_2D_array_size_float \
                                                         ),              \
-                                                double**: _Generic((_2), \
+                                                double***: _Generic((_2), \
                                                                    int: alloc_2D_array_size_double \
                                                         )              \
                 )
