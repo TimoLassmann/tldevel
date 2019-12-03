@@ -17,6 +17,7 @@ EXTERN int clear_bitvector(bitvec* bv);
 EXTERN int bit_set(bitvec* bv, int i);
 EXTERN int bit_clr(bitvec* bv, int i);
 EXTERN int bit_test(bitvec* bv, int i, int* ret);
+EXTERN int free_bitvector(bitvec** bv);
 
 #undef TLBITVEC_IMPORT
 #undef EXTERN

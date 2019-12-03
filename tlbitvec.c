@@ -31,6 +31,7 @@ int make_bitvector( bitvec** bv, int num_elem)
         *bv = bitvec;
         return OK;
 ERROR:
+        free_bitvector(&bitvec);
         return FAIL;
 }
 
@@ -77,4 +78,14 @@ int bit_test(bitvec* bv, int i, int* ret)
         return OK;
 ERROR:
         return FAIL;
+}
+
+int free_bitvector(bitvec** bv)
+{
+        if(*bv){
+                MFREE((*bv)->arr);
+                MFREE(*bv);
+                *bv = NULL;
+        }
+        return OK;
 }
