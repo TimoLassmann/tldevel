@@ -1,7 +1,7 @@
 #ifndef TLDEV_H
 #define TLDEV_H
 
-#include "stdlib.h"
+#include <stdlib.h>
 
 #include "tllogsum.h"
 
@@ -10,7 +10,6 @@
 #else
 #define EXTERN extern
 #endif
-
 
 #define OK              0
 #define FAIL            1
@@ -42,6 +41,18 @@
                 error(AT, ##__VA_ARGS__);       \
                 goto ERROR;                     \
         }
+
+#if (DEBUGLEVEL >= 1)
+#define DASSERT(TEST,...) if(!(TEST)) {           \
+                        error(AT,#TEST );         \
+                        error(AT, ##__VA_ARGS__); \
+                        goto ERROR;               \
+        }
+#else
+#define DASSERT(TEST,...)
+
+#endif
+
 
 #define ADDFAILED(x)  "Function \"" TOSTRING(x) "\" failed."
 
