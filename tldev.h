@@ -102,8 +102,8 @@
 
 /* g memory functions */
 
-EXTERN int get_dim1(void* ptr);
-EXTERN int get_dim2(void* ptr);
+EXTERN int get_dim1(void* ptr, int* d);
+EXTERN int get_dim2(void* ptr, int* d);
 
 #define CONCAT(X, Y) CONCAT_(X, Y)
 #define CONCAT_(X, Y) X ## Y
