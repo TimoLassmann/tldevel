@@ -1,7 +1,7 @@
 #ifndef HASH_TABLE_H
 #define HASH_TABLE_H
 
-#include "tldevel.h"
+
 
 #include <stdint.h>
 #include <inttypes.h>
@@ -213,7 +213,7 @@
 uint32_t get_hash_value_int(const int x, const int table_size);
 uint32_t get_hash_value_double(const double x,const int table_size);
 uint32_t get_hash_value_string(const char* s, const int table_size);
-uint32_t get_hash_value_int_array(const int* x,const int table_size);
+uint32_t get_hash_value_int_array(int* x,const int table_size);
 
 #define get_hash_value(type, size) _Generic ((type),                \
                                              char*: get_hash_value_string, \
@@ -223,7 +223,7 @@ uint32_t get_hash_value_int_array(const int* x,const int table_size);
                 )(type, size)
 
 int ht_compare_key_int(const int a, const int b);
-int ht_compare_key_int_star(const int* a, const int* b);
+int ht_compare_key_int_star(int* a, int* b);
 int ht_compare_key_double(const double a, const double b);
 int ht_compare_key_strings(const char* a, const char* b);
 
@@ -235,7 +235,7 @@ int ht_compare_key_strings(const char* a, const char* b);
                 )(a, b)
 
 int print_int(const int a);
-int print_int_star(const int* a);
+int print_int_star(int* a);
 int print_double(const double a);
 int print_string(const char* a);
 

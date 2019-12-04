@@ -7,15 +7,10 @@
 #define SCALE 100000.0
 #define LOGSUM_SIZE 1600000
 
-
-
-static float logsum_lookup[LOGSUM_SIZE];
-
-
-
 #define MACRO_MIN(a,b)          (((a)<(b))?(a):(b))
 #define MACRO_MAX(a,b)          (((a)>(b))?(a):(b))
 
+static float logsum_lookup[LOGSUM_SIZE];
 
 void init_logsum()
 {
@@ -51,7 +46,6 @@ float prob2scaledprob(float p)
                 return  log(p);
         }
 }
-
 
 float scaledprob2prob(float p)
 {

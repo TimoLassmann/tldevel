@@ -7,6 +7,7 @@
 #define MODE_RTREE_MERGE_IDENTICAL 1
 #define MODE_RTREE_MERGE_OVERLAPPING 2
 
+#include "stdint.h"
 
 /* Needs to be declares here so I can access elments vis flatten_tree...  */
 struct rtree_interval

@@ -1,5 +1,10 @@
 #include "hash_table.h"
 
+#include <string.h>
+#include <stdio.h>
+
+#include "tldevel.h"
+
 
 static uint32_t hash_uint32( uint32_t a);
 
@@ -10,15 +15,19 @@ int print_int(const int a)
         return OK;
 }
 
-int print_int_star(const int* a)
+int print_int_star(int* a)
 {
-        int len = DIM1(a);
+
+        int len;
+        RUN(get_dim1(a,&len));
         int i;
         for(i = 0; i < len;i++){
                 fprintf(stdout,"%d,",a[i]);
         }
         fprintf(stdout,"\n");
         return OK;
+ERROR:
+        return FAIL;
 }
 
 int print_double(const double a)
@@ -44,10 +53,13 @@ int ht_compare_key_int(const int a, const int b)
         return 1;
 }
 
-int ht_compare_key_int_star(const int* a, const int* b)
+int ht_compare_key_int_star(int* a, int* b)
 {
-        int len_a = DIM1(a);
-        int len_b = DIM1(b);
+        int len_a;
+        int len_b;
+
+        get_dim1(a, &len_a);
+        get_dim1(b, &len_b);
         int min_l = MACRO_MIN(len_a, len_b);
         int i;
         for(i = 0.; i < min_l;i++){
@@ -138,13 +150,13 @@ uint32_t hash_uint32( uint32_t a)
         return a;
 }
 
-uint32_t get_hash_value_int_array(const int* x,const int table_size)
+uint32_t get_hash_value_int_array(int* x,const int table_size)
 {
         ASSERT(table_size != 0, "Table size cannot be 0!");
         uint32_t hash = 0;
-        int len = DIM1(x);
+        int len;
         int i;
-
+        get_dim1(x,&len);
         hash = hash ^  hash_uint32(x[0]);
         for(i = 1; i < len;i++){
                 hash = (hash << 5) ^ ( hash >> (27));

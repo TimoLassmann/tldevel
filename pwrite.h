@@ -15,6 +15,8 @@
 
 #endif
 
+#include <stdio.h>
+
 struct thread_control_variables;
 struct pwrite_buffer;
 

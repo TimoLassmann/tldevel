@@ -5,6 +5,9 @@
 
 #include "rtr.h"
 
+#include <stdio.h>
+#include <math.h>
+
 struct rtree_branch{
         struct rtree_interval* interval;
         struct rtree_node *child;
@@ -578,7 +581,7 @@ int merge_tree_intervals(struct rtr_data** org, struct rtr_data* result,int num_
                 ASSERT(org[i] != NULL,"Tree %d is empty",i);
                 ASSERT(org[i]->dim == result->dim,"org and result tree have different dimensions");
                 RUN(flatten_rtree(org[i]));
-                DPRINTF1("TREE:%d count of largest node:%d",i, org[i]->flat_interval[0]->count );
+                //DPRINTF1("TREE:%d count of largest node:%d",i, org[i]->flat_interval[0]->count );
         }
 
         RUNP(sr = init_search_results());
@@ -666,7 +669,7 @@ int condense_tree_intervals(struct rtr_data** org, struct rtr_data* result,int n
                 ASSERT(org[i] != NULL,"Tree %d is empty",i);
                 ASSERT(org[i]->dim == result->dim,"org and result tree have different dimensions");
                 RUN(flatten_rtree(org[i]));
-                DPRINTF1("TREE:%d count of largest node:%d\n",i, org[i]->flat_interval[0]->count );
+                //DPRINTF1("TREE:%d count of largest node:%d\n",i, org[i]->flat_interval[0]->count );
         }
 
 

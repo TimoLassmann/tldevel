@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "tldev.h"
+#include "tldevel.h"
 
 #define TLRNG_IMPORT
 #include "tlrng.h"

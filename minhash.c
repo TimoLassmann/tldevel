@@ -3,15 +3,19 @@
 #include "minhash.h"
 
 #include "tlrng.h"
+
+#include "tlbitvec.h"
+
 int shuffle_arr_minhash(int* arr,int n, struct rng_state* rng);
 
 struct minhash* create_min_hash(struct Boolean_matrix* bm, int num_sig,long int seed)
 {
         struct minhash* min_h = NULL;
-        uint32_t* col = NULL;
+        struct bitvec*  col = NULL;
         int* list = NULL;
         int i,j,c;
         int n,m;
+        int ret;
         //struct drand48_data randBuffer;
 
         struct rng_state* rng = NULL;
@@ -118,7 +122,8 @@ struct minhash* create_min_hash(struct Boolean_matrix* bm, int num_sig,long int 
                 for(i = 0; i < m;i++){
                         col = bm->m[i];
                         for(j = 0; j < n;j++){
-                                if(bit_test(col,j)){
+                                RUN(bit_test(col, j, &ret));
+                                if(ret){
                                         if(list[j]+1 < min_h->sig[i][c]){
                                                 min_h->sig[i][c] = list[j]+1;
                                         }
@@ -249,6 +254,7 @@ int jaccard_sim(struct Boolean_matrix* bm, int*S , int n, double* jac_sim)
 {
         int i,j,c;
         int n_row;
+        int ret;
         double set_intersection = 0.0;
         double set_union = 0.0;
 
@@ -259,7 +265,9 @@ int jaccard_sim(struct Boolean_matrix* bm, int*S , int n, double* jac_sim)
                 c = 0;
 
                 for(j = 0; j < n;j++){
-                        c+= bit_test(bm->m[S[j]],i);
+                        RUN(bit_test(bm->m[S[j]],i,&ret));
+                        c+= ret;
+                        //c+= bit_test(bm->m[S[j]],i);
                 }
                 if(c == n){
                         set_intersection += 1.0;
@@ -302,7 +310,8 @@ struct Boolean_matrix* init_Bmatrix( int columns,int rows)
 
         for(i = 0; i < bm->n_column;i++){
                 bm->m[i] = NULL;
-                RUNP(bm->m[i] = make_bitvector(bm->n_row));
+                RUN(make_bitvector(&bm->m[i], bm->n_row));
+                //RUNP(bm->m[i] = make_bitvector(bm->n_row));
         }
         return bm;
 ERROR:

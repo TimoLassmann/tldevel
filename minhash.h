@@ -6,8 +6,12 @@
 #include "tldevel.h"
 #include <limits.h>
 
+#include "tlbitvec.h"
+#include <stdint.h>
+
 struct Boolean_matrix{
-        uint32_t** m;
+
+        struct bitvec** m;
         int n_row;
         int n_column;
 };

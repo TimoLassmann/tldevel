@@ -4,8 +4,9 @@
 
 #include <pthread.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include "tldevel.h"
-
+#include "tlmisc.h"
 
 #include "pwrite.h"
 

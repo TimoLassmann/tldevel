@@ -1,9 +1,6 @@
 #ifndef TLLOGSUM_H
 #define TLLOGSUM_H
 
-
-
-
 #ifdef TLLOGSUM_IMPORT
 #define EXTERN
 #else
