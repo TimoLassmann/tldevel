@@ -1,7 +1,28 @@
 
-#include "rng.h"
+
+
+#include <stdint.h>
+#include <time.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#include "tldev.h"
+
+#define TLRNG_IMPORT
+#include "tlrng.h"
 
 /* code here was adopted from:  */
+
+/*  Written in 2018 by David Blackman and Sebastiano Vigna (vigna@acm.org)
+
+To the extent possible under law, the author has dedicated all copyright
+and related and neighboring rights to this software to the public domain
+worldwide. This software is distributed without any warranty.
+
+See <http://creativecommons.org/publicdomain/zero/1.0/>. */
+
+
+
 
 /* http://vigna.di.unimi.it/xorshift/xoshiro256starstar.c */
 /* http://xoshiro.di.unimi.it/splitmix64.c */
@@ -10,14 +31,22 @@
 /* Sebastiano Vigna (vigna@acm.org) */
 /* David Blackman */
 
+/* And code bits from  */
+/* the easel library (by Sean Eddy) */
 #ifdef ITESTRNG
+
+#include <stdio.h>
+
 int main(int argc, char *argv[])
 {
         struct rng_state* rng = NULL;
+        struct rng_state* rng_second = NULL;
         int i;
         RUNP(rng = init_rng(0));
+        RUNP(rng_second = init_rng_from_rng(rng));
         for(i = 0; i < 10;i++){
                 fprintf(stdout,"%f\t%d\n", tl_random_double(rng), tl_random_int(rng,10));
+                fprintf(stdout,"%f\t%d\n", tl_random_double(rng_second), tl_random_int(rng_second,10));
         }
         free_rng(rng);
         return EXIT_SUCCESS;
@@ -26,9 +55,14 @@ ERROR:
 }
 #endif
 
+struct rng_state{
+        uint64_t s[4];
+};
+
+
 static inline uint64_t rotl(const uint64_t x, int k);
-uint64_t next(struct rng_state* s);
-void jump(struct rng_state* s);
+static uint64_t next(struct rng_state* s);
+static void jump(struct rng_state* s);
 void long_jump(struct rng_state* s);
 
 static uint64_t choose_arbitrary_seed(void);
@@ -50,6 +84,9 @@ int tl_random_int(struct rng_state* rng,int a)
         return (int) (tl_random_double(rng) * a);
 }
 
+
+
+
 struct rng_state* init_rng(uint64_t seed)
 {
         struct rng_state* s = NULL;
@@ -61,6 +98,7 @@ struct rng_state* init_rng(uint64_t seed)
                 seed = choose_arbitrary_seed();
         }
         sanity = 0;
+
         while(!sanity){
                 sanity = 0;
                 z = (seed += 0x9e3779b97f4a7c15);
@@ -98,6 +136,22 @@ struct rng_state* init_rng(uint64_t seed)
 ERROR:
         return NULL;
 }
+
+struct rng_state* init_rng_from_rng(struct rng_state* rng)
+{
+        struct rng_state* s = NULL;
+        int i;
+        MMALLOC(s, sizeof(struct rng_state));
+
+        for(i = 0; i < 4;i++){
+                s->s[i] = rng->s[i];
+        }
+        jump(s);
+        return s;
+ERROR:
+        return NULL;
+}
+
 
 void free_rng(struct rng_state* rng)
 {
@@ -140,12 +194,24 @@ static uint32_t jenkins_mix3(uint32_t a, uint32_t b, uint32_t c)
 }
 
 
+
+
+
 static inline uint64_t rotl(const uint64_t x, int k) {
         return (x << k) | (x >> (64 - k));
 }
 
 
+/* This is xoshiro256** 1.0, one of our all-purpose, rock-solid
+   generators. It has excellent (sub-ns) speed, a state (256 bits) that is
+   large enough for any parallel application, and it passes all tests we
+   are aware of.
 
+   For generating just floating-point numbers, xoshiro256+ is even faster.
+
+   The state must be seeded so that it is not everywhere zero. If you have
+   a 64-bit seed, we suggest to seed a splitmix64 generator and use its
+   output to fill s. */
 
 uint64_t next(struct rng_state* s)
 {

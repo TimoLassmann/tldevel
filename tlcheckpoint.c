@@ -1,11 +1,9 @@
-
 #include <stdio.h>
-
 #include <time.h>
-
 #include <string.h>
 
 #include "tldev.h"
+#include "tlmisc.h"
 
 #define TLCHECKPOINT_IMPORT
 #include "tlcheckpoint.h"

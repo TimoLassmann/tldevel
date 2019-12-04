@@ -24,7 +24,7 @@ PWRITESOURCES  = pwrite.h   pwrite.c
 HASHTABLESOURCES = hash_table.h hash_table.c
 MINHASHSOURCES = minhash.h minhash.c
 
-RNGSOURCES = rng.c rng.h
+RNGSOURCES = tlrng.c tlrng.h
 
 
 RBSOURCES = rb.h rb.c
@@ -45,9 +45,9 @@ AM_LDFLAGS += -Wno-undef
 #TESTS= libtldevel_ITEST  ht_ITEST mem_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST  libpwrite_ITEST pwrite_test.sh  libavlrb_ITEST minhash_ITEST rng_ITEST
 
 
-check_PROGRAMS = tldev_test #libtldevel_ITEST  ht_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST libpwrite_ITEST mem_ITEST libavlrb_ITEST minhash_ITEST rng_ITEST
+check_PROGRAMS = tldev_test rng_ITEST #libtldevel_ITEST  ht_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST libpwrite_ITEST mem_ITEST libavlrb_ITEST minhash_ITEST rng_ITEST
 
-tldev_test_SOURCES = $(TLDEVSOURCES) tllogsum.h tllogsum.c test_tldev.c tlbitvec.h tlbitvec.c tlcheckpoint.h tlcheckpoint.c
+tldev_test_SOURCES = $(TLDEVSOURCES) tllogsum.h tllogsum.c test_tldev.c tlbitvec.h tlbitvec.c tlcheckpoint.h tlcheckpoint.c tlmisc.h tlmisc.c tlrng.h tlrng.c
 tldev_test_CPPFLAGS = $(AM_CPPFLAGS)
 tldev_test_LDADD =
 

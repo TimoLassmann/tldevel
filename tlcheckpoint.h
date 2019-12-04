@@ -11,6 +11,13 @@
 
 typedef struct checkpoint checkpoint;
 
+
+EXTERN struct checkpoint* init_checkpoint(char* base_name,char* target_dir);
+EXTERN int set_checkpoint_file(struct checkpoint* chk,char* function,char* location,char* cmd);
+EXTERN int test_for_checkpoint_file(struct checkpoint* chk,char* function,char* location, char* cmd);
+EXTERN void free_checkpoint(struct checkpoint* chk);
+
+
 #define DECLARE_CHK(n,dir) struct checkpoint* chk_##n = NULL;  RUNP( chk_##n =  init_checkpoint(TOSTRING(n),dir));
 
 #define RUN_CHECKPOINT(n,EXP,CMD) do {                                  \

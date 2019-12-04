@@ -2,7 +2,7 @@
 
 #include "minhash.h"
 
-#include "rng.h"
+#include "tlrng.h"
 int shuffle_arr_minhash(int* arr,int n, struct rng_state* rng);
 
 struct minhash* create_min_hash(struct Boolean_matrix* bm, int num_sig,long int seed)
