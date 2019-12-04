@@ -21,9 +21,6 @@ worldwide. This software is distributed without any warranty.
 
 See <http://creativecommons.org/publicdomain/zero/1.0/>. */
 
-
-
-
 /* http://vigna.di.unimi.it/xorshift/xoshiro256starstar.c */
 /* http://xoshiro.di.unimi.it/splitmix64.c */
 
