@@ -47,7 +47,7 @@ AM_LDFLAGS += -Wno-undef
 
 check_PROGRAMS = tldev_test #libtldevel_ITEST  ht_ITEST rb_ITEST librtree_ITEST libthrpool_ITEST libpwrite_ITEST mem_ITEST libavlrb_ITEST minhash_ITEST rng_ITEST
 
-tldev_test_SOURCES = $(TLDEVSOURCES) tllogsum.h tllogsum.c test_tldev.c tlbitvec.h tlbitvec.c
+tldev_test_SOURCES = $(TLDEVSOURCES) tllogsum.h tllogsum.c test_tldev.c tlbitvec.h tlbitvec.c tlcheckpoint.h tlcheckpoint.c
 tldev_test_CPPFLAGS = $(AM_CPPFLAGS)
 tldev_test_LDADD =
 

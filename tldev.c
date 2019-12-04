@@ -10,11 +10,8 @@
 #define tldev_IMPORT
 #include "tldev.h"
 
-#define MESSAGE_MARGIN 22
+
 #define TYPE_MARGIN 8
-
-
-
 
 static void verror(FILE* f_ptr, const char *location, const char *format,  va_list argp);
 static void vwarning(FILE* f_ptr,const char *location, const char *format,  va_list argp);

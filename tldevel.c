@@ -61,7 +61,6 @@ void print_program_description(char * const argv[],const char* description)
                                 fprintf(stdout,"\n");
                                 fprintf(stdout,"%-*s: ",MESSAGE_MARGIN,"");
                                 newline = 1;
-
                         }else{
                                 if(isspace(description[i]) &&newline){
 

@@ -14,6 +14,8 @@
 #define OK              0
 #define FAIL            1
 
+#define MESSAGE_MARGIN 22
+
 #define MACRO_MIN(a,b)          (((a)<(b))?(a):(b))
 #define MACRO_MAX(a,b)          (((a)>(b))?(a):(b))
 
@@ -68,6 +70,14 @@
                 }                                   \
         }while (0)
 
+/* Functions to declare and use a timer */
+
+#define DECLARE_TIMER(n) struct timespec ts1_##n; struct timespec ts2_##n;
+#define START_TIMER(n) clock_gettime(CLOCK_MONOTONIC_RAW, &ts1_##n);
+#define STOP_TIMER(n) clock_gettime(CLOCK_MONOTONIC_RAW, &ts2_##n);
+#define GET_TIMING(n) (double)(ts2_##n.tv_sec - ts1_##n.tv_sec) + ((double)  ts2_##n.tv_nsec - ts1_##n.tv_nsec) / 1000000000.0
+
+/* Memory functions  */
 
 #define MFREE(p) do {                                           \
                 if(p){                                          \
@@ -219,8 +229,6 @@ FREE_2D_ARRAY_DEF(double);
 #define galloc(...) SELECTGALLOC(__VA_ARGS__)(__VA_ARGS__)
 #define SELECTGALLOC(...) CONCAT(SELECTGALLOC_, NARG(__VA_ARGS__))(__VA_ARGS__)
 
-
-
 #define SELECTGALLOC_0()
 
 #define SELECTGALLOC_1(_1) _Generic ((_1),             \
@@ -272,8 +280,6 @@ FREE_2D_ARRAY_DEF(double);
 EXTERN void error(const char *location, const char *format, ...);
 EXTERN void warning(const char *location, const char *format, ...);
 EXTERN void log_message( const char *format, ...);
-
-
 
 #undef tldev_IMPORT
 #undef EXTERN
