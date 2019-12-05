@@ -1,11 +1,7 @@
 #ifndef TLRNG_H
 #define TLRNG_H
 
-
-
-//#include "tldevel.h"
-
-
+#include "stdint.h"
 
 #ifdef TLRNG_IMPORT
 #define EXTERN

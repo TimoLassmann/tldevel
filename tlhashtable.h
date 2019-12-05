@@ -1,10 +1,16 @@
-#ifndef HASH_TABLE_H
-#define HASH_TABLE_H
+#ifndef TLHASH_TABLE_H
+#define TLHASH_TABLE_H
 
+#ifdef TLHASHTABLE_IMPORT
+#define EXTERN
+#else
+#define EXTERN extern
+#endif
 
 
 #include <stdint.h>
 #include <inttypes.h>
+#include <stdio.h>
 
 #define HT_GLOBAL_INIT(name, type)                                      \
                                                                         \
@@ -210,6 +216,7 @@
          }                                                              \
 
 
+
 uint32_t get_hash_value_int(const int x, const int table_size);
 uint32_t get_hash_value_double(const double x,const int table_size);
 uint32_t get_hash_value_string(const char* s, const int table_size);
@@ -260,4 +267,7 @@ int print_string(const char* a);
 #define HT_FLATTEN(name,ht)  hash_table_flat__##name(ht);
 #define HT_PRINT(name,ht)  print_hash_table_##name(ht)
 #define HT_FREE(name,ht) free_hash_table_##name(ht)
+
+#undef TLHASHTABLE_IMPORT
+#undef EXTERN
 #endif

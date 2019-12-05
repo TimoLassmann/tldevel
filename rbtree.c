@@ -216,14 +216,14 @@ struct rbtree_node*  tree_get_node(struct rbtree_root* root, void* key)
 
 struct rbtree_node* search_node(struct rbtree_root* root, struct rbtree_node* n,void* key)
 {
-        DPRINTF3("searching: %p.",n);
+        //DPRINTF3("searching: %p.",n);
         long int c;
         if(n){
                 c = root->compare(root->key(n->data_node),key);
                 if(c == 0){
                         return n;
                 }else if(c > 0){
-                        DPRINTF3("going right.");
+                        //DPRINTF3("going right.");
                         if(n->right){
 
                                 return search_node(root, n->right , key);
@@ -231,7 +231,7 @@ struct rbtree_node* search_node(struct rbtree_root* root, struct rbtree_node* n,
                                 return NULL;
                         }
                 }else{
-                        DPRINTF3("going left.");
+                        //DPRINTF3("going left.");
 
                         if(n->left){
                                 return search_node(root, n->left , key);

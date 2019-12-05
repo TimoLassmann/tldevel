@@ -8,7 +8,7 @@
 #define EXTERN extern
 #endif
 
-n
+
 typedef struct checkpoint checkpoint;
 
 
