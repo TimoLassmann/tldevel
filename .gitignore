@@ -3,4 +3,5 @@
 *.tar.gz
 *.a
 *.log
+*.trs
 config.*

@@ -11,12 +11,6 @@
 
 #define BUFFER_LEN 128
 
-struct checkpoint{
-        char* base_dir;
-        char* base_name;
-        int test_num;
-};
-
 
 int set_checkpoint_file(struct checkpoint* chk,char* function,char* location,char* cmd)
 {

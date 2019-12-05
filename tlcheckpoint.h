@@ -1,6 +1,7 @@
 #ifndef TLCHECKPOINT_H
 #define TLCHECKPOINT_H
 
+#include "tldevel.h"
 
 #ifdef TLCHECKPOINT_IMPORT
 #define EXTERN
@@ -9,14 +10,18 @@
 #endif
 
 
-typedef struct checkpoint checkpoint;
+
+struct checkpoint{
+        char* base_dir;
+        char* base_name;
+        int test_num;
+};
 
 
 EXTERN struct checkpoint* init_checkpoint(char* base_name,char* target_dir);
 EXTERN int set_checkpoint_file(struct checkpoint* chk,char* function,char* location,char* cmd);
 EXTERN int test_for_checkpoint_file(struct checkpoint* chk,char* function,char* location, char* cmd);
 EXTERN void free_checkpoint(struct checkpoint* chk);
-
 
 #define DECLARE_CHK(n,dir) struct checkpoint* chk_##n = NULL;  RUNP( chk_##n =  init_checkpoint(TOSTRING(n),dir));
 
@@ -30,8 +35,7 @@ EXTERN void free_checkpoint(struct checkpoint* chk);
                 chk_##n->test_num += 1;                                 \
         }while (0)
 
-
-
+#define DESTROY_CHK(n) if(chk_##n){free_checkpoint( chk_##n);};
 
 #undef TLCHECKPOINT_IMPORT
 #undef EXTERN
