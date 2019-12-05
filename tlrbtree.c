@@ -1,19 +1,12 @@
-#ifdef HAVE_CONFIG_H
-#ifndef config_header_inc
-#define config_header_inc
-#include "config.h"
-#endif
 
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 
-
 #include "tldevel.h"
 
-#include "rbtree.h"
-
+#define TLRBTREE_IMPORT
+#include "tlrbtree.h"
 
 
 
@@ -35,40 +28,41 @@ struct rbtree_node{
 
 
 
-struct rbtree_root* flatten_tree_worker(struct rbtree_root* root,struct rbtree_node* n);
-struct rbtree_node* search_node(struct rbtree_root* root, struct rbtree_node* n,void* key);
-struct rbtree_node* insert_val_start(struct rbtree_root* root, struct rbtree_node* n,void* datanode);
-struct rbtree_node* delete_val_start(struct rbtree_root* root, struct rbtree_node* n,void* datanode);
-struct rbtree_node* insert_val(struct rbtree_root* root, struct rbtree_node* n,void* datanode);
+static struct rbtree_root* flatten_tree_worker(struct rbtree_root* root,struct rbtree_node* n);
+static struct rbtree_node* search_node(struct rbtree_root* root, struct rbtree_node* n,void* key);
+static struct rbtree_node* insert_val_start(struct rbtree_root* root, struct rbtree_node* n,void* datanode);
+static struct rbtree_node* delete_val_start(struct rbtree_root* root, struct rbtree_node* n,void* datanode);
+static struct rbtree_node* insert_val(struct rbtree_root* root, struct rbtree_node* n,void* datanode);
 
-void free_tree( struct rbtree_root* root);
-int tree_insert(struct rbtree_root* root, void* datanode);
-int tree_delete(struct rbtree_root* root, void* datanode);
-void print_tree(struct rbtree_root* root,FILE* out_ptr);
-int flatten_tree(struct rbtree_root* root);
-void* tree_get_data(struct rbtree_root* root, void* key);
-struct rbtree_node* tree_get_node(struct rbtree_root* root, void* key);
+static void free_tree( struct rbtree_root* root);
+static int tree_insert(struct rbtree_root* root, void* datanode);
+static int tree_delete(struct rbtree_root* root, void* datanode);
+static void print_tree(struct rbtree_root* root,FILE* out_ptr);
+static int flatten_tree(struct rbtree_root* root);
+static void* tree_get_data(struct rbtree_root* root, void* key);
+static struct rbtree_node* tree_get_node(struct rbtree_root* root, void* key);
 
 
 
 int rank(struct rbtree_node* n);
-struct rbtree_node* set_num(struct rbtree_node* n);
-int size(struct rbtree_node* n);
-int isred(struct rbtree_node* n);
-struct rbtree_node* rotateLeft(struct rbtree_node* n);
-struct rbtree_node* rotateRight(struct rbtree_node* n);
-struct rbtree_node* flipColors(struct rbtree_node* n);
+static struct rbtree_node* set_num(struct rbtree_node* n);
+static int size(struct rbtree_node* n);
+static int isred(struct rbtree_node* n);
+static struct rbtree_node* rotateLeft(struct rbtree_node* n);
+static struct rbtree_node* rotateRight(struct rbtree_node* n);
+static struct rbtree_node* flipColors(struct rbtree_node* n);
 
-struct rbtree_node* moveredleft(struct rbtree_node* n);
-struct rbtree_node* moveredright(struct rbtree_node* n);
-void* get_tree_min(struct rbtree_root* root);
-void* min_rb_data_node(struct rbtree_node* n);
-struct rbtree_node*  deleteMin(struct rbtree_node* n);
-struct rbtree_node* fixUp(struct rbtree_node* n);
-struct rbtree_node* delete(struct rbtree_root* root, struct rbtree_node* n, void* datanode);
 
-void free_rbtree(struct rbtree_node* n,void (*free_function_pointer)(void* ptr));
-int print_tree2(struct rbtree_node* node,void (*print_function_pointer)(void* ptr,FILE* out_ptr),FILE* out_ptr, int d);
+static struct rbtree_node* moveredleft(struct rbtree_node* n);
+static struct rbtree_node* moveredright(struct rbtree_node* n);
+static void* get_tree_min(struct rbtree_root* root);
+static void* min_rb_data_node(struct rbtree_node* n);
+static struct rbtree_node*  deleteMin(struct rbtree_node* n);
+static struct rbtree_node* fixUp(struct rbtree_node* n);
+static struct rbtree_node* delete(struct rbtree_root* root, struct rbtree_node* n, void* datanode);
+
+static void free_rbtree(struct rbtree_node* n,void (*free_function_pointer)(void* ptr));
+static int print_tree2(struct rbtree_node* node,void (*print_function_pointer)(void* ptr,FILE* out_ptr),FILE* out_ptr, int d);
 
 
 void print_tree(struct rbtree_root* root,FILE* out_ptr)

@@ -1,9 +1,16 @@
 
-#ifndef lib_rbtree_header
-#define lib_rbtree_header
+#ifndef TLRBTREE_H
+#define TLRBTREE_H
 
+#ifdef TLRBTREE_IMPORT
+#define EXTERN
+#else
+#define EXTERN extern
+#endif
 
-struct rbtree_node;
+#include <stdio.h>
+
+typedef struct rbtree_node rbtree_node;
 
 struct rbtree_root{
         struct rbtree_node* node;
@@ -29,12 +36,13 @@ struct rbtree_root{
 };
 
 
-extern struct rbtree_root* init_tree(void* (*key_function_pointer)(void* ptr), long int (*compare_function_pointer)(void* keyA, void* keyB),int (*resolve_same_pointer)(void* ptr_a,void* ptr_b),void (*fp_print)(void* ptr,FILE* out_ptr),void (*fp_free)(void* ptr));
+EXTERN struct rbtree_root* init_tree(void* (*key_function_pointer)(void* ptr), long int (*compare_function_pointer)(void* keyA, void* keyB),int (*resolve_same_pointer)(void* ptr_a,void* ptr_b),void (*fp_print)(void* ptr,FILE* out_ptr),void (*fp_free)(void* ptr));
 
 //void tree_insert(struct rbtree_root* root, void* datanode);
 //extern int tree_insert(struct rbtree_root* root, void* datanode);
 
 
-
+#undef TLRBTREE_IMPORT
+#undef EXTERN
 #endif
 
