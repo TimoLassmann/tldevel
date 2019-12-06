@@ -3,9 +3,11 @@ AC_INIT([libtldevel], [m4_esyscmd_s([./version.sh])])
 AM_INIT_AUTOMAKE
 AC_PROG_CC
 AC_PROG_INSTALL
-AC_PROG_RANLIB
-#AM_SILENT_RULES([no])
+
+AM_SILENT_RULES([no])
 #AC_CONFIG_MACRO_DIR([m4])
+LT_INIT
+AC_CONFIG_MACRO_DIRS([m4])
 
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-lm':
@@ -106,9 +108,14 @@ AC_SUBST([COMPILER]) COMPILER=`$CC --version | head -n 1`
 ac_configure_args="$ac_configure_args PACKAGE_VERSION=$PACKAGE_VERSION   PACKAGE_NAME=$PACKAGE_NAME"
 
 
-AC_CONFIG_FILES([Makefile
-env_settings
-helper/Makefile])
+AC_CONFIG_FILES([
+lib/Makefile
+dev/Makefile
+Makefile
+])
+
+AC_CONFIG_HEADERS([config.h])
+
 AC_OUTPUT
 
 AC_MSG_NOTICE([---------------------------------------------------------])

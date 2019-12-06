@@ -1,18 +1,64 @@
 #!/usr/bin/env sh
-inside_git_repo=
 
-inside_git_repo="$(git rev-parse --is-inside-work-tree 2>/dev/null)"
+exists()
+{
+  command -v "$1" >/dev/null 2>&1
+}
+
+if ! exists libtoolize; then
+    if ! exists glibtoolize; then
+        echo 'libtool/glibtool not found!'
+        echo 'to install using homebrew:'
+        echo 'brew install libtool'
+        exit 1
+    fi
+fi
+
+if ! exists aclocal; then
+    echo 'aclocal not found!'
+    echo 'to install using homebrew:'
+    echo 'brew install automake'
+    exit 1
+fi
+
+if ! exists autoheader; then
+    echo 'autoheader not found!'
+    echo 'to install using homebrew:'
+    echo 'brew install automake'
+    exit 1
+fi
+
+if ! exists automake; then
+    echo 'automake not found!'
+    echo 'to install using homebrew:'
+    echo 'brew install automake'
+    exit 1
+fi
+
+if ! exists autoconf; then
+    echo 'autoconf not found!'
+    echo 'to install using homebrew:'
+    echo 'brew install automake'
+    exit 1
+fi
+
 
 
 test -n "$srcdir" || srcdir=`dirname "$0"`
 test -n "$srcdir" || srcdir=.
 
-if [ "$inside_git_repo" ]; then
-    echo "Updating git sub-modules"
-    cd "$srcdir"
-    git submodule update --init --recursive
-fi
+cd "$srcdir"
 
-autoreconf --force --install --verbose "$srcdir"
+case `uname` in Darwin*) glibtoolize --force --copy ;;
+                 *) libtoolize --force  --copy ;;
+esac
 
-test -n "$NOCONFIGURE" || "$srcdir/configure" "$@"
+aclocal -I m4 $AL_OPTS
+autoheader $AH_OPTS
+automake --add-missing --copy --gnu $AM_OPTS
+autoconf $AC_OPTS
+
+
+echo
+echo "Now run '$srcdir/configure' and 'make' to compile."
+echo

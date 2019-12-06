@@ -2,6 +2,12 @@
 #define TLDEVEL_H
 
 #include <stdlib.h>
+#include <stdio.h>
+
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #ifdef TLDEVEL_IMPORT
 #define EXTERN
