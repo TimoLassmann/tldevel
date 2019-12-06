@@ -1,5 +1,5 @@
 
-SUBDIRS = lib
+SUBDIRS = lib lib/dev
 
 ACLOCAL_AMFLAGS = -I m4
 

@@ -1,5 +1,5 @@
 
-SUBDIRS = dev
+#SUBDIRS = dev
 
 ACLOCAL_AMFLAGS = -I m4
 
