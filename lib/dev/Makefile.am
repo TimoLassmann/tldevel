@@ -3,7 +3,7 @@ ACLOCAL_AMFLAGS = -I m4
 AM_LDFLAGS = @DEAD_STRIP@
 AM_LDFLAGS += -Wno-undef
 
-LIBS = ../lib/libtldevel.a -lm
+LIBS = ../libtldevel.a -lm
 
 
 AM_CPPFLAGS = -I$(top_srcdir)/lib

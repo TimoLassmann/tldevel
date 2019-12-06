@@ -110,7 +110,7 @@ ac_configure_args="$ac_configure_args PACKAGE_VERSION=$PACKAGE_VERSION   PACKAGE
 
 AC_CONFIG_FILES([
 lib/Makefile
-dev/Makefile
+lib/dev/Makefile
 Makefile
 ])
 
