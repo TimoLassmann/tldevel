@@ -1,5 +1,5 @@
 
-SUBDIRS = lib lib/dev
+SUBDIRS = lib_tldevel lib_tldevel/dev
 
 ACLOCAL_AMFLAGS = -I m4
 
