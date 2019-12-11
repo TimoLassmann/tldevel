@@ -13,7 +13,7 @@ function usage()
 
 function next()
 {
-    printf "Add this to configure.ac:\n\n" ;
+    printf "\n\nNext steps:\n\nAdd this to configure.ac:\n\n" ;
 
     printf "   AC_CONFIG_FILES([\n" ;
     printf "      lib_tldevel/Makefile\n" ;
@@ -31,7 +31,7 @@ function next()
     printf "Add this to your src/Makefile.am.\n\n" ;
 
     printf "   LIBS = ../libtldevel.a -lm\n";
-    printf "   AM_CPPFLAGS = -I$(top_srcdir)/lib_tldevel\n";
+    printf "   AM_CPPFLAGS = -I\$(top_srcdir)/lib_tldevel\n";
     printf "   XXXXX_LDADD = ../libtldevel.a\n";
 
     exit 1;
