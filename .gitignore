@@ -2,6 +2,8 @@
 *~
 *.tar.gz
 *.a
+*.o
 *.log
 *.trs
+*_test
 config.*

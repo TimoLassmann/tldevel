@@ -6,8 +6,23 @@ AC_PROG_INSTALL
 
 AM_SILENT_RULES([no])
 #AC_CONFIG_MACRO_DIR([m4])
+
+
 LT_INIT
 AC_CONFIG_MACRO_DIRS([m4])
+
+m4_include([m4/ax_check_zlib.m4])
+
+AX_CHECK_ZLIB(
+[
+CPPFLAGS="$CPPFLAGS -I${ZLIB_HOME}/include"
+LDFLAGS="$LDFLAGS -L${ZLIB_HOME}/lib"
+LIBS="-lz $LIBS"
+AC_DEFINE([HAVE_LIBZ], [1],[Define to 1 if you have `z' library (-lz)])
+AM_CONDITIONAL([ENABLE_ZLIB], [test "$zlib_cv_zlib_h" = "yes"])
+]
+,
+AC_MSG_WARN([Zlib not found!!!]))
 
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-lm':
@@ -79,13 +94,12 @@ no)  AC_DEFINE(DEBUGLEVEL, 0,[No debugging.]);;
 esac
 
 
-
 if test "$enable_debugging" != "no"; then
-        AC_DEFINE(DEBUG,1,[Defines debugging .])
-        CFLAGS="-ggdb -pedantic  -Wall -m64 -std=gnu11 -fdata-sections -ffunction-sections"
+AC_DEFINE(DEBUG,1,[Defines debugging .])
+CFLAGS="-ggdb -pedantic -Wall -std=gnu11 -fdata-sections -ffunction-sections"
 else
-        CFLAGS="-O3 -pedantic -funroll-loops -Wall -std=gnu11 -fdata-sections -ffunction-sections"
-        DEBUG=0
+CFLAGS="-O3 -pedantic -funroll-loops -Wall -std=gnu11 -fdata-sections -ffunction-sections"
+DEBUG=0
 fi
 
 
@@ -127,8 +141,11 @@ AC_MSG_NOTICE([         Configured on: $DATE])
 AC_MSG_NOTICE([         Configured by: $USER])
 AC_MSG_NOTICE([           Host system: $host_cpu-$host_vendor-$host_os])
 AC_MSG_NOTICE([     Uname information: $UNAME_INFO])
+AC_MSG_NOTICE([                CFLAGS: $CFLAGS])
+AC_MSG_NOTICE([               CPFLAGS: $CPPFLAGS])
+AC_MSG_NOTICE([                  LIBS: $LIBS])
+AC_MSG_NOTICE([               LDFLAGS: $LDFLAGS])
 AC_MSG_NOTICE([    Installation point: $prefix])
 AC_MSG_NOTICE([---------------------------------------------------------])
-
 
 

@@ -3,7 +3,7 @@ ACLOCAL_AMFLAGS = -I m4
 AM_LDFLAGS = @DEAD_STRIP@
 AM_LDFLAGS += -Wno-undef
 
-LIBS = ../libtldevel.a -lm
+#LIBS += ../libtldevel.a
 
 
 AM_CPPFLAGS = -I$(top_srcdir)/lib_tldevel
@@ -15,7 +15,9 @@ checkpoint_test \
 rbtree_test \
 logsum_test \
 hash_test \
-minhash_test
+minhash_test \
+alphabet_test \
+seqio_test
 
 TESTS = $(TESTLIST)
 
@@ -28,6 +30,15 @@ tldevel_test_LDADD = ../libtldevel.a
 rng_test_SOURCES = tlrng_test.c
 rng_test_CPPFLAGS = $(AM_CPPFLAGS)
 rng_test_LDADD = ../libtldevel.a
+
+alphabet_test_SOURCES = tlalphabet_test.c
+alphabet_test_CPPFLAGS = $(AM_CPPFLAGS)
+alphabet_test_LDADD = ../libtldevel.a
+
+seqio_test_SOURCES = tlseqio_test.c
+seqio_test_CPPFLAGS = $(AM_CPPFLAGS)
+seqio_test_LDADD = ../libtldevel.a
+
 
 checkpoint_test_SOURCES = tlcheckpoint_test.c
 checkpoint_test_CPPFLAGS = $(AM_CPPFLAGS)
