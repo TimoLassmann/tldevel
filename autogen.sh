@@ -59,6 +59,15 @@ automake --add-missing --copy --gnu $AM_OPTS
 autoconf $AC_OPTS
 
 
+aclocal -I m4 $AL_OPTS
+autoheader $AH_OPTS
+automake --add-missing --copy --gnu $AM_OPTS
+autoconf $AC_OPTS
+
+#autoreconf --force --install --verbose "$srcdir"
+
+
 echo
 echo "Now run '$srcdir/configure' and 'make' to compile."
 echo
+
