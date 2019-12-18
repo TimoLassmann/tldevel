@@ -141,12 +141,8 @@ int read_fasta_fastq_file(struct file_handler* fh, struct tl_seq_buffer** seq_bu
         RUN(reset_tl_seq_buffer(sb));
 
         /* reading  */
-
         RUN(read_sequences(fh,sb,num));
-        //if(fh->file_type == FILE_TYPE_FASTA){
-        //RUN(read_fasta(fh,sb,num));
-        //}
-        //LOG_MSG("num_seq:%d pos:%d left: %d",sb->num_seq, fh->pos, fh->bytes_read);
+
         *seq_buf = sb;
         return OK;
 ERROR:
@@ -174,6 +170,9 @@ int read_sequences(struct file_handler*fh, struct tl_seq_buffer* sb, int num)
                         }
                 }else{
                         //LOG_MSG("read new content");
+                        if (gzeof (fh->gz_f_ptr)){
+                                break;
+                        }
                         RUN(read_file_contents(fh));
                         if(!fh->bytes_read){
                                 break;
@@ -189,10 +188,6 @@ int read_sequences(struct file_handler*fh, struct tl_seq_buffer* sb, int num)
                                 break;
                         }
                 }
-                if (gzeof (fh->gz_f_ptr)){
-                        break;
-                }
-
         }
         max_len = -1;
         for(i = 0; i < sb->num_seq;i++){
