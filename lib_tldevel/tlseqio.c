@@ -8,10 +8,17 @@
 #define TLSEQIO_IMPORT
 #include "tlseqio.h"
 
+#define TLSEQIO_FASTA 1
+#define TLSEQIO_FASTQ 2
+#define TLSEQIO_GZIPPED 4
+
 #define TL_SEQ_MAX_NAME_LEN 128
 
-//#define TL_READ_BUFF_LEN 8388608
-#define TL_READ_BUFF_LEN 300
+#define TL_READ_BUFF_LEN 8388608
+//#define TL_READ_BUFF_LEN 300
+#define TL_OUT_LINE_LEN 70
+
+#define TL_DEFAULT_COMPRESSION '1'
 
 #define str(x)          # x
 #define xstr(x)         str(x)
@@ -23,7 +30,20 @@
 #define RS_UNDEFINED 0
 #define RS_NAME 1
 #define RS_SEQ 2
-#define RS_QUAL 3
+#define RS_SEQ_DONE 3
+#define RS_QUAL 4
+
+struct file_handler{
+        FILE* f_ptr;
+        gzFile gz_f_ptr;
+        uint8_t file_type;
+        char* read_buffer;
+        int bytes_read;
+        int pos;
+        int read_state;
+        int write_state;
+        int gz;
+};
 
 static int detect_fasta_fastq(const char* b, int len, int* type);
 
@@ -34,57 +54,61 @@ static int parse_buf_fastq(struct file_handler* fh, struct tl_seq_buffer* sb,int
 
 static int read_file_contents(struct file_handler* fh);
 
-static  int get_io_handler(struct file_handler** fh,const char* filename);
-static  void free_io_handler(struct file_handler* f);
+static int get_io_handler(struct file_handler** fh,const char* filename,int gz);
+static void free_io_handler(struct file_handler* f);
 
-static  int alloc_tl_seq_buffer(struct tl_seq_buffer** seq_buf, int size);
-static  int resize_tl_seq_buffer(struct tl_seq_buffer* sb);
-static  int reset_tl_seq_buffer(struct tl_seq_buffer* sb);
-
-
-
-static  int resize_tl_seq(struct tl_seq* s);
-
-
+static int alloc_tl_seq_buffer(struct tl_seq_buffer** seq_buf, int size);
+static int resize_tl_seq_buffer(struct tl_seq_buffer* sb);
+static int reset_tl_seq_buffer(struct tl_seq_buffer* sb);
 
 static int alloc_tl_seq(struct tl_seq** sequence);
+static int resize_tl_seq(struct tl_seq* s);
 static void free_tl_seq(struct tl_seq* sequence);
 
+static int write_fasta_to_buf(struct tl_seq* seq, char* buf, int* index,int* write_ok);
+static int write_fastq_to_buf(struct tl_seq* seq, char* buf, int* index,int* write_ok);
 
-
-int open_fasta_fastq_file(struct file_handler** fh,char* filename)
+int open_fasta_fastq_file(struct file_handler** fh,char* filename, int mode)
 {
         struct file_handler* f = NULL;
         int type = 0;
         int status;
-        ASSERT(my_file_exists(filename),"File: %s does not exists",filename);
-        RUN(get_io_handler(&f, filename));
 
-        RUN(read_file_contents(f));
 
-        /* detect file type  */
+        if(mode == TLSEQIO_READ){
+                ASSERT(my_file_exists(filename),"File: %s does not exists",filename);
+                RUN(get_io_handler(&f, filename, mode));
+                RUN(read_file_contents(f));
 
-        RUN(detect_fasta_fastq(f->read_buffer , f->bytes_read, &type));
+                /* detect file type  */
+                RUN(detect_fasta_fastq(f->read_buffer , f->bytes_read, &type));
 
-        status = gzrewind(f->f_ptr);
-        if(status){
-                ERROR_MSG("gzrewind failed");
+                status = gzrewind(f->gz_f_ptr);
+                if(status){
+                        ERROR_MSG("gzrewind failed");
+                }
+                switch (type) {
+                case FILE_TYPE_FASTA:
+                        LOG_MSG("Found fasta");
+                        break;
+                case FILE_TYPE_FASTQ:
+                        LOG_MSG("Found fastq");
+                        break;
+                case FILE_TYPE_UNDEFINED:
+                        ERROR_MSG("Could not determine type of file: %s",filename);
+                        break;
+
+                default:
+                        break;
+                }
+                f->file_type = type;
+        }else{
+
+                if(my_file_exists(filename)){
+                         WARNING_MSG("Will overwrite file: %s", filename);
+                }
+                RUN(get_io_handler(&f, filename, mode));
         }
-        switch (type) {
-        case FILE_TYPE_FASTA:
-                LOG_MSG("Found fasta");
-                break;
-        case FILE_TYPE_FASTQ:
-                LOG_MSG("Found fastq");
-                break;
-        case FILE_TYPE_UNDEFINED:
-                ERROR_MSG("Could not determine type of file: %s",filename);
-                break;
-
-        default:
-                break;
-        }
-        f->file_type = type;
         *fh = f;
         return OK;
 ERROR:
@@ -109,6 +133,11 @@ int read_fasta_fastq_file(struct file_handler* fh, struct tl_seq_buffer** seq_bu
                 }
         }
 
+        sb->is_fastq = 0;
+        if(fh->file_type == FILE_TYPE_FASTQ){
+                sb->is_fastq = 1;
+        }
+
         RUN(reset_tl_seq_buffer(sb));
 
         /* reading  */
@@ -117,7 +146,7 @@ int read_fasta_fastq_file(struct file_handler* fh, struct tl_seq_buffer** seq_bu
         //if(fh->file_type == FILE_TYPE_FASTA){
         //RUN(read_fasta(fh,sb,num));
         //}
-
+        //LOG_MSG("num_seq:%d pos:%d left: %d",sb->num_seq, fh->pos, fh->bytes_read);
         *seq_buf = sb;
         return OK;
 ERROR:
@@ -126,13 +155,9 @@ ERROR:
 
 int read_sequences(struct file_handler*fh, struct tl_seq_buffer* sb, int num)
 {
+        int i;
+        int max_len;
         while(1){
-                if (gzeof (fh->f_ptr)){
-                        if(fh->file_type == FILE_TYPE_FASTA){
-                                sb->num_seq++;
-                        }
-                        break;
-                }
 
                 if(fh->pos){
                         //LOG_MSG("Finishing buffer");
@@ -164,8 +189,18 @@ int read_sequences(struct file_handler*fh, struct tl_seq_buffer* sb, int num)
                                 break;
                         }
                 }
+                if (gzeof (fh->gz_f_ptr)){
+                        break;
+                }
 
         }
+        max_len = -1;
+        for(i = 0; i < sb->num_seq;i++){
+                if(sb->sequences[i]->len > max_len){
+                        max_len = sb->sequences[i]->len;
+                }
+        }
+        sb->max_len = max_len;
         return OK;
 ERROR:
         return FAIL;
@@ -248,6 +283,11 @@ int parse_buf_fasta(struct file_handler* fh, struct tl_seq_buffer* sb,int num)
         fh->read_state = state;
         fh->pos = 0;            /* am at end of buffer */
 
+        /* we reached the end of the buffer and of the file; the last sequence must be complete.  */
+        if (gzeof (fh->gz_f_ptr)){
+                sb->num_seq++;
+
+        }
         //LOG_MSG("END state: %d", fh->read_state);
         return OK;
 ERROR:
@@ -294,7 +334,7 @@ int parse_buf_fastq(struct file_handler* fh, struct tl_seq_buffer* sb,int num)
                         }
                         //fprintf(stdout, "NAME: %s\n",sb->sequences[sb->num_seq]->name);
                         state = RS_SEQ;
-                }else if(buf[i] == '+' && state == RS_QUAL){
+                }else if(buf[i] == '+' && state == RS_SEQ_DONE){
                         state = RS_QUAL;
                         while(1){
                                 if(buf[i] == '\n' || buf[i] == 0){
@@ -322,8 +362,16 @@ int parse_buf_fastq(struct file_handler* fh, struct tl_seq_buffer* sb,int num)
                                         i++;
                                 }
                                 sb->sequences[sb->num_seq]->len = len;
-                                state = RS_QUAL;
+                                state = RS_SEQ_DONE;
                         }else if(state == RS_QUAL){
+                                /*fprintf(stdout,"PRINT:a\n");
+                                for(len = 0; len < 200;len++){
+                                        if(i+len > buf_len){
+                                                break;
+                                        }
+                                        fprintf(stdout,"%c",buf[i+len]);
+                                }
+                                fprintf(stdout,"\n");*/
                                 len = 0;
                                 qual = sb->sequences[sb->num_seq]->qual;
                                 while(1){
@@ -340,7 +388,9 @@ int parse_buf_fastq(struct file_handler* fh, struct tl_seq_buffer* sb,int num)
                                         i++;
                                 }
                                 sb->sequences[sb->num_seq]->qual = qual;
-                                ASSERT(len == sb->sequences[sb->num_seq]->len,"seq and qual have different lengths: %d %d",len, sb->sequences[sb->num_seq]->len);
+
+                                ASSERT(len == sb->sequences[sb->num_seq]->len,"seq and qual have different lengths: %d %d buf: %d (%d)",len, sb->sequences[sb->num_seq]->len, i, buf_len);
+
                                 /* if I read everyting until here and seqlen == qual len I am done */
                                 sb->num_seq++;
                                 state = RS_NAME;
@@ -610,30 +660,32 @@ ERROR:
 }
 
 
-int get_io_handler(struct file_handler** fh,const char* filename)
+int get_io_handler(struct file_handler** fh,const char* filename,int mode)
 {
         struct file_handler* f_handle = NULL;
         char* ret = NULL;
-        gzFile f_ptr = NULL;
+        char file_mode[4];
+        gzFile local_gz_f_ptr = NULL;
 
 
-        ASSERT(my_file_exists(filename), "File: %s not found.", filename);
+        //ASSERT(my_file_exists(filename), "File: %s not found.", filename);
 
         /* This is a bit ugly - refine in future. */
         if(!*fh){
                 MMALLOC(f_handle, sizeof(struct file_handler));
         }
-
         f_handle->f_ptr = NULL;
+        f_handle->gz_f_ptr = NULL;
         f_handle->file_type = 0;
-        f_handle->seq_index = NULL;
         f_handle->read_buffer = NULL;
         f_handle->bytes_read = 0;
+        f_handle->pos = 0;
+        f_handle->read_state = RS_UNDEFINED;
+        f_handle->write_state = 0;
+        f_handle->gz= 0;
 
         MMALLOC(f_handle->read_buffer, sizeof(char)*  TL_READ_BUFF_LEN + TL_READ_BUFF_LEN);
 
-        f_handle->pos = 0;
-        f_handle->read_state = RS_UNDEFINED;
         ret = strstr(filename, "fasta");
         if(ret){
                 f_handle->file_type += TLSEQIO_FASTA;
@@ -644,12 +696,52 @@ int get_io_handler(struct file_handler** fh,const char* filename)
         }
         ret = strstr(filename, "gz");
         if(ret){
-                f_handle->file_type |= TLSEQIO_GZIPPED;
+                if(strlen(ret) == 2){
+                        LOG_MSG("Is gzipped");
+                        f_handle->file_type |= TLSEQIO_GZIPPED;
+                }
+        }
+        if(mode == TLSEQIO_WRITE){
+                if(f_handle->file_type & TLSEQIO_GZIPPED){
+                        WARNING_MSG("Opening an file for uncompressed write was requested but the file ends in .gz");
+                        WARNING_MSG("Will write compressed. Consider using the TLSEQIO_WRITE_GZIPPED!");
+                        file_mode[0] = 'w';
+                        file_mode[1] = 'b';
+                        file_mode[2] = TL_DEFAULT_COMPRESSION;
+                        file_mode[3] = 0;
+
+                        RUNP(local_gz_f_ptr = gzopen(filename, file_mode));
+
+                        f_handle->gz = 1;
+                }else{
+                        LOG_MSG("Opening file %s for writing",filename);
+                        file_mode[0] = 'w';
+                        file_mode[1] = 0;
+                        RUNP(f_handle->f_ptr = fopen(filename, file_mode));
+                        f_handle->gz = 0;
+                }
+        }
+        if(mode == TLSEQIO_WRITE_GZIPPED){
+                LOG_MSG("Opening file %s for writing",filename);
+                file_mode[0] = 'w';
+                file_mode[1] = 'b';
+                file_mode[2] = TL_DEFAULT_COMPRESSION;
+                file_mode[3] = 0;
+
+                RUNP(local_gz_f_ptr= gzopen(filename, file_mode));
+                f_handle->gz = 1;
+        }
+        if(mode == TLSEQIO_READ){
+                file_mode[0] = 'r';
+                file_mode[1] = 0;
+
+                //LOG_MSG("Opening %s for reading (%s)", filename,file_mode);
+                RUNP(local_gz_f_ptr = gzopen(filename, file_mode));
+                     //fprintf(stdout,"%p\n",(void*) local_gz_f_ptr);
+
         }
 
-        RUNP(f_ptr = gzopen(filename, "r"));
-
-        f_handle->f_ptr = f_ptr;
+        f_handle->gz_f_ptr = local_gz_f_ptr;
 
         *fh = f_handle;
         return OK;
@@ -660,8 +752,11 @@ ERROR:
 void free_io_handler(struct file_handler* f)
 {
         if(f){
+                if(f->gz_f_ptr){
+                        gzclose(f->gz_f_ptr);
+                }
                 if(f->f_ptr){
-                        gzclose(f->f_ptr);
+                        fclose(f->f_ptr);
                 }
                 if(f->read_buffer){
                         MFREE(f->read_buffer);
@@ -678,13 +773,13 @@ int echo_file(struct file_handler* f)
         buf = f->read_buffer;
         while (1) {
                 int bytes_read;
-                bytes_read = gzread ( f->f_ptr, buf,  TL_READ_BUFF_LEN - 1);
+                bytes_read = gzread ( f->gz_f_ptr, buf,  TL_READ_BUFF_LEN - 1);
                 buf[bytes_read] = '\0';
                 //printf ("%s", buf);
                 LOG_MSG("Read: %d", bytes_read);
                 if (bytes_read < TL_READ_BUFF_LEN - 1) {
                         LOG_MSG("Read: %d", bytes_read);
-                        if (gzeof (f->f_ptr )) {
+                        if (gzeof (f->gz_f_ptr )) {
                                 break;
                         }else{
                                 ERROR_MSG("Something went wrong");
@@ -711,7 +806,7 @@ int alloc_tl_seq_buffer(struct tl_seq_buffer** seq_buf, int size)
         sb->max_len = 0;
         sb->num_seq = 0;
         sb->L = 0;
-
+        sb->is_fastq = 0;
         sb->sequences = NULL;
 
         MMALLOC(sb->sequences, sizeof(struct tl_seq*) * sb->malloc_num);
@@ -827,24 +922,17 @@ void free_tl_seq(struct tl_seq* sequence)
 
 int read_file_contents(struct file_handler* fh)
 {
-
-        int i;
-
         char c;
         ASSERT(fh!=NULL, "No file handler");
-
-
-
-        fh->bytes_read = gzread(fh->f_ptr, fh->read_buffer, TL_READ_BUFF_LEN -1);
+        fh->bytes_read = gzread(fh->gz_f_ptr, fh->read_buffer, TL_READ_BUFF_LEN -1);
         fh->read_buffer[fh->bytes_read] = 0;
         fh->pos = 0;
-        fprintf(stdout,"%s\n\n", fh->read_buffer);
-
-        //i = fh->bytes_read-1;
+        //fprintf(stdout,"%s\n\n", fh->read_buffer);
+        /* Read more bytes  until we have a newline */
         if(fh->read_buffer[fh->bytes_read-1] != '\n'){
 
                 while(1){
-                        c = gzgetc(fh->f_ptr);
+                        c = gzgetc(fh->gz_f_ptr);
                         fh->read_buffer[fh->bytes_read] = c;
                         fh->bytes_read++;
                         if(c == '\n'){
@@ -857,7 +945,178 @@ int read_file_contents(struct file_handler* fh)
         }
         fh->read_buffer[fh->bytes_read] = 0;
 
-        fprintf(stdout,"%s", fh->read_buffer);
+        //fprintf(stdout,"%s", fh->read_buffer);
+        return OK;
+ERROR:
+        return FAIL;
+}
+
+
+int write_fasta_fastq(struct tl_seq_buffer* sb, struct file_handler* fh)
+{
+        char* write_buffer = NULL;
+        int wb_pos;
+        int i;
+        int write_ok;
+        /* function pointer to switch between fasta and fastq output */
+        int (*write_p)(struct tl_seq* seq, char* buf, int* index,int* write_ok) = NULL;
+
+        ASSERT(sb != NULL, "No sequence buffer");
+
+        wb_pos = 0;
+        MMALLOC(write_buffer, sizeof(char) * TL_READ_BUFF_LEN);
+
+        if(sb->is_fastq){
+                write_p = &write_fastq_to_buf;
+        }else{
+                write_p = &write_fasta_to_buf;
+        }
+
+        for(i = 0; i < sb->num_seq;i++){
+                RUN(write_p(sb->sequences[i],write_buffer, &wb_pos,&write_ok));
+                if(!write_ok){
+                        if(fh->gz){
+                                gzwrite(fh->gz_f_ptr, write_buffer, wb_pos);
+                        }else{
+                                fwrite(write_buffer, sizeof(char), wb_pos,fh->f_ptr);
+                        }
+                        wb_pos = 0;
+                        RUN(write_p(sb->sequences[i],write_buffer, &wb_pos,&write_ok));
+                        if(!write_ok){
+                                ERROR_MSG("Couldn't fit sequence into write buffer(!)");
+                        }
+                }
+        }
+        if(wb_pos){
+                if(fh->gz){
+                        gzwrite(fh->gz_f_ptr, write_buffer, wb_pos);
+                }else{
+                        fwrite(write_buffer, sizeof(char), wb_pos,fh->f_ptr);
+                }
+        }
+        MFREE(write_buffer);
+        return OK;
+ERROR:
+        return FAIL;
+}
+
+int write_fasta_to_buf(struct tl_seq* seq, char* buf, int* index,int* write_ok)
+{
+        int name_len;
+        int len;
+        int i;
+        int local_i;
+        int check;
+
+        local_i = *index;
+        /* length of name; plus one for '>' plus one for newline  */
+        name_len = strnlen(seq->name, TL_SEQ_MAX_NAME_LEN);
+        len = name_len +2;
+        /* length of sequence + one for newline + len / 70 for internal line breaks  */
+        len += seq->len + 1 + seq->len / TL_OUT_LINE_LEN;
+        /* plus one character for the null terminator  */
+        len += 1;
+        *write_ok = 1;
+        /* does this fit?  */
+        if(local_i + len >= TL_READ_BUFF_LEN){
+                *write_ok = 0;
+                return OK;
+        }
+
+        check = local_i;
+        buf[local_i] = '>';
+        local_i++;
+        for(i = 0;i < name_len;i++){
+                buf[local_i] = seq->name[i];
+                local_i++;
+        }
+        buf[local_i] = '\n';
+        local_i++;
+        /* write sequence */
+        for(i = 0;i < seq->len;i++){
+                if((i!=0) && (i % TL_OUT_LINE_LEN) == 0){
+                        buf[local_i] = '\n';
+                        local_i++;
+                }
+                buf[local_i] = seq->seq[i];
+                local_i++;
+        }
+        buf[local_i] = '\n';
+        local_i++;
+
+        buf[local_i] = 0;
+
+        check = (local_i+1) - check;
+        ASSERT(check == len, "Wrote %d but estimated %d", check,len);
+        *index = local_i;
+        return OK;
+ERROR:
+        return FAIL;
+}
+
+
+int write_fastq_to_buf(struct tl_seq* seq, char* buf, int* index,int* write_ok)
+{
+        int name_len;
+        int len;
+        int i;
+        int local_i;
+        int check;
+
+        local_i = *index;
+        /* length of name; plus one for '>' plus one for newline  */
+        name_len = strnlen(seq->name, TL_SEQ_MAX_NAME_LEN);
+        len = name_len +2;
+        /* length of sequence + one for newline*/
+        len += seq->len + 1 ;
+        /* add two for '+' and newline */
+        len += 2;
+        /* same again for the base quality  */
+        len += seq->len + 1 ;
+        /* plus one character for the null terminator  */
+        len += 1;
+        *write_ok = 1;
+        /* does this fit?  */
+        if(local_i + len >= TL_READ_BUFF_LEN){
+                *write_ok = 0;
+                return OK;
+        }
+
+        check = local_i;
+        buf[local_i] = '@';
+        local_i++;
+        for(i = 0;i < name_len;i++){
+                buf[local_i] = seq->name[i];
+                local_i++;
+        }
+        buf[local_i] = '\n';
+        local_i++;
+        /* write sequence */
+        for(i = 0;i < seq->len;i++){
+                buf[local_i] = seq->seq[i];
+                local_i++;
+        }
+        buf[local_i] = '\n';
+        local_i++;
+
+        buf[local_i] = '+';
+        local_i++;
+        buf[local_i] = '\n';
+        local_i++;
+
+        for(i = 0;i < seq->len;i++){
+                buf[local_i] = seq->qual[i];
+                local_i++;
+        }
+        buf[local_i] = '\n';
+        local_i++;
+
+        buf[local_i] = 0;
+
+        check = (local_i+1) - check;
+        ASSERT(check == len, "Wrote %d but estimated %d", check,len);
+
+        *index = local_i;
         return OK;
 ERROR:
         return FAIL;
