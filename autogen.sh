@@ -43,9 +43,27 @@ if ! exists autoconf; then
 fi
 
 
-
 test -n "$srcdir" || srcdir=`dirname "$0"`
-test -n "$srcdir" || srcdir=.
+
+srcdir=$srcdir"/lib_tldevel"
+
+echo "configuring $srcdir"
+
+cd "$srcdir"
+
+case `uname` in Darwin*) glibtoolize --force --copy ;;
+                 *) libtoolize --force  --copy ;;
+esac
+
+
+aclocal -I m4 $AL_OPTS
+autoheader $AH_OPTS
+automake --add-missing --copy --gnu $AM_OPTS
+autoconf $AC_OPTS
+
+
+
+srcdir=.
 
 cd "$srcdir"
 
@@ -59,12 +77,6 @@ automake --add-missing --copy --gnu $AM_OPTS
 autoconf $AC_OPTS
 
 
-aclocal -I m4 $AL_OPTS
-autoheader $AH_OPTS
-automake --add-missing --copy --gnu $AM_OPTS
-autoconf $AC_OPTS
-
-#autoreconf --force --install --verbose "$srcdir"
 
 
 echo
