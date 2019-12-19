@@ -10,7 +10,8 @@
 
 * Installation
 
-  To use this library, unpack it in the root directory of your C project and make sure the main =configure.ac= file knows about it: 
+  To use this library, unpack it in the root directory of your C project. Rename the unpacked =tldevel-XXX=  =tldevel= and make sure the main =configure.ac= file knows about it: 
+  
 
   #+BEGIN_SRC makefile
     AC_INIT([XXXX], [1.0])
@@ -21,7 +22,7 @@
 
     AC_CHECK_HEADERS([stdlib.h])
     AC_CONFIG_FILES([Makefile])
-    AC_CONFIG_SUBDIRS([lib_tldevel])
+    AC_CONFIG_SUBDIRS([tldevel])
     AC_OUTPUT
 
   #+END_SRC
@@ -29,7 +30,7 @@
   Add lib_tldevel to subdirs in =Makefile.am=: 
 
 #+BEGIN_SRC makefile
-  SUBDIRS = lib_tldevel	
+  SUBDIRS = tldevel	
 #+END_SRC
 
   The main =autogen.sh= script should also know about it: 
@@ -85,7 +86,7 @@
 
     test -n "$srcdir" || srcdir=`dirname "$0"`
 
-    src_tllibdir=$srcdir"/lib_tldevel"
+    src_tllibdir=$srcdir"/tldevel"
 
     echo "configuring $src_tllibdir"
 
