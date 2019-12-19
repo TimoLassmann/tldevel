@@ -1,0 +1,121 @@
+#+TITLE: libtldevel
+#+AUTHOR: Timo Lassmann
+#+PROPERTY: header-args :eval never-export
+#+PROPERTY:    header-args:sh  :tangle no
+
+* Introduction
+
+  Libtldevel is a library I use to develop C programs. It contains wrappers around memory allocation functions and modules to do various things. 
+  This is a library I use to develop C programs. 
+
+* Installation
+
+  To use this library, unpack it in the root directory of your C project and make sure the main =configure.ac= file knows about it: 
+
+  #+BEGIN_SRC makefile
+    AC_INIT([XXXX], [1.0])
+    AC_CONFIG_AUX_DIR([.])
+    AM_INIT_AUTOMAKE
+    AC_PROG_CC
+
+
+    AC_CHECK_HEADERS([stdlib.h])
+    AC_CONFIG_FILES([Makefile])
+    AC_CONFIG_SUBDIRS([lib_tldevel])
+    AC_OUTPUT
+
+  #+END_SRC
+
+  The main =autogen.sh= script should also know about it: 
+
+  #+BEGIN_SRC sh :noweb yes :tangle example_autogen.sh :shebang #!/usr/bin/env sh 
+    #!/usr/bin/env sh
+    exists()
+    {
+        command -v "$1" >/dev/null 2>&1
+    }
+
+    if ! exists libtoolize; then
+        if ! exists glibtoolize; then
+            echo 'libtool/glibtool not found!'
+            echo 'to install using homebrew:'
+            echo 'brew install libtool'
+            exit 1
+        fi
+    fi
+
+    if ! exists aclocal; then
+        echo 'aclocal not found!'
+        echo 'to install using homebrew:'
+        echo 'brew install automake'
+        exit 1
+    fi
+
+    if ! exists autoheader; then
+        echo 'autoheader not found!'
+        echo 'to install using homebrew:'
+        echo 'brew install automake'
+        exit 1
+    fi
+
+    if ! exists automake; then
+        echo 'automake not found!'
+        echo 'to install using homebrew:'
+        echo 'brew install automake'
+        exit 1
+    fi
+
+    if ! exists autoconf; then
+        echo 'autoconf not found!'
+        echo 'to install using homebrew:'
+        echo 'brew install automake'
+        exit 1
+    fi
+  #+END_SRC
+
+  Now run the automake toolchain on all directories that need to be configured including =lib_tldevel=. 
+
+  #+BEGIN_SRC sh :noweb yes :tangle example_autogen.sh
+
+    test -n "$srcdir" || srcdir=`dirname "$0"`
+
+    src_tllibdir=$srcdir"/lib_tldevel"
+
+    echo "configuring $src_tllibdir"
+
+    cd "$src_tllibdir"
+
+    case `uname` in Darwin*) glibtoolize --force --copy ;;
+                     ,*) libtoolize --force  --copy ;;
+    esac
+
+
+    aclocal -I m4 $AL_OPTS
+    autoheader $AH_OPTS
+    automake --add-missing --copy --gnu $AM_OPTS
+    autoconf $AC_OPTS
+
+
+  #+END_SRC
+  and now main directory: 
+  #+BEGIN_SRC sh :noweb yes :tangle example_autogen.sh
+
+    cd ".."
+
+    cd "$srcdir"
+
+    case `uname` in Darwin*) glibtoolize --force --copy ;;
+                     ,*) libtoolize --force  --copy ;;
+    esac
+
+    aclocal -I m4 $AL_OPTS
+    autoheader $AH_OPTS
+    automake --add-missing --copy --gnu $AM_OPTS
+    autoconf $AC_OPTS
+  #+END_SRC
+
+* Notes 
+
+  At some point I should add wrappers and/or test scripts for GNU [[https://adtinfo.org/][=libavl=]].
+
+  
