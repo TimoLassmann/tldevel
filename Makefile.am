@@ -3,7 +3,7 @@ SUBDIRS = dev
 
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST= autogen.sh version.sh VERSION
+EXTRA_DIST= README.org autogen.sh version.sh VERSION
 
 AM_LDFLAGS = @DEAD_STRIP@
 AM_LDFLAGS += -Wno-undef
