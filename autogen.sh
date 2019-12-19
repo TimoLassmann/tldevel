@@ -45,11 +45,11 @@ fi
 
 test -n "$srcdir" || srcdir=`dirname "$0"`
 
-srcdir=$srcdir"/lib_tldevel"
+src_tllibdir=$srcdir"/lib_tldevel"
 
-echo "configuring $srcdir"
+echo "configuring $src_tllibdir"
 
-cd "$srcdir"
+cd "$src_tllibdir"
 
 case `uname` in Darwin*) glibtoolize --force --copy ;;
                  *) libtoolize --force  --copy ;;
@@ -61,9 +61,7 @@ autoheader $AH_OPTS
 automake --add-missing --copy --gnu $AM_OPTS
 autoconf $AC_OPTS
 
-
-
-srcdir=.
+cd ".."
 
 cd "$srcdir"
 
