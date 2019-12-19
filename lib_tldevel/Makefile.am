@@ -3,6 +3,8 @@ SUBDIRS = dev
 
 ACLOCAL_AMFLAGS = -I m4
 
+EXTRA_DIST= version.sh VERSION
+
 AM_LDFLAGS = @DEAD_STRIP@
 AM_LDFLAGS += -Wno-undef
 
