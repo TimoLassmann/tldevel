@@ -26,6 +26,12 @@
 
   #+END_SRC
 
+  Add lib_tldevel to subdirs in =Makefile.am=: 
+
+#+BEGIN_SRC makefile
+  SUBDIRS = lib_tldevel	
+#+END_SRC
+
   The main =autogen.sh= script should also know about it: 
 
   #+BEGIN_SRC sh :noweb yes :tangle example_autogen.sh :shebang #!/usr/bin/env sh 
