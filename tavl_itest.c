@@ -3,6 +3,8 @@
 #include "tldevel.h"
 #include "tavl.h"
 
+#include "tlrng.h"
+
 /* I want to test:
    1) how to provide my own malloc wrapper; OK
    2) how to work with structs as data items; OK
@@ -147,7 +149,8 @@ int main (int argc,char * argv[])
         struct test_data* data = NULL;
         int i;
         double r = 0;
-        unsigned seed = time(0);
+        //struct rng_state*rng_state;
+        //unsigned seed = time(0);
 
 
         fprintf(stdout,"Create table\n");
@@ -160,7 +163,7 @@ int main (int argc,char * argv[])
         fprintf(stdout,"MAX:height%d\n", TAVL_MAX_HEIGHT);
         for(i = 0; i < 5;i++){
                 fprintf(stdout,"ITER:%d\n",i);
-                r = random_float_zero_to_x_thread(1.0, &seed);
+                r = i+5;  //random_float_zero_to_x_thread(1.0, &seed);
                 fprintf(stdout,"%f\n",r);
                 data= NULL;
                 MMALLOC(data,sizeof(struct test_data));
@@ -234,3 +237,4 @@ ERROR:
         return EXIT_FAILURE;
 
 }
+a

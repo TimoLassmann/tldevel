@@ -6,7 +6,8 @@ AM_LDFLAGS += -Wno-undef
 #LIBS += ../libtldevel.a
 
 
-AM_CPPFLAGS = -I$(top_srcdir)/lib_tldevel
+
+AM_CPPFLAGS = -I$(top_srcdir)/ -I${top_builddir}
 
 TESTLIST = \
 tldevel_test \
