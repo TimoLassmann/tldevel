@@ -4,7 +4,7 @@ AM_LDFLAGS = @DEAD_STRIP@
 AM_LDFLAGS += -Wno-undef
 
 #LIBS += ../libtldevel.a
-
+@VALGRIND_CHECK_RULES@
 
 
 AM_CPPFLAGS = -I$(top_srcdir)/ -I${top_builddir}

@@ -16,6 +16,7 @@ int main(int argc, char *argv[])
                 fprintf(stdout,"%f\t%d\n", tl_random_double(rng_second), tl_random_int(rng_second,10));
         }
         free_rng(rng);
+        free_rng(rng_second);
         return EXIT_SUCCESS;
 ERROR:
         return EXIT_FAILURE;
