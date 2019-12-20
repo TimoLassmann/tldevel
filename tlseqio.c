@@ -204,7 +204,7 @@ ERROR:
 int parse_buf_fasta(struct file_handler* fh, struct tl_seq_buffer* sb,int num)
 {
         char* buf = NULL;
-        uint8_t* seq = NULL;
+        char* seq = NULL;
         int state;
         int pos;
         int len;
@@ -292,7 +292,7 @@ ERROR:
 int parse_buf_fastq(struct file_handler* fh, struct tl_seq_buffer* sb,int num)
 {
         char* buf = NULL;
-        uint8_t* seq = NULL;
+        char* seq = NULL;
         char* qual;
         int state;
         int pos;
@@ -871,7 +871,7 @@ int alloc_tl_seq(struct tl_seq** sequence)
         s->seq = NULL;
         s->qual = NULL;
         s->name = NULL;
-        MMALLOC(s->seq, sizeof(uint8_t)* s->malloc_len);
+        MMALLOC(s->seq, sizeof(char)* s->malloc_len);
         MMALLOC(s->qual, sizeof(char) * s->malloc_len);
         MMALLOC(s->name, sizeof(char) * TL_SEQ_MAX_NAME_LEN);
 
@@ -888,7 +888,7 @@ int resize_tl_seq(struct tl_seq* s)
         ASSERT(s != NULL, "No sequence");
         s->malloc_len = s->malloc_len + s->malloc_len / 2;
         //LOG_MSG("New len: %d", s->malloc_len);
-        MREALLOC(s->seq, sizeof(uint8_t)* s->malloc_len);
+        MREALLOC(s->seq, sizeof(char)* s->malloc_len);
         MREALLOC(s->qual, sizeof(char) * s->malloc_len);
         return OK;
 ERROR:

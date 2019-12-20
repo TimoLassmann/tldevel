@@ -25,6 +25,12 @@ typedef struct {
 } mem_i;
 
 
+const char* tldevel_version(void)
+{
+        return TLDEVEL_VERSION;
+}
+
+
 /* g memory stuff */
 
 int get_dim1(void* ptr,int* d)

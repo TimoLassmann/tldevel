@@ -10,7 +10,7 @@
 #endif
 
 
-typedef struct rng_state rngstate;
+typedef struct rng_state rng_state;
 
 EXTERN struct rng_state* init_rng(uint64_t seed);
 EXTERN struct rng_state* init_rng_from_rng(struct rng_state* rng);

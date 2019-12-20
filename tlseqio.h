@@ -23,7 +23,7 @@
 typedef struct file_handler file_handler;
 
 struct tl_seq{
-        uint8_t* seq;
+        char* seq;
         char* name;
         char* qual;
         int malloc_len;

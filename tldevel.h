@@ -15,6 +15,8 @@
 #define EXTERN extern
 #endif
 
+#define TLDEVEL_VERSION PACKAGE_VERSION
+
 #define OK              0
 #define FAIL            1
 

@@ -1,6 +1,10 @@
 #ifndef TLALPHABET_H
 #define TLALPHABET_H
 
+
+#include "tlrng.h"
+
+
 #ifdef TLALPHABET_IMPORT
 #define EXTERN
 #else
@@ -9,19 +13,21 @@
 
 #define TLALPHABET_DEFAULT_PROTEIN 1
 #define TLALPHABET_DEFAULT_DNA 2
-
 #define TLALPHABET_REDUCED_PROTEIN 3
+
+#define TLALPHABET_NOAMBIGIOUS_PROTEIN 4
+#define TLALPHABET_NOAMBIGUOUS_DNA 5
+
 
 #include <stdint.h>
 
-struct alphabet{
-        int8_t to_internal[128];
-        int8_t to_external[32];
-        uint8_t type;
-        uint8_t L;
-};
+typedef struct alphabet alphabet;
 
-EXTERN int create_alphabet(struct alphabet** alphabet, int type);
+EXTERN int create_alphabet(struct alphabet** alphabet, struct rng_state* rng,int type);
+EXTERN int convert_to_internal(struct alphabet* a, uint8_t* seq, int len);
+//EXTERN int convert_to_external(struct alphabet* a, uint8_t* seq, int len);
+
+EXTERN void free_alphabet(struct alphabet* a);
 
 #undef TLALPHABET_IMPORT
 #undef EXTERN

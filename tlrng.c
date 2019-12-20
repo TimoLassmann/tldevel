@@ -58,8 +58,6 @@ int tl_random_int(struct rng_state* rng,int a)
 }
 
 
-
-
 struct rng_state* init_rng(uint64_t seed)
 {
         struct rng_state* s = NULL;

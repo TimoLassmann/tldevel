@@ -1,22 +1,49 @@
 #include "tldevel.h"
 
+
+
+
 #define TLALPHABET_IMPORT
 #include "tlalphabet.h"
 
+
+
+struct alphabet{
+        int8_t to_internal[128];
+        int8_t to_external[32];
+        struct rng_state* rng_state;
+        uint8_t type;
+        uint8_t L;
+        int8_t r_type;
+        uint8_t r_options;
+};
+
+
 static int create_default_protein(struct alphabet* a);
+static int create_nonambiguous_protein(struct alphabet* a);
 static int create_default_DNA(struct alphabet* a);
+static int create_nonambiguous_DNA(struct alphabet* a);
 static int create_reduced_protein(struct alphabet* a);
 
 static int clean_and_set_to_extern(struct alphabet* a);
 static int merge_codes(struct alphabet*a,const int X, const int Y);
 
-
-int create_alphabet(struct alphabet** alphabet, int type)
+int create_alphabet(struct alphabet** alphabet, struct rng_state* rng,int type)
 {
         struct alphabet* a = NULL;
         int i;
+
+
         MMALLOC(a, sizeof(struct alphabet));
 
+        a->r_type = -1;
+        a->r_options = 0;
+        a->rng_state = NULL;
+        if(rng != NULL){
+                RUNP(a->rng_state = init_rng_from_rng(rng));
+        }else{
+                RUNP(a->rng_state = init_rng(0));
+        }
         for(i = 0; i < 128;i++){
                 a->to_internal[i] = -1;
         }
@@ -28,15 +55,23 @@ int create_alphabet(struct alphabet** alphabet, int type)
 
         switch (type) {
         case TLALPHABET_DEFAULT_PROTEIN : {
-                create_default_protein(a);
+                RUN(create_default_protein(a));
                 break;
         }
         case TLALPHABET_DEFAULT_DNA : {
-                create_default_DNA(a);
+                RUN(create_default_DNA(a));
                 break;
         }
         case TLALPHABET_REDUCED_PROTEIN : {
-                create_reduced_protein(a);
+                RUN(create_reduced_protein(a));
+                break;
+        }
+        case TLALPHABET_NOAMBIGIOUS_PROTEIN:{
+                RUN(create_nonambiguous_protein(a));
+                break;
+        }
+        case TLALPHABET_NOAMBIGUOUS_DNA:{
+                RUN(create_nonambiguous_DNA(a));
                 break;
         }
         default:
@@ -53,6 +88,42 @@ ERROR:
         }
         return FAIL;
 }
+
+void free_alphabet(struct alphabet* a)
+{
+        if(a){
+                free_rng(a->rng_state);
+                MFREE(a);
+        }
+}
+
+int convert_to_internal(struct alphabet* a, uint8_t* seq, int len)
+{
+        int8_t* t = NULL;
+        int i;
+        t = a->to_internal;
+
+        for(i = 0;i < len;i++){
+                seq[i] = t[seq[i]];
+                if(seq[i] == a->r_type){
+                        seq[i] = tl_random_int(a->rng_state, a->r_options);
+                }
+        }
+        return OK;
+}
+
+int convert_to_external(struct alphabet* a, uint8_t* seq, int len)
+{
+        int8_t* t = NULL;
+        int i;
+        t = a->to_external;
+
+        for(i = 0;i < len;i++){
+                seq[i] = t[seq[i]];
+        }
+        return OK;
+}
+
 
 int create_default_protein(struct alphabet* a)
 {
@@ -87,11 +158,47 @@ int create_default_protein(struct alphabet* a)
         return OK;
 }
 
+int create_nonambiguous_protein(struct alphabet* a)
+{
+        char aacode[20] = "ACDEFGHIKLMNPQRSTVWY";
+
+        int code;
+        int i;
+        code = 0;
+        for(i = 0; i < 20;i++){
+                //fprintf(stdout,"%c %d CODE: %d\n", aacode[i], (int) aacode[i], code);
+                a->to_internal[(int) aacode[i]] = code;
+
+                code++;
+        }
+        /* ambiguity codes  */
+        /* BZX  */
+
+        a->to_internal[(int) 'B'] = code;
+
+        a->to_internal[(int) 'Z'] = code;
+        a->to_internal[(int) 'X'] = code;
+
+        /* Some protein sequences contain 'U' - a non-IUPAC code
+           I will treat these as an ambiguous aa
+           e.g:
+           >Q74EN2_GEOSL/108-206
+           TRELEALVAKGTEEGGYLLIDSRPAGKYNEAHIPTAVSIPFAELEKNPALLTASKDRLLVFYCGGVTUVLSPKSAGLAKKSGYEKVRVYLDGEPEWKKA
+
+        */
+        a->to_internal[(int) 'U'] = code;
+        a->r_type = code;
+        a->r_options = 20;
+        code++;
+        return OK;
+}
+
+
 int create_default_DNA(struct alphabet* a)
 {
 
-        char dnacode[16] = "ACGTUNRYSWKMBDHV";
 
+        char dnacode[16] = "ACGTUNRYSWKMBDHV";
         int code;
         int i;
         code = 0;
@@ -103,6 +210,7 @@ int create_default_DNA(struct alphabet* a)
         }
 
         merge_codes(a,'U','T');
+
 
         /* R.................A or G */
         /* Y.................C or T */
@@ -128,6 +236,40 @@ int create_default_DNA(struct alphabet* a)
         return OK;
 }
 
+int create_nonambiguous_DNA(struct alphabet* a)
+{
+
+        char dnacode[5] = "ACGTU";
+
+        int code;
+        int i;
+        code = 0;
+        for(i = 0; i < 5;i++){
+                //fprintf(stdout,"%c %d CODE: %d\n", aacode[i], (int) aacode[i], code);
+                a->to_internal[(int) dnacode[i]] = code;
+
+                code++;
+        }
+
+        merge_codes(a,'U','T');
+
+        a->to_internal[(int) 'N'] = code;
+        a->to_internal[(int) 'R'] = code;
+        a->to_internal[(int) 'Y'] = code;
+        a->to_internal[(int) 'S'] = code;
+        a->to_internal[(int) 'W'] = code;
+        a->to_internal[(int) 'K'] = code;
+        a->to_internal[(int) 'M'] = code;
+        a->to_internal[(int) 'B'] = code;
+        a->to_internal[(int) 'D'] = code;
+        a->to_internal[(int) 'H'] = code;
+        a->to_internal[(int) 'V'] = code;
+
+        a->r_type = code;
+        a->r_options = 4;
+        code++;
+        return OK;
+}
 
 int create_reduced_protein(struct alphabet* a)
 {
@@ -218,6 +360,7 @@ int clean_and_set_to_extern(struct alphabet* a)
                         code++;
                 }
         }
+        a->r_type = trans[a->r_type];
         a->L = code;
         for(i = 64; i < 96;i++){
                 if(a->to_internal[i] != -1){
@@ -233,5 +376,6 @@ int clean_and_set_to_extern(struct alphabet* a)
                         a->to_external[a->to_internal[i]] = i;
                 }
         }
+
         return OK;
 }
