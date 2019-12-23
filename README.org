@@ -28,8 +28,12 @@
   Add lib_tldevel to subdirs in main =Makefile.am= and add the library where it's needed.
 
 #+BEGIN_SRC makefile
-    SUBDIRS = $(TLDEVELDIR)
-    LIBS = $(TLDEVEL_LIB)	
+  SUBDIRS = $(TLDEVELDIR)
+
+  AM_CPPFLAGS = -I$(top_srcdir)/$(TLDEVELDIR)
+
+  LIBS =  $(top_builddir)/$(TLDEVEL_LIB)
+
 #+END_SRC
 
   The main =autogen.sh= script should also know about it: 

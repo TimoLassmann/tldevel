@@ -92,11 +92,9 @@ esac
 case $ax_cv_tldevel_which in
 source)
   ax_cv_tldevel=yes
-  CPPFLAGS="$CPPFLAGS -I${TLDEVELDIR}"
-  LDFLAGS="$LDFLAGS -L${TLDEVELDIR}"
-  #TLDEVEL_CPPFLAGS="-I$TLDEVELDIR"
-  #TLDEVEL_LDFLAGS="-L$TLDEVELDIR"
-  TLDEVEL_LIB="$TLDEVELDIR/libtldevel.la"
+  TLDEVEL_CPPFLAGS="-I./${srcdir}/$TLDEVELDIR"
+  TLDEVEL_LDFLAGS="-L./${srcdir}/$TLDEVELDIR"
+  TLDEVEL_LIB="../${srcdir}/$TLDEVELDIR/libtldevel.la"
   if test "x$enable_configure_tldevel" = "xyes"; then
     # We can't use a literal, because $HTSDIR is user-provided and variable
     AC_CONFIG_SUBDIRS($TLDEVELDIR)
