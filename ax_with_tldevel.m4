@@ -50,7 +50,7 @@ yes|search)
     *) srcp=$srcdir/ ;;
   esac
   found=
-  for dir in ${srcp}tldevel* -- ${srcp}tldevel -- ${srcp}../tldevel -- ${srcp}../tldevel*
+  for dir in ${srcp}tldevel* -- ${srcp}tldevel
   do
     if test "$dir" = "--"; then
       test -n "$found" && break
@@ -92,11 +92,18 @@ esac
 case $ax_cv_tldevel_which in
 source)
   ax_cv_tldevel=yes
-  TLDEVEL_CPPFLAGS="-I./${srcdir}/$TLDEVELDIR"
-  TLDEVEL_LDFLAGS="-L./${srcdir}/$TLDEVELDIR"
-  TLDEVEL_LIB="../${srcdir}/$TLDEVELDIR/libtldevel.la"
+#CPPFLAGS="$CPPFLAGS -I${TLDEVELDIR}"
+  #LDFLAGS="$LDFLAGS -L${TLDEVELDIR}"
+  TLDEVEL_CPPFLAGS='-I$(top_srcdir)'
+  TLDEVEL_CPPFLAGS+="/$TLDEVELDIR"
+  TLDEVEL_LDFLAGS='-L${top_srcdir}'
+  TLDEVEL_LDFLAGS+="/$TLDEVELDIR"
+  TLDEVEL_LIB='${top_srcdir}'
+  TLDEVEL_LIB+="/$TLDEVELDIR/libtldevel.la"
+  #TLDEVEL_LIB="../${srcdir}/$TLDEVELDIR/libtldevel.la"
   if test "x$enable_configure_tldevel" = "xyes"; then
     # We can't use a literal, because $HTSDIR is user-provided and variable
+    #ac_configure_args="${ac_configure_args} "
     AC_CONFIG_SUBDIRS($TLDEVELDIR)
   fi
   ;;
@@ -131,7 +138,6 @@ esac
 AC_SUBST([TLDEVELDIR])
 AC_SUBST([TLDEVEL_CPPFLAGS])
 AC_SUBST([TLDEVEL_LDFLAGS])
-
 AC_SUBST([TLDEVEL_LIB])
 
 
