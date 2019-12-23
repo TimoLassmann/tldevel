@@ -10,27 +10,26 @@
 
 * Installation
 
-  To use this library, unpack it in the root directory of your C project. Rename the unpacked =tldevel-XXX=  =tldevel= and make sure the main =configure.ac= file knows about it: 
+  To use this library, unpack it in the root directory of your C project. Rename the unpacked =tldevel-XXX=  =tldevel= and make add the macro "ax_with_tldevel.m4" to a =m4= directory in your project. In =configure.ac=:
   
 
   #+BEGIN_SRC makefile
-    AC_INIT([XXXX], [1.0])
-    AC_CONFIG_AUX_DIR([.])
     AM_INIT_AUTOMAKE
-    AC_PROG_CC
 
+    LT_INIT
+    AC_CONFIG_MACRO_DIRS([m4])
+    m4_include([m4/ax_with_tldevel.m4])
 
-    AC_CHECK_HEADERS([stdlib.h])
-    AC_CONFIG_FILES([Makefile])
-    AC_CONFIG_SUBDIRS([tldevel])
-    AC_OUTPUT
+    AX_WITH_TLDEVEL
 
   #+END_SRC
-
-  Add lib_tldevel to subdirs in =Makefile.am=: 
+  
+  
+  Add lib_tldevel to subdirs in main =Makefile.am= and add the library where it's needed.
 
 #+BEGIN_SRC makefile
-  SUBDIRS = tldevel	
+    SUBDIRS = $(TLDEVELDIR)
+    LIBS = $(TLDEVEL_LIB)	
 #+END_SRC
 
   The main =autogen.sh= script should also know about it: 
@@ -80,34 +79,11 @@
     fi
   #+END_SRC
 
-  Now run the automake toolchain on all directories that need to be configured including =lib_tldevel=. 
+  This is the main block. 
 
   #+BEGIN_SRC sh :noweb yes :tangle example_autogen.sh
 
     test -n "$srcdir" || srcdir=`dirname "$0"`
-
-    src_tllibdir=$srcdir"/tldevel"
-
-    echo "configuring $src_tllibdir"
-
-    cd "$src_tllibdir"
-
-    case `uname` in Darwin*) glibtoolize --force --copy ;;
-                     ,*) libtoolize --force  --copy ;;
-    esac
-
-
-    aclocal -I m4 $AL_OPTS
-    autoheader $AH_OPTS
-    automake --add-missing --copy --gnu $AM_OPTS
-    autoconf $AC_OPTS
-
-
-  #+END_SRC
-  and now main directory: 
-  #+BEGIN_SRC sh :noweb yes :tangle example_autogen.sh
-
-    cd ".."
 
     cd "$srcdir"
 
