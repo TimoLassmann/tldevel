@@ -25,16 +25,30 @@
   #+END_SRC
   
   
-  Add lib_tldevel to subdirs in main =Makefile.am= and add the library where it's needed.
+  Add lib_tldevel to subdirs in main top level =Makefile.am=: 
 
-#+BEGIN_SRC makefile
-  SUBDIRS = $(TLDEVELDIR)
+  #+BEGIN_SRC makefile
+    SUBDIRS = $(TLDEVELDIR)
 
-  AM_CPPFLAGS = -I$(top_srcdir)/$(TLDEVELDIR)
 
-  LIBS =  $(top_builddir)/$(TLDEVEL_LIB)
+  #+END_SRC
 
-#+END_SRC
+  And let add the library to project =Makefile.am='s that need it
+
+  #+BEGIN_SRC makefile
+    AM_CFLAGS =  @TLDEVEL_CPPFLAGS@
+    LIBS = @TLDEVEL_LIB@ 
+
+  #+END_SRC
+
+  To make this work nicely with my emacs config let company know where tldevel is installed 
+
+  #+BEGIN_SRC emacs-lisp
+    ((c-mode (eval setq company-clang-arguments (append 
+                                                 company-clang-arguments
+                                                 '("-I../tldevel-1.0")))))
+  #+END_SRC
+
 
   The main =autogen.sh= script should also know about it: 
 
