@@ -8,22 +8,40 @@ EXTRA_DIST= README.org autogen.sh version.sh VERSION
 AM_LDFLAGS = @DEAD_STRIP@
 AM_LDFLAGS += -Wno-undef
 
+lib_LTLIBRARIES = libtldevel.la
+#noinst_LIBRARIES = libtldevel.a
 
-noinst_LIBRARIES = libtldevel.a
-
-TLHASHTABLESOURCES = tlhashtable.h tlhashtable.c
-TLMINHASHSOURCES = tlminhash.h tlminhash.c
-TLDEVELSOURCES = tldevel.h  tldevel.c
-TLRNGSOURCES = tlrng.c tlrng.h
-TLLOGSUMSOURCES = tllogsum.h tllogsum.c
-TLBITVECSOURCES = tlbitvec.h tlbitvec.c
+TLHASHTABLESOURCES = tlhashtable.c
+TLMINHASHSOURCES = tlminhash.c
+TLDEVELSOURCES = tldevel.c
+TLRNGSOURCES = tlrng.c
+TLLOGSUMSOURCES = tllogsum.c
+TLBITVECSOURCES = tlbitvec.c
 TLRBTREESOURCES  = tlrbtree.h tlrbtree.c
-TLCHECKPOINTSOURCES = tlcheckpoint.h tlcheckpoint.c
-TLMISCSOURCES = tlmisc.h tlmisc.c
-TLALPHABETSOURCES = tlalphabet.h  tlalphabet.c
-TLSEQIOSOURCES = tlseqio.h tlseqio.c
+TLCHECKPOINTSOURCES = tlcheckpoint.c
+TLMISCSOURCES = tlmisc.c
+TLALPHABETSOURCES = tlalphabet.c
+TLSEQIOSOURCES = tlseqio.c
 
-libtldevel_a_SOURCES = \
+#lib_LTLIBRARIES = libgettext.la
+#libgettext_la_SOURCES = gettext.c gettext.h …
+
+include_HEADERS = \
+tlhashtable.h \
+tlminhash.h \
+tldevel.h \
+tlrng.h \
+tllogsum.h \
+tlbitvec.h \
+tlrbtree.h \
+tlcheckpoint.h \
+tlmisc.h \
+tlalphabet.h \
+tlseqio.h 
+
+
+
+libtldevel_la_SOURCES = \
 $(TLHASHTABLESOURCES) \
 $(TLMINHASHSOURCES) \
 $(TLDEVELSOURCES) \
@@ -36,5 +54,5 @@ $(TLMISCSOURCES) \
 $(TLALPHABETSOURCES)
 # !ENABLE_ZLIB actually works!
 if ENABLE_ZLIB
-libtldevel_a_SOURCES += $(TLSEQIOSOURCES)
+libtldevel_la_SOURCES += $(TLSEQIOSOURCES)
 endif

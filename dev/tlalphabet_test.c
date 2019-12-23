@@ -1,27 +1,29 @@
 
 
+#include <stdint.h>
+#include <string.h>
+
+
 #include "tldevel.h"
 
 #include "tlalphabet.h"
 
-#include <stdint.h>
-#include <string.h>
 
 int print_seq(uint8_t* seq, int len);
 
 int main(int argc, char *argv[])
 {
         struct alphabet* a = NULL;
-        int len;
+        int len = 16;
         int i;
         char dna[] = "ACGTACGTACGTNNNN";
 
         uint8_t* dna_seq = NULL;
-        len = strlen(dna);
+
         MMALLOC(dna_seq,sizeof(uint8_t) * len);
 
         RUN(create_alphabet(&a,NULL,TLALPHABET_DEFAULT_DNA));
-        for(i = 0; i < strlen(dna);i++){
+        for(i = 0; i < len;i++){
                 dna_seq[i] = (uint8_t) dna[i];
         }
 
@@ -35,7 +37,7 @@ int main(int argc, char *argv[])
 
         RUN(create_alphabet(&a,NULL,TLALPHABET_NOAMBIGUOUS_DNA ));
 
-        for(i = 0; i < strlen(dna);i++){
+        for(i = 0; i < len;i++){
                 dna_seq[i] = (uint8_t) dna[i];
         }
 
@@ -45,27 +47,6 @@ int main(int argc, char *argv[])
         //RUN(convert_to_external(a, dna_seq,len));
         print_seq(dna_seq, len);
 
-        free_alphabet(a);
-        exit(0);
-//convert_to_internal(dna_seq);
-        //convert_to_
-
-
-        RUN(create_alphabet(&a,NULL,TLALPHABET_DEFAULT_PROTEIN));
-
-        //print_alphabet(a);
-        free_alphabet(a);
-
-        a = NULL;
-        RUN(create_alphabet(&a,NULL,TLALPHABET_REDUCED_PROTEIN));
-
-        //print_alphabet(a);
-        free_alphabet(a);
-
-
-        RUN(create_alphabet(&a,NULL,TLALPHABET_DEFAULT_DNA));
-
-        //print_alphabet(a);
         free_alphabet(a);
         MFREE(dna_seq);
         return EXIT_SUCCESS;
@@ -79,7 +60,7 @@ int print_seq(uint8_t* seq, int len)
         int i;
 
         for(i = 0; i < len;i++){
-                fprintf(stdout,"%d", seq[i]);
+                fprintf(stdout,"%d %d\n",i, seq[i]);
         }
         fprintf(stdout,"\n");
         return OK;

@@ -2,7 +2,7 @@
 #define TLALPHABET_H
 
 
-#include "tlrng.h"
+
 
 
 #ifdef TLALPHABET_IMPORT
@@ -22,6 +22,8 @@
 #include <stdint.h>
 
 typedef struct alphabet alphabet;
+
+typedef struct rng_state rng_state;
 
 EXTERN int create_alphabet(struct alphabet** alphabet, struct rng_state* rng,int type);
 EXTERN int convert_to_internal(struct alphabet* a, uint8_t* seq, int len);

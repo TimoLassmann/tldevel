@@ -287,6 +287,8 @@ EXTERN void error(const char *location, const char *format, ...);
 EXTERN void warning(const char *location, const char *format, ...);
 EXTERN void log_message( const char *format, ...);
 
+EXTERN const char* tldevel_version(void);
+
 #undef TLDEVEL_IMPORT
 #undef EXTERN
 #endif

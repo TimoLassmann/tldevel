@@ -1,22 +1,21 @@
 #include "tldevel.h"
 
-
-
+#include "tlrng.h"
 
 #define TLALPHABET_IMPORT
 #include "tlalphabet.h"
 
 
-
 struct alphabet{
-        int8_t to_internal[128];
-        int8_t to_external[32];
+        uint8_t to_internal[256];
+        /* int8_t to_external[32]; */
         struct rng_state* rng_state;
         uint8_t type;
         uint8_t L;
-        int8_t r_type;
+        uint8_t r_type;
         uint8_t r_options;
 };
+
 
 
 static int create_default_protein(struct alphabet* a);
@@ -35,8 +34,9 @@ int create_alphabet(struct alphabet** alphabet, struct rng_state* rng,int type)
 
 
         MMALLOC(a, sizeof(struct alphabet));
+        a->L = 0;
 
-        a->r_type = -1;
+        a->r_type = UINT8_MAX;
         a->r_options = 0;
         a->rng_state = NULL;
         if(rng != NULL){
@@ -44,13 +44,14 @@ int create_alphabet(struct alphabet** alphabet, struct rng_state* rng,int type)
         }else{
                 RUNP(a->rng_state = init_rng(0));
         }
-        for(i = 0; i < 128;i++){
-                a->to_internal[i] = -1;
+        for(i = 0; i < 256;i++){
+                a->to_internal[i] = UINT8_MAX;
+
         }
 
-        for(i = 0; i < 32;i++){
-                a->to_external[i] = -1;
-        }
+        /* for(i = 0; i < 32;i++){ */
+        /*         a->to_external[i] = -1; */
+        /* } */
         a->type = type;
 
         switch (type) {
@@ -80,6 +81,12 @@ int create_alphabet(struct alphabet** alphabet, struct rng_state* rng,int type)
         }
 
         RUN(clean_and_set_to_extern(a));
+
+        for(i = 0; i < 256;i++){
+                fprintf(stdout,"%d\n", a->to_internal[i]);
+        }
+        fprintf(stdout,"\n");
+
         *alphabet = a;
         return OK;
 ERROR:
@@ -99,10 +106,9 @@ void free_alphabet(struct alphabet* a)
 
 int convert_to_internal(struct alphabet* a, uint8_t* seq, int len)
 {
-        int8_t* t = NULL;
+        uint8_t* t = NULL;
         int i;
         t = a->to_internal;
-
         for(i = 0;i < len;i++){
                 seq[i] = t[seq[i]];
                 if(seq[i] == a->r_type){
@@ -112,17 +118,17 @@ int convert_to_internal(struct alphabet* a, uint8_t* seq, int len)
         return OK;
 }
 
-int convert_to_external(struct alphabet* a, uint8_t* seq, int len)
-{
-        int8_t* t = NULL;
-        int i;
-        t = a->to_external;
+/* int convert_to_external(struct alphabet* a, uint8_t* seq, int len) */
+/* { */
+/*         int8_t* t = NULL; */
+/*         int i; */
+/*         t = a->to_external; */
 
-        for(i = 0;i < len;i++){
-                seq[i] = t[seq[i]];
-        }
-        return OK;
-}
+/*         for(i = 0;i < len;i++){ */
+/*                 seq[i] = t[seq[i]]; */
+/*         } */
+/*         return OK; */
+/* } */
 
 
 int create_default_protein(struct alphabet* a)
@@ -342,14 +348,14 @@ int clean_and_set_to_extern(struct alphabet* a)
 {
         int i;
         uint8_t code = 0;
-        int8_t trans[32];
-        for(i = 0; i < 32;i++){
-                trans[i] = -1;
+        uint8_t trans[256];
+        for(i = 0; i < 256;i++){
+                trans[i] = UINT8_MAX;
 
         }
 
         for(i = 64; i < 96;i++){
-                if(a->to_internal[i] != -1){
+                if(a->to_internal[i] != UINT8_MAX){
                         trans[a->to_internal[i]] = 1;
                 }
         }
@@ -363,7 +369,7 @@ int clean_and_set_to_extern(struct alphabet* a)
         a->r_type = trans[a->r_type];
         a->L = code;
         for(i = 64; i < 96;i++){
-                if(a->to_internal[i] != -1){
+                if(a->to_internal[i] != UINT8_MAX){
                         a->to_internal[i] = trans[a->to_internal[i]];//a->to_internal[i]];
                         a->to_internal[i+32] = a->to_internal[i];
 
@@ -371,11 +377,11 @@ int clean_and_set_to_extern(struct alphabet* a)
 
         }
 
-        for(i = 64;i < 96;i++){
-                if(a->to_internal[i] != -1){
-                        a->to_external[a->to_internal[i]] = i;
-                }
-        }
+        /* for(i = 64;i < 96;i++){ */
+        /*         if(a->to_internal[i] != -1){ */
+        /*                 a->to_external[a->to_internal[i]] = i; */
+        /*         } */
+        /* } */
 
         return OK;
 }
