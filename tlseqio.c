@@ -871,7 +871,7 @@ int reset_tl_seq_buffer(struct tl_seq_buffer* sb)
 {
         int i;
         ASSERT(sb != NULL, "No sequence buffer");
-        for(i = 0; i < sb->num_seq;i++){
+        for(i = 0; i < sb->malloc_num ;i++){
                 sb->sequences[i]->len = 0;
         }
         sb->num_seq = 0;       /* horrible hack! as soon as the first seq name is encountered this is incremented to 0...  */
