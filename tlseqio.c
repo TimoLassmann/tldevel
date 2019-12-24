@@ -89,10 +89,10 @@ int open_fasta_fastq_file(struct file_handler** fh,char* filename, int mode)
                 }
                 switch (type) {
                 case FILE_TYPE_FASTA:
-                        LOG_MSG("Found fasta");
+                        //LOG_MSG("Found fasta");
                         break;
                 case FILE_TYPE_FASTQ:
-                        LOG_MSG("Found fastq");
+                        //LOG_MSG("Found fastq");
                         break;
                 case FILE_TYPE_UNDEFINED:
                         ERROR_MSG("Could not determine type of file: %s",filename);
@@ -103,10 +103,6 @@ int open_fasta_fastq_file(struct file_handler** fh,char* filename, int mode)
                 }
                 f->file_type = type;
         }else{
-
-                if(my_file_exists(filename)){
-                         WARNING_MSG("Will overwrite file: %s", filename);
-                }
                 RUN(get_io_handler(&f, filename, mode));
         }
         *fh = f;
@@ -125,7 +121,7 @@ int read_fasta_fastq_file(struct file_handler* fh, struct tl_seq_buffer** seq_bu
 
         sb = *seq_buf;
         if(sb == NULL){
-                LOG_MSG("Allocating seqbuffer");
+                //LOG_MSG("Allocating seqbuffer");
                 RUN(alloc_tl_seq_buffer(&sb, num));
         }else{
                 while(num > sb->malloc_num){
@@ -692,7 +688,7 @@ int get_io_handler(struct file_handler** fh,const char* filename,int mode)
         ret = strstr(filename, "gz");
         if(ret){
                 if(strlen(ret) == 2){
-                        LOG_MSG("Is gzipped");
+                        //LOG_MSG("Is gzipped");
                         f_handle->file_type |= TLSEQIO_GZIPPED;
                 }
         }
@@ -709,7 +705,7 @@ int get_io_handler(struct file_handler** fh,const char* filename,int mode)
 
                         f_handle->gz = 1;
                 }else{
-                        LOG_MSG("Opening file %s for writing",filename);
+                        //LOG_MSG("Opening file %s for writing",filename);
                         file_mode[0] = 'w';
                         file_mode[1] = 0;
                         RUNP(f_handle->f_ptr = fopen(filename, file_mode));
@@ -717,7 +713,7 @@ int get_io_handler(struct file_handler** fh,const char* filename,int mode)
                 }
         }
         if(mode == TLSEQIO_WRITE_GZIPPED){
-                LOG_MSG("Opening file %s for writing",filename);
+                //LOG_MSG("Opening file %s for writing",filename);
                 file_mode[0] = 'w';
                 file_mode[1] = 'b';
                 file_mode[2] = TL_DEFAULT_COMPRESSION;
@@ -729,7 +725,7 @@ int get_io_handler(struct file_handler** fh,const char* filename,int mode)
 
         if(mode == TLSEQIO_APPEND){
                 if(f_handle->file_type & TLSEQIO_GZIPPED){
-                        WARNING_MSG("Opening an file for uncompressed write was requested but the file ends in .gz");
+                        WARNING_MSG("Opening an file for uncompressed append was requested but the file ends in .gz");
                         WARNING_MSG("Will write compressed. Consider using the TLSEQIO_WRITE_GZIPPED!");
                         file_mode[0] = 'a';
                         file_mode[1] = 'b';
@@ -740,7 +736,7 @@ int get_io_handler(struct file_handler** fh,const char* filename,int mode)
 
                         f_handle->gz = 1;
                 }else{
-                        LOG_MSG("Opening file %s for writing",filename);
+                        //LOG_MSG("Opening file %s for writing",filename);
                         file_mode[0] = 'a';
                         file_mode[1] = 0;
                         RUNP(f_handle->f_ptr = fopen(filename, file_mode));
@@ -748,7 +744,7 @@ int get_io_handler(struct file_handler** fh,const char* filename,int mode)
                 }
         }
         if(mode == TLSEQIO_APPEND_GZIPPED){
-                LOG_MSG("Opening file %s for writing",filename);
+                //LOG_MSG("Opening file %s for writing",filename);
                 file_mode[0] = 'a';
                 file_mode[1] = 'b';
                 file_mode[2] = TL_DEFAULT_COMPRESSION;

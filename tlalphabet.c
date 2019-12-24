@@ -82,10 +82,6 @@ int create_alphabet(struct alphabet** alphabet, struct rng_state* rng,int type)
 
         RUN(clean_and_set_to_extern(a));
 
-        for(i = 0; i < 256;i++){
-                fprintf(stdout,"%d\n", a->to_internal[i]);
-        }
-        fprintf(stdout,"\n");
 
         *alphabet = a;
         return OK;
