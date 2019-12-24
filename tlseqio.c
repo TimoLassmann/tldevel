@@ -726,6 +726,38 @@ int get_io_handler(struct file_handler** fh,const char* filename,int mode)
                 RUNP(local_gz_f_ptr= gzopen(filename, file_mode));
                 f_handle->gz = 1;
         }
+
+        if(mode == TLSEQIO_APPEND){
+                if(f_handle->file_type & TLSEQIO_GZIPPED){
+                        WARNING_MSG("Opening an file for uncompressed write was requested but the file ends in .gz");
+                        WARNING_MSG("Will write compressed. Consider using the TLSEQIO_WRITE_GZIPPED!");
+                        file_mode[0] = 'a';
+                        file_mode[1] = 'b';
+                        file_mode[2] = TL_DEFAULT_COMPRESSION;
+                        file_mode[3] = 0;
+
+                        RUNP(local_gz_f_ptr = gzopen(filename, file_mode));
+
+                        f_handle->gz = 1;
+                }else{
+                        LOG_MSG("Opening file %s for writing",filename);
+                        file_mode[0] = 'a';
+                        file_mode[1] = 0;
+                        RUNP(f_handle->f_ptr = fopen(filename, file_mode));
+                        f_handle->gz = 0;
+                }
+        }
+        if(mode == TLSEQIO_APPEND_GZIPPED){
+                LOG_MSG("Opening file %s for writing",filename);
+                file_mode[0] = 'a';
+                file_mode[1] = 'b';
+                file_mode[2] = TL_DEFAULT_COMPRESSION;
+                file_mode[3] = 0;
+
+                RUNP(local_gz_f_ptr= gzopen(filename, file_mode));
+                f_handle->gz = 1;
+        }
+
         if(mode == TLSEQIO_READ){
                 file_mode[0] = 'r';
                 file_mode[1] = 0;
@@ -802,6 +834,7 @@ int alloc_tl_seq_buffer(struct tl_seq_buffer** seq_buf, int size)
         sb->num_seq = 0;
         sb->L = 0;
         sb->is_fastq = 0;
+        sb->offset = 0;
         sb->sequences = NULL;
 
         MMALLOC(sb->sequences, sizeof(struct tl_seq*) * sb->malloc_num);

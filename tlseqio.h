@@ -20,6 +20,10 @@
 #define TLSEQIO_WRITE 1
 #define TLSEQIO_WRITE_GZIPPED 2
 
+#define TLSEQIO_APPEND 3
+#define TLSEQIO_APPEND_GZIPPED 4
+
+
 typedef struct file_handler file_handler;
 
 struct tl_seq{
@@ -33,6 +37,7 @@ struct tl_seq{
 struct tl_seq_buffer{
         struct tl_seq** sequences;
         int malloc_num;
+        int offset;
         int num_seq;
         int max_len;
         int is_fastq;
