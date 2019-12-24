@@ -104,6 +104,11 @@ void free_alphabet(struct alphabet* a)
         }
 }
 
+uint8_t tlalphabet_get_code (const struct alphabet* a,const char c)
+{
+        return a->to_internal[(int)c];
+}
+
 int convert_to_internal(struct alphabet* a, uint8_t* seq, int len)
 {
         uint8_t* t = NULL;

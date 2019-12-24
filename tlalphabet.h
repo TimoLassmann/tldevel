@@ -1,3 +1,4 @@
+
 #ifndef TLALPHABET_H
 #define TLALPHABET_H
 
@@ -26,6 +27,8 @@ typedef struct alphabet alphabet;
 typedef struct rng_state rng_state;
 
 EXTERN int create_alphabet(struct alphabet** alphabet, struct rng_state* rng,int type);
+
+EXTERN uint8_t tlalphabet_get_code (const struct alphabet* a,const char c);
 EXTERN int convert_to_internal(struct alphabet* a, uint8_t* seq, int len);
 //EXTERN int convert_to_external(struct alphabet* a, uint8_t* seq, int len);
 

@@ -18,6 +18,8 @@ int main(int argc, char *argv[])
         int i;
         char dna[] = "ACGTACGTACGTNNNN";
 
+
+
         uint8_t* dna_seq = NULL;
 
         MMALLOC(dna_seq,sizeof(uint8_t) * len);
@@ -32,6 +34,9 @@ int main(int argc, char *argv[])
         RUN(convert_to_internal(a, dna_seq,len));
         //RUN(convert_to_external(a, dna_seq,len));
         print_seq(dna_seq, len);
+        for(i = 0; i < 32;i++){
+                fprintf(stdout,"%d\t%c\t%d\n",i+64, (char) (i+ 64), tlalphabet_get_code(a,(char) (i+ 64)));
+        }
 
         free_alphabet(a);
 
@@ -47,6 +52,9 @@ int main(int argc, char *argv[])
         //RUN(convert_to_external(a, dna_seq,len));
         print_seq(dna_seq, len);
 
+        for(i = 0; i < 32;i++){
+                fprintf(stdout,"%d\t%c\t%d\n",i+64, (char) (i+ 64), tlalphabet_get_code(a,(char) (i+ 64)));
+        }
         free_alphabet(a);
         MFREE(dna_seq);
         return EXIT_SUCCESS;
