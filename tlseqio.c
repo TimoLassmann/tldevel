@@ -957,12 +957,12 @@ int read_file_contents(struct file_handler* fh)
 
                 while(1){
                         c = gzgetc(fh->gz_f_ptr);
+                        if(c == -1){
+                                break;
+                        }
                         fh->read_buffer[fh->bytes_read] = c;
                         fh->bytes_read++;
                         if(c == '\n'){
-                                break;
-                        }
-                        if(c == -1){
                                 break;
                         }
                 }
