@@ -251,6 +251,7 @@ int parse_buf_fasta(struct file_handler* fh, struct tl_seq_buffer* sb,int num)
                                 seq  =sb->sequences[sb->num_seq]->seq;
                                 while(1){
                                         if(buf[i] == '\n' || buf[i] == 0){
+                                                seq[len] = 0;
                                                 break;
                                         }
                                         seq[len] = buf[i];
@@ -339,6 +340,7 @@ int parse_buf_fastq(struct file_handler* fh, struct tl_seq_buffer* sb,int num)
                                 seq  =sb->sequences[sb->num_seq]->seq;
                                 while(1){
                                         if(buf[i] == '\n' || buf[i] == 0){
+                                                seq[len] = 0;
                                                 break;
                                         }
                                         seq[len] = buf[i];
@@ -368,6 +370,7 @@ int parse_buf_fastq(struct file_handler* fh, struct tl_seq_buffer* sb,int num)
                                 while(1){
                                         ///fprintf(stdout,"<<<%c>>>",buf[i]);
                                         if(buf[i] == '\n' || buf[i] == 0){
+                                                qual[len] = 0;
                                                 break;
                                         }
                                         qual[len] = buf[i];
