@@ -46,15 +46,15 @@
 
 #define ASSERT(TEST,...)  if(!(TEST)) {         \
                 error(AT,#TEST );               \
-                error(AT, ##__VA_ARGS__);       \
+                error(AT, __VA_ARGS__);         \
                 goto ERROR;                     \
         }
 
 #if (DEBUGLEVEL >= 1)
-#define DASSERT(TEST,...) if(!(TEST)) {           \
-                        error(AT,#TEST );         \
-                        error(AT, ##__VA_ARGS__); \
-                        goto ERROR;               \
+#define DASSERT(TEST,...) if(!(TEST)) {         \
+                error(AT,#TEST );               \
+                error(AT, __VA_ARGS__);         \
+                goto ERROR;                     \
         }
 #else
 #define DASSERT(TEST,...)
