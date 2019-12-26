@@ -12,6 +12,12 @@ LT_INIT
 AC_CONFIG_MACRO_DIRS([m4])
 
 m4_include([m4/ax_check_zlib.m4])
+m4_include([m4/ax_check_compile_flag.m4])
+m4_include([m4/set_compile_flags.m4])
+
+
+
+
 
 AX_CHECK_ZLIB(
 [
@@ -96,6 +102,8 @@ esac
 
 if test "$enable_debugging" != "no"; then
 AC_DEFINE(DEBUG,1,[Defines debugging .])
+ANAL_WARNINGS
+
 CFLAGS="-ggdb -pedantic -Wall -std=gnu11 -fdata-sections -ffunction-sections"
 else
 CFLAGS="-O3 -pedantic -funroll-loops -Wall -std=gnu11 -fdata-sections -ffunction-sections"
@@ -144,6 +152,7 @@ AC_MSG_NOTICE([                CFLAGS: $CFLAGS])
 AC_MSG_NOTICE([               CPFLAGS: $CPPFLAGS])
 AC_MSG_NOTICE([                  LIBS: $LIBS])
 AC_MSG_NOTICE([               LDFLAGS: $LDFLAGS])
+AC_MSG_NOTICE([               LDFLAGS: $WANAL_CFLAGS])
 AC_MSG_NOTICE([    Installation point: $prefix])
 AC_MSG_NOTICE([---------------------------------------------------------])
 

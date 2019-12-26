@@ -8,16 +8,15 @@
 #define EXTERN extern
 #endif
 
+struct bitvec;
 
-typedef struct bitvec bitvec;
 
-
-EXTERN int make_bitvector( bitvec** bv, int num_elem);
-EXTERN int clear_bitvector(bitvec* bv);
-EXTERN int bit_set(bitvec* bv, int i);
-EXTERN int bit_clr(bitvec* bv, int i);
-EXTERN int bit_test(bitvec* bv, int i, int* ret);
-EXTERN int free_bitvector(bitvec** bv);
+EXTERN int make_bitvector(struct bitvec** bv, int num_elem);
+EXTERN int clear_bitvector(struct bitvec* bv);
+EXTERN int bit_set(struct bitvec* bv, int i);
+EXTERN int bit_clr(struct bitvec* bv, int i);
+EXTERN int bit_test(struct bitvec* bv, int i, int* ret);
+EXTERN int free_bitvector(struct bitvec** bv);
 
 #undef TLBITVEC_IMPORT
 #undef EXTERN

@@ -8,16 +8,17 @@
 #include "tlbitvec.h"
 
 
-#define SHIFT 5
-#define MASK 0x1F
-
 struct bitvec{
         uint32_t* arr;
         int size;
 };
 
 
-int make_bitvector( bitvec** bv, int num_elem)
+#define SHIFT 5
+#define MASK 0x1F
+
+
+int make_bitvector(struct bitvec** bv, int num_elem)
 {
         struct bitvec* bitvec = NULL;
 
@@ -35,7 +36,7 @@ ERROR:
         return FAIL;
 }
 
-int clear_bitvector(bitvec* bv)
+int clear_bitvector(struct bitvec* bv)
 {
         ASSERT(bv!= NULL, "No bit vector allocated");
         memset( bv->arr, 0, sizeof(int) *((bv->size / 32) + 1));
@@ -44,7 +45,7 @@ ERROR:
         return FAIL;
 }
 
-int bit_set(bitvec* bv, int i)
+int bit_set(struct bitvec* bv, int i)
 {
         ASSERT(bv!= NULL, "No bit vector allocated");
         ASSERT(i >= 0, "i needs to be positive (is: %d)", i);
@@ -57,7 +58,7 @@ ERROR:
 
 
 
-int bit_clr(bitvec* bv, int i)
+int bit_clr(struct bitvec* bv, int i)
 {
         ASSERT(bv!= NULL, "No bit vector allocated");
         ASSERT(i >= 0, "i needs to be positive (is: %d)", i);
@@ -69,7 +70,7 @@ ERROR:
         return FAIL;
 }
 
-int bit_test(bitvec* bv, int i, int* ret)
+int bit_test(struct bitvec* bv, int i, int* ret)
 {
         ASSERT(bv!= NULL, "No bit vector allocated");
         DASSERT(i >= 0, "i needs to be positive (is: %d)", i);
@@ -80,7 +81,7 @@ ERROR:
         return FAIL;
 }
 
-int free_bitvector(bitvec** bv)
+int free_bitvector(struct bitvec** bv)
 {
         if(*bv){
                 MFREE((*bv)->arr);

@@ -22,9 +22,9 @@
 
 #include <stdint.h>
 
-typedef struct alphabet alphabet;
+struct alphabet;
 
-typedef struct rng_state rng_state;
+struct rng_state;
 
 EXTERN int create_alphabet(struct alphabet** alphabet, struct rng_state* rng,int type);
 

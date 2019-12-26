@@ -8,6 +8,10 @@ int main(int argc, char *argv[])
         int* blah = NULL;
         int d;
 
+
+
+        LOG_MSG("%p",blah);
+
         galloc(&blah,1);
         LOG_MSG("%p",blah);
         RUN(get_dim1(blah,&d));

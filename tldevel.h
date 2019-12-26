@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <float.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -76,6 +77,12 @@
                 }                                   \
         }while (0)
 
+
+#define DBL_EQ(a,b) (fabs((a) - (b)) < DBL_EPSILON)
+
+#define FLT_EQ(a,b) (fabs((a) - (b)) < FLT_EPSILON)
+
+
 /* Functions to declare and use a timer */
 
 #define DECLARE_TIMER(n) struct timespec ts1_##n; struct timespec ts2_##n;
@@ -131,6 +138,17 @@
 
 EXTERN int get_dim1(void* ptr, int* d);
 EXTERN int get_dim2(void* ptr, int* d);
+
+/*
+#define VA_NUM_ARGS(...) VA_NUM_ARGS_IMPL(__VA_ARGS__, 5,4,3,2,1)
+#define VA_NUM_ARGS_IMPL(_1,_2,_3,_4,_5,N,...) N
+
+#define macro_dispatcher(func, ...) macro_dispatcher_(func, VA_NUM_ARGS(__VA_ARGS__))
+#define macro_dispatcher_(func, nargs) macro_dispatcher__(func, nargs)
+#define macro_dispatcher__(func, nargs) func ## nargs
+*/
+
+
 
 #define CONCAT(X, Y) CONCAT_(X, Y)
 #define CONCAT_(X, Y) X ## Y
@@ -188,6 +206,7 @@ EXTERN int get_dim2(void* ptr, int* d);
 #define COMMA_11110 ,
 #define COMMA_11111 ,
 
+
 #define ALLOC_1D_ARRAY_DEF(type)                                  \
         EXTERN int alloc_1D_array_size_ ##type (type **array, int dim1)
 
@@ -232,7 +251,11 @@ FREE_2D_ARRAY_DEF(double);
 
 
 
+
+
+
 #define galloc(...) SELECTGALLOC(__VA_ARGS__)(__VA_ARGS__)
+
 #define SELECTGALLOC(...) CONCAT(SELECTGALLOC_, NARG(__VA_ARGS__))(__VA_ARGS__)
 
 #define SELECTGALLOC_0()

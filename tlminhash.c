@@ -18,7 +18,7 @@ struct Boolean_matrix{
 
 
 struct minhash{
-        unsigned int** sig;
+        int** sig;
         int n_signatures;
         int n_columns;
         int n_samples;
@@ -102,7 +102,7 @@ ERROR:
 int jaccard_sim_min_multihash(struct minhash* min_h , int* S, int n, double* jac_sim, double *p_S_in_X)
 {
         int i,j;
-        unsigned int** m = NULL;
+        int** m = NULL;
         double set_intersection = 0.0;
         double c,min;
         int num_samples;
@@ -149,8 +149,8 @@ int jaccard_sim_min_hash(struct minhash* min_h , int a, int b, double* jac_sim, 
         double set_intersection = 0.0;
 
 
-        unsigned int* col_a = NULL;
-        unsigned int* col_b = NULL;
+        int* col_a = NULL;
+        int* col_b = NULL;
         double min_stuff = 0.0;
         ASSERT(min_h != NULL, "No minhash");
         col_a = min_h->sig[a];

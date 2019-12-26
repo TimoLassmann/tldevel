@@ -1,14 +1,14 @@
 
 #include <math.h>
 
+#include "tldevel.h"
+
 #define TLLOGSUM_IMPORT
 #include "tllogsum.h"
 
-#define SCALE 100000.0
-#define LOGSUM_SIZE 1600000
+#define SCALE 1000.0
+#define LOGSUM_SIZE 16000
 
-#define MACRO_MIN(a,b)          (((a)<(b))?(a):(b))
-#define MACRO_MAX(a,b)          (((a)>(b))?(a):(b))
 
 static float logsum_lookup[LOGSUM_SIZE];
 
@@ -29,7 +29,7 @@ float logsum(const float a,const float b)
         register const float max = MACRO_MAX(a, b);
         register const float min = MACRO_MIN(a, b);
 
-        if(min == -INFINITY){
+        if( FLT_EQ(min, -INFINITY)){
                 return max;
         }
         if( (max-min) >= 15.7f){
@@ -40,7 +40,7 @@ float logsum(const float a,const float b)
 
 float prob2scaledprob(float p)
 {
-        if(p == 0.0){
+        if( FLT_EQ(p, 0.0f)){
                 return -INFINITY;
         }else{
                 return  log(p);
@@ -49,7 +49,8 @@ float prob2scaledprob(float p)
 
 float scaledprob2prob(float p)
 {
-        if(p == -INFINITY){
+
+        if( FLT_EQ(p, -INFINITY)){
                 return 0.0;
         }else{
                 return exp(p);

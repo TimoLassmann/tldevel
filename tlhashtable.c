@@ -1,6 +1,8 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
+
 
 #include "tldevel.h"
 
@@ -91,8 +93,7 @@ int ht_compare_key_double(const double a, const double b)
         if(a > b){
                 return -1;
         }
-
-        if(a == b){
+        if ( DBL_EQ(a, b)){
                 return 0;
         }
         return 1;

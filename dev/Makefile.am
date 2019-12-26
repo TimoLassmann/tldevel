@@ -5,6 +5,7 @@ AM_LDFLAGS += -Wno-undef
 
 @VALGRIND_CHECK_RULES@
 
+AM_CFLAGS    =  $(WANAL_CFLAGS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/ -I${top_builddir}
 
@@ -17,11 +18,14 @@ logsum_test \
 hash_test \
 minhash_test \
 alphabet_test \
-seqio_test
+seqio_test \
+demo
 
 TESTS = $(TESTLIST)
 
 check_PROGRAMS = $(TESTLIST)
+
+demo_SOURCES = demo.c
 
 tldevel_test_SOURCES = tldevel_test.c
 tldevel_test_CPPFLAGS = $(AM_CPPFLAGS)

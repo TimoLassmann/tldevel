@@ -85,7 +85,7 @@ ERROR:
 struct checkpoint* init_checkpoint(char* base_name,char* target_dir)
 {
         struct checkpoint* chk = NULL;
-        size_t i = 0;
+        int i = 0;
         int j;
         MMALLOC(chk, sizeof(struct checkpoint));
 
@@ -93,7 +93,7 @@ struct checkpoint* init_checkpoint(char* base_name,char* target_dir)
         chk->base_dir = NULL;
         chk->base_name = NULL;
 
-        i = strlen(target_dir);
+        i = (int)strlen(target_dir);
         MMALLOC(chk->base_dir, sizeof(char) * (i+1));
 
         for(j = 0;j < i;j++){
@@ -101,7 +101,7 @@ struct checkpoint* init_checkpoint(char* base_name,char* target_dir)
         }
         chk->base_dir[i] = 0;
 
-        i = strlen(base_name);
+        i = (int) strlen(base_name);
         MMALLOC(chk->base_name, sizeof(char) * (i+1));
         for(j = 0;j < i;j++){
                 chk->base_name[j] = base_name[j];

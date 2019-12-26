@@ -3,10 +3,12 @@ SUBDIRS = dev
 
 ACLOCAL_AMFLAGS = -I m4
 
+
 EXTRA_DIST= README.org autogen.sh version.sh VERSION ax_with_tldevel.m4
 
 AM_LDFLAGS = @DEAD_STRIP@
 AM_LDFLAGS += -Wno-undef
+AM_CFLAGS    =  $(WANAL_CFLAGS)
 
 lib_LTLIBRARIES = libtldevel.la
 #noinst_LIBRARIES = libtldevel.a

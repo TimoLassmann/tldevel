@@ -496,17 +496,17 @@ int detect_fasta_fastq(const char* b, int len, int* type)
                 illumina18[i] = 0;
         }
 
-        for(i = 0 ; i < strlen(DNA_letters);i++){
+        for(i = 0 ; i < (int) strlen(DNA_letters);i++){
                 DNA[(int) DNA_letters[i]] = 1;
         }
 
-        for(i = 0 ; i < strlen(protein_letters);i++){
+        for(i = 0 ; i < (int)strlen(protein_letters);i++){
                 protein[(int) protein_letters[i]] = 1;
         }
-        for(i = 0; i < strlen(Illumina15);i++){
+        for(i = 0; i < (int)strlen(Illumina15);i++){
                 illumina15[(int) Illumina15[i]] = 1;
         }
-        for(i = 0; i < strlen(Illumina18);i++){
+        for(i = 0; i < (int)strlen(Illumina18);i++){
                 illumina18[(int) Illumina18[i]] = 1;
         }
 
