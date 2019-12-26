@@ -31,6 +31,19 @@ const char* tldevel_version(void)
 }
 
 
+int galloc_unknown_type_error (void* p, ...)
+{
+        error(AT, "galloc was called with pointer of unknown type");
+        return FAIL;
+}
+
+int galloc_too_few_arg_error (void* p)
+{
+        error(AT,"galloc was called with only one argument");
+        return FAIL;
+}
+
+
 /* g memory stuff */
 
 int get_dim1(void* ptr,int* d)
@@ -159,7 +172,9 @@ ALLOC_2D_ARRAY(double)
 
 
 #define FREE_VOID(type)                         \
-        void gfree_void_ ##type(type *a){}
+        void gfree_void_ ##type(type *a){\
+                error(AT, "free was called on wrong type (%p)",(void*)a); \
+        }
 
 FREE_VOID(char)
 FREE_VOID(int)

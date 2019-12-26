@@ -1,6 +1,7 @@
 
 #include "tldevel.h"
 
+#include <stdint.h>
 
 int main(int argc, char *argv[])
 {
@@ -47,6 +48,25 @@ int main(int argc, char *argv[])
         RUN(get_dim2(ga,&d));
         LOG_MSG("d2: %d", d);
         gfree(ga);
+
+        float* f;
+        int status = 0;
+        status = galloc(&f);
+        if(status == OK){
+                ERROR_MSG("Should have crashed");
+        }else{
+                LOG_MSG("galloc correctly reported error");
+        }
+
+        uint64_t** otto = NULL;
+
+        status = galloc(&otto, 19,10);
+        if(status == OK){
+                ERROR_MSG("Should have crashed");
+        }else{
+                LOG_MSG("galloc correctly reported error");
+        }
+
         return EXIT_SUCCESS;
 ERROR:
         gfree(ga);

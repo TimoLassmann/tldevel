@@ -5,8 +5,6 @@ AM_LDFLAGS += -Wno-undef
 
 @VALGRIND_CHECK_RULES@
 
-AM_CFLAGS    =  $(WANAL_CFLAGS)
-
 AM_CPPFLAGS = -I$(top_srcdir)/ -I${top_builddir}
 
 TESTLIST = \

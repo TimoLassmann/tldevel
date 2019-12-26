@@ -102,11 +102,14 @@ esac
 
 if test "$enable_debugging" != "no"; then
 AC_DEFINE(DEBUG,1,[Defines debugging .])
-ANAL_WARNINGS
 
-CFLAGS="-ggdb -pedantic -Wall -std=gnu11 -fdata-sections -ffunction-sections"
+ADD_DEBUG_COMPILE_WARNINGS
+CFLAGS="-ggdb -std=gnu11"
+CFLAGS="${CFLAGS} ${TLDEVEL_CFLAGS}"
 else
-CFLAGS="-O3 -pedantic -funroll-loops -Wall -std=gnu11 -fdata-sections -ffunction-sections"
+ADD_PRODUCTION_COMPILE_WARNINGS
+CFLAGS="-O3 -std=gnu11"
+CFLAGS="${CFLAGS} ${TLDEVEL_CFLAGS}"
 DEBUG=0
 fi
 
@@ -152,7 +155,6 @@ AC_MSG_NOTICE([                CFLAGS: $CFLAGS])
 AC_MSG_NOTICE([               CPFLAGS: $CPPFLAGS])
 AC_MSG_NOTICE([                  LIBS: $LIBS])
 AC_MSG_NOTICE([               LDFLAGS: $LDFLAGS])
-AC_MSG_NOTICE([               LDFLAGS: $WANAL_CFLAGS])
 AC_MSG_NOTICE([    Installation point: $prefix])
 AC_MSG_NOTICE([---------------------------------------------------------])
 

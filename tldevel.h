@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <math.h>
 #include <float.h>
 
 #ifdef HAVE_CONFIG_H
@@ -150,61 +151,6 @@ EXTERN int get_dim2(void* ptr, int* d);
 
 
 
-#define CONCAT(X, Y) CONCAT_(X, Y)
-#define CONCAT_(X, Y) X ## Y
-
-#define ARGN(...) ARGN_(__VA_ARGS__)
-#define ARGN_(_0, _1, _2, _3 , N, ...) N
-
-#define NARG(...) ARGN(__VA_ARGS__ COMMA(__VA_ARGS__) 4, 3, 2, 1, 0)
-#define HAS_COMMA(...) ARGN(__VA_ARGS__, 1, 1, 0)
-
-#define SET_COMMA(...) ,
-
-#define COMMA(...) SELECT_COMMA                     \
-        (                                           \
-                HAS_COMMA(__VA_ARGS__),             \
-                HAS_COMMA(__VA_ARGS__ ()),          \
-                HAS_COMMA(SET_COMMA __VA_ARGS__),   \
-                HAS_COMMA(SET_COMMA __VA_ARGS__),   \
-                HAS_COMMA(SET_COMMA __VA_ARGS__ ()) \
-                )
-
-#define SELECT_COMMA(_0, _1, _2, _3, _4) SELECT_COMMA_(_0, _1, _2, _3, _4)
-#define SELECT_COMMA_(_0, _1, _2, _3, _4) COMMA_ ## _0 ## _1 ## _2 ## _3 ## _4
-
-#define COMMA_00000 ,
-#define COMMA_00001
-#define COMMA_00010 ,
-#define COMMA_00011 ,
-#define COMMA_00100 ,
-#define COMMA_00101 ,
-#define COMMA_00110 ,
-#define COMMA_00111 ,
-#define COMMA_01000 ,
-#define COMMA_01001 ,
-#define COMMA_01010 ,
-#define COMMA_01011 ,
-#define COMMA_01100 ,
-#define COMMA_01101 ,
-#define COMMA_01110 ,
-#define COMMA_01111 ,
-#define COMMA_10000 ,
-#define COMMA_10001 ,
-#define COMMA_10010 ,
-#define COMMA_10011 ,
-#define COMMA_10100 ,
-#define COMMA_10101 ,
-#define COMMA_10110 ,
-#define COMMA_10111 ,
-#define COMMA_11000 ,
-#define COMMA_11001 ,
-#define COMMA_11010 ,
-#define COMMA_11011 ,
-#define COMMA_11100 ,
-#define COMMA_11101 ,
-#define COMMA_11110 ,
-#define COMMA_11111 ,
 
 
 #define ALLOC_1D_ARRAY_DEF(type)                                  \
@@ -225,13 +171,13 @@ ALLOC_2D_ARRAY_DEF(double);
 
 
 #define FREE_VOID_DEF(type)                     \
-        void gfree_void_ ##type(type *a)
+        EXTERN void gfree_void_ ##type(type *a)
 
 #define FREE_1D_ARRAY_DEF(type)                 \
-        void free_1d_array_ ##type(type **array)
+        EXTERN void free_1d_array_ ##type(type **array)
 
 #define FREE_2D_ARRAY_DEF(type)                   \
-        void free_2d_array_ ##type(type ***array)
+        EXTERN void free_2d_array_ ##type(type ***array)
 
 
 FREE_VOID_DEF(char);
@@ -249,43 +195,41 @@ FREE_2D_ARRAY_DEF(int);
 FREE_2D_ARRAY_DEF(float);
 FREE_2D_ARRAY_DEF(double);
 
+EXTERN int galloc_unknown_type_error (void* p, ...);
+EXTERN int galloc_too_few_arg_error (void* p);
+
+#define p1(X) _Generic((X),                               \
+                       default: galloc_too_few_arg_error  \
+                )(X)
+
+#define p2(X,Y) _Generic((X),                                 \
+                         char**: alloc_1D_array_size_char,    \
+                         int**: alloc_1D_array_size_int,      \
+                         float**:  alloc_1D_array_size_float, \
+                         double**:alloc_1D_array_size_double, \
+                         default: galloc_unknown_type_error  \
+                )(X,Y)
+
+#define p3(X,Y,Z) _Generic((X),                                 \
+                           char***: alloc_2D_array_size_char,    \
+                           int***: alloc_2D_array_size_int,      \
+                           float***:  alloc_2D_array_size_float, \
+                           double***:alloc_2D_array_size_double, \
+                           default: galloc_unknown_type_error   \
+                )(X,Y,Z)
 
 
+#define _ARG3(_0, _1, _2, _3, ...) _3
+#define NARG3(...) _ARG3(__VA_ARGS__,3, 2, 1, 0)
 
+#define _GALLOC_ARGS_1( a) p1(a)
+#define _GALLOC_ARGS_2( a, b) p2(a,b)
+#define _GALLOC_ARGS_3( a, b, c ) p3(a,b,c)
 
-
-#define galloc(...) SELECTGALLOC(__VA_ARGS__)(__VA_ARGS__)
-
-#define SELECTGALLOC(...) CONCAT(SELECTGALLOC_, NARG(__VA_ARGS__))(__VA_ARGS__)
-
-#define SELECTGALLOC_0()
-
-#define SELECTGALLOC_1(_1) _Generic ((_1),             \
-                                     default: galloc_void \
-                )
-
-#define SELECTGALLOC_2(_1, _2) _Generic((_1),                        \
-                                        char**: alloc_1D_array_size_char, \
-                                        int**: alloc_1D_array_size_int,  \
-                                        float**:  alloc_1D_array_size_float, \
-                                        double**:alloc_1D_array_size_double \
-                )
-
-#define SELECTGALLOC_3(_1, _2, _3) _Generic((_1),                    \
-                                                char***: _Generic((_2),  \
-                                                                 int: alloc_2D_array_size_char \
-                                                        ),              \
-                                                int***: _Generic((_2),   \
-                                                                int: alloc_2D_array_size_int \
-                                                        ),              \
-                                                float***: _Generic((_2), \
-                                                                  int: alloc_2D_array_size_float \
-                                                        ),              \
-                                                double***: _Generic((_2), \
-                                                                   int: alloc_2D_array_size_double \
-                                                        )              \
-                )
-
+#define __GALLOC_ARGS( N, ...) _GALLOC_ARGS_ ## N ( __VA_ARGS__)
+#define _GALLOC_ARGS( N, ...) __GALLOC_ARGS( N, __VA_ARGS__)
+#define GALLOC_ARGS( ...) _GALLOC_ARGS( NARG3(__VA_ARGS__), __VA_ARGS__)
+#define galloc(...) GALLOC_ARGS( __VA_ARGS__)
 
 
 

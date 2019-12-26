@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <stdarg.h>
 
 #define p1(X) _Generic((X),                         \
                          double: p1_double,           \
@@ -17,7 +18,7 @@
                          double: p3_double,           \
                          int: p3_int,                 \
                            int***: p3_int_ss,          \
-                         default: p3_int              \
+                         default: error              \
                 )(X,Y,Z)
 
 
@@ -71,6 +72,10 @@ void p3_int_ss(int*** a,int b,int c)
 }
 
 
+void error (void* p, ...)
+{
+        printf("%s  pointer: %p\n", __func__, (void*)p);
+}
 
 int main(int argc, char** argv)
 {
@@ -82,7 +87,10 @@ int main(int argc, char** argv)
         galloc(6, 0,7);
         galloc(6.5, 0,7);
 
-        int** f = NULL;
-        galloc(&f, 0,7);
+        int** i = NULL;
+        galloc(&i, 0,7);
+        double** d = NULL;
+        galloc(&d, 0,7);
+
         return 0;
 }
