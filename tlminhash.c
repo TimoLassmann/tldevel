@@ -195,7 +195,7 @@ int jaccard_sim(struct Boolean_matrix* bm, int*S , int n, double* jac_sim)
         }
         *jac_sim = 0.0;
 
-        if(DBL_EQ(set_union, 0.0)){
+        if( TLSAFE_EQ(set_union, 0.0)){
                 *jac_sim = set_intersection / set_union;
         }
         return OK;

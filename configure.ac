@@ -2,6 +2,8 @@ AC_INIT([tldevel], [1.0])
 AC_CONFIG_AUX_DIR([.])
 AM_INIT_AUTOMAKE
 AC_PROG_CC
+AC_PROG_CXX
+
 AC_PROG_INSTALL
 
 AM_SILENT_RULES([no])
@@ -44,7 +46,7 @@ AC_CHECK_HEADERS([stdint.h])
 AC_CHECK_HEADERS([limits.h])
 AC_CHECK_HEADERS([stddef.h])
 AC_CHECK_HEADERS([time.h])
-
+AC_CHECK_HEADERS([float.h])
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
 AC_TYPE_INT8_T
@@ -62,8 +64,9 @@ AC_C_INLINE
 AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
-AC_CHECK_FUNCS([clock_gettime memset pow sqrt getpid])
 
+AC_CHECK_FUNCS([clock_gettime memset pow sqrt getpid])
+AC_CHECK_FUNCS([strstr])
 
 
 AC_CHECK_FUNCS([strdup])

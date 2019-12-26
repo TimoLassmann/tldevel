@@ -291,3 +291,32 @@ void vlog(FILE* f_ptr,const char *format,  va_list argp)
         fprintf(f_ptr,"\n");
         fflush(f_ptr);
 }
+
+
+int nearly_equal_float(float a, float b)
+{
+        float absa = fabsf(a);
+        float absb = fabsf(b);
+        float d = fabsf(a-b);
+        if(a == b){
+                return 1;
+        }else if (a == 0.0f || b == 0 || (absa + absb < FLT_MIN)){
+                return d < (FLT_EPSILON * FLT_MIN);
+        }else{
+                return d / MACRO_MIN((absa+absb), FLT_MIN) < FLT_EPSILON;
+        }
+}
+
+int nearly_equal_double(double a, double b)
+{
+        double absa = fabs(a);
+        double absb = fabs(b);
+        double d = fabs(a-b);
+        if(a == b){
+                return 1;
+        }else if (a == 0.0f || b == 0 || (absa + absb < DBL_MIN)){
+                return d < (DBL_EPSILON * DBL_MIN);
+        }else{
+                return d / MACRO_MIN((absa+absb), DBL_MIN) < DBL_EPSILON;
+        }
+}

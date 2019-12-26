@@ -93,7 +93,7 @@ int ht_compare_key_double(const double a, const double b)
         if(a > b){
                 return -1;
         }
-        if ( DBL_EQ(a, b)){
+        if (TLSAFE_EQ(a, b)){
                 return 0;
         }
         return 1;

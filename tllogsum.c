@@ -29,7 +29,7 @@ float logsum(const float a,const float b)
         register const float max = MACRO_MAX(a, b);
         register const float min = MACRO_MIN(a, b);
 
-        if( FLT_EQ(min, -INFINITY)){
+        if(  TLSAFE_EQ(min, -INFINITY)){
                 return max;
         }
         if( (max-min) >= 15.7f){
@@ -40,7 +40,7 @@ float logsum(const float a,const float b)
 
 float prob2scaledprob(float p)
 {
-        if( FLT_EQ(p, 0.0f)){
+        if( TLSAFE_EQ(p, 0.0f)){
                 return -INFINITY;
         }else{
                 return  log(p);
@@ -50,7 +50,7 @@ float prob2scaledprob(float p)
 float scaledprob2prob(float p)
 {
 
-        if( FLT_EQ(p, -INFINITY)){
+        if( TLSAFE_EQ(p, -INFINITY)){
                 return 0.0;
         }else{
                 return exp(p);

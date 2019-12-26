@@ -79,9 +79,16 @@
         }while (0)
 
 
-#define DBL_EQ(a,b) (fabs((a) - (b)) < DBL_EPSILON)
+EXTERN int nearly_equal_float(float a, float b);
+EXTERN int nearly_equal_double(double a, double b);
 
-#define FLT_EQ(a,b) (fabs((a) - (b)) < FLT_EPSILON)
+
+#define TLSAFE_EQ(X,Y) _Generic((X),                        \
+                                float: nearly_equal_float,  \
+                                double: nearly_equal_double \
+                )(X,Y)
+
+
 
 
 /* Functions to declare and use a timer */
@@ -253,6 +260,8 @@ EXTERN int galloc_too_few_arg_error (void* p);
 EXTERN void error(const char *location, const char *format, ...);
 EXTERN void warning(const char *location, const char *format, ...);
 EXTERN void log_message( const char *format, ...);
+
+
 
 EXTERN const char* tldevel_version(void);
 
