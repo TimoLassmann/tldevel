@@ -1,10 +1,42 @@
+
+AC_DEFUN([AX_ENABLE_DEBUG],
+[AC_ARG_ENABLE(debugging,
+[AS_HELP_STRING([--enable-debugging],[include debugging code])
+AS_HELP_STRING([--enable-debugging=x],[also set diagnostics verbosity level to <x> (1-3)])],
+enable_debugging=$enableval, enable_debugging="no")
+
+case $enable_debugging in
+yes)  AC_DEFINE(DEBUGLEVEL, 0,[No debugging. ]);;
+1)  AC_DEFINE(DEBUGLEVEL, 1,[Defines debugging level 1.]);;
+2)  AC_DEFINE(DEBUGLEVEL, 2,[Defines debugging level 2.]);;
+3)  AC_DEFINE(DEBUGLEVEL, 3,[Defines debugging level 3.]);;
+no)  AC_DEFINE(DEBUGLEVEL, 0,[No debugging.]);;
+*)  AC_MSG_ERROR([Unknown argument to --enable-debugging: $enable_debugging]);;
+esac
+
+
+if test "$enable_debugging" != "no"; then
+AC_DEFINE(DEBUG,1,[Defines debugging .])
+
+ADD_DEBUG_COMPILE_WARNINGS
+CFLAGS="-ggdb -std=gnu11"
+CFLAGS="${CFLAGS} ${TLDEVEL_CFLAGS}"
+else
+ADD_PRODUCTION_COMPILE_WARNINGS
+CFLAGS="-O3 -std=gnu11"
+CFLAGS="${CFLAGS} ${TLDEVEL_CFLAGS}"
+DEBUG=0
+fi
+
+])
+
 AC_DEFUN([ADD_DEBUG_COMPILE_WARNINGS],
   [TLDEVEL_CFLAGS=""
   TLDEVEL_CXXFLAGS=""
   TLDEVEL_CFLAGS_ONLY=""
   AX_CHECK_COMPILE_FLAG([-pedantic],[TLDEVEL_CFLAGS="${TLDEVEL_CFLAGS} -pedantic"],,)
   AX_CHECK_COMPILE_FLAG([-fstack-protector],[TLDEVEL_CFLAGS="${TLDEVEL_CFLAGS} -fstack-protector"],,)
-  AX_CHECK_COMPILE_FLAG([-fsanitize=safe-stack],[TLDEVEL_CFLAGS="${TLDEVEL_CFLAGS} -fsanitize=safe-stack"],,)
+  dnl AX_CHECK_COMPILE_FLAG([-fsanitize=safe-stack],[TLDEVEL_CFLAGS="${TLDEVEL_CFLAGS} -fsanitize=safe-stack"],,)
   AX_CHECK_COMPILE_FLAG([-fstack-clash-protection],[TLDEVEL_CFLAGS="${TLDEVEL_CFLAGS} -fstack-clash-protection"],,)
   AX_CHECK_COMPILE_FLAG([-D_GLIBCXX_ASSERTIONS],[TLDEVEL_CFLAGS="${TLDEVEL_CFLAGS} -D_GLIBCXX_ASSERTIONS"],,)
   AX_CHECK_COMPILE_FLAG([-fexceptions],[TLDEVEL_CFLAGS="${TLDEVEL_CFLAGS} -fexceptions"],,)

@@ -15,7 +15,7 @@ AC_CONFIG_MACRO_DIRS([m4])
 
 m4_include([m4/ax_check_zlib.m4])
 m4_include([m4/ax_check_compile_flag.m4])
-m4_include([m4/set_compile_flags.m4])
+m4_include([m4/ax_set_compile_flags.m4])
 
 
 
@@ -88,34 +88,7 @@ DEAD_STRIP="-Wl,--gc-sections -Wl,--as-needed"
 esac
 AC_SUBST(DEAD_STRIP)
 
-AC_ARG_ENABLE(debugging,
-[AS_HELP_STRING([--enable-debugging],[include debugging code])
-AS_HELP_STRING([--enable-debugging=x],[also set diagnostics verbosity level to <x> (1-3)])],
-enable_debugging=$enableval, enable_debugging="no")
-
-case $enable_debugging in
-yes)  AC_DEFINE(DEBUGLEVEL, 0,[No debugging. ]);;
-1)  AC_DEFINE(DEBUGLEVEL, 1,[Defines debugging level 1.]);;
-2)  AC_DEFINE(DEBUGLEVEL, 2,[Defines debugging level 2.]);;
-3)  AC_DEFINE(DEBUGLEVEL, 3,[Defines debugging level 3.]);;
-no)  AC_DEFINE(DEBUGLEVEL, 0,[No debugging.]);;
-*)  AC_MSG_ERROR([Unknown argument to --enable-debugging: $enable_debugging]);;
-esac
-
-
-if test "$enable_debugging" != "no"; then
-AC_DEFINE(DEBUG,1,[Defines debugging .])
-
-ADD_DEBUG_COMPILE_WARNINGS
-CFLAGS="-ggdb -std=gnu11"
-CFLAGS="${CFLAGS} ${TLDEVEL_CFLAGS}"
-else
-ADD_PRODUCTION_COMPILE_WARNINGS
-CFLAGS="-O3 -std=gnu11"
-CFLAGS="${CFLAGS} ${TLDEVEL_CFLAGS}"
-DEBUG=0
-fi
-
+AX_ENABLE_DEBUG
 
 AX_VALGRIND_DFLT([memcheck], [on])
 AX_VALGRIND_CHECK
@@ -133,7 +106,7 @@ AC_SUBST([COMPILER]) COMPILER=`$CC --version | head -n 1`
 
 
 
-ac_configure_args="$ac_configure_args PACKAGE_VERSION=$PACKAGE_VERSION   PACKAGE_NAME=$PACKAGE_NAME"
+dnl ac_configure_args="$ac_configure_args PACKAGE_VERSION=$PACKAGE_VERSION   PACKAGE_NAME=$PACKAGE_NAME"
 
 
 AC_CONFIG_FILES([
