@@ -2,8 +2,6 @@
 #include "tldevel.h"
 #include "tlseqio.h"
 
-
-
 int main(int argc, char *argv[])
 {
         struct file_handler* f = NULL;
@@ -14,14 +12,14 @@ int main(int argc, char *argv[])
                 RUN(open_fasta_fastq_file(&f, argv[1], TLSEQIO_READ));
 
 
-                RUN(open_fasta_fastq_file(&f_out, "Dummy", TLSEQIO_WRITE ));
+                RUN(open_fasta_fastq_file(&f_out, "Dummy.fastq.gz", TLSEQIO_WRITE ));
                 //int total_r = 0;
                 //int total_w = 0;
                 while(1){
 
                         RUN(read_fasta_fastq_file(f, &sb, 1000));
                         //total_r+= sb->num_seq;
-                        //LOG_MSG("Finished reading chunk: found %d ",sb->num_seq);
+                        LOG_MSG("Finished reading chunk: found %d ",sb->num_seq);
                         /*for(i = 0; i < sb->num_seq;i++){
 
                                 fprintf(stdout,"%s\n", sb->sequences[i]->name);
@@ -47,8 +45,8 @@ int main(int argc, char *argv[])
                 }
 
                 free_tl_seq_buffer(sb);
-                RUN(close_fasta_fastq_file(&f));
-                RUN(close_fasta_fastq_file(&f_out));
+                RUN(close_seq_file(&f));
+                RUN(close_seq_file(&f_out));
                 //fprintf(stdout,"%p",f);
         }
 

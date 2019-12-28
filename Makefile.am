@@ -26,8 +26,8 @@ TLRBTREESOURCES  = tlrbtree.h tlrbtree.c
 TLCHECKPOINTSOURCES = tlcheckpoint.c
 TLMISCSOURCES = tlmisc.c
 TLALPHABETSOURCES = tlalphabet.c
-TLSEQIOSOURCES = tlseqio.c
-
+TLSEQIOSOURCES = tlseqio.c tlseqbuffer.c
+TLHTSWRAPSOURCES = tlhtswrap.c tlseqbuffer.c
 #lib_LTLIBRARIES = libgettext.la
 #libgettext_la_SOURCES = gettext.c gettext.h …
 
@@ -41,8 +41,15 @@ tlbitvec.h \
 tlrbtree.h \
 tlcheckpoint.h \
 tlmisc.h \
-tlalphabet.h \
-tlseqio.h 
+tlalphabet.h
+
+if ENABLE_HTS
+include_HEADERS += tlseqio.h tlseqbuffer.h
+else
+if ENABLE_ZLIB
+include_HEADERS += tlseqio.h tlseqbuffer.h
+endif
+endif
 
 
 
@@ -57,7 +64,15 @@ $(TLRBTREESOURCES) \
 $(TLCHECKPOINTSOURCES) \
 $(TLMISCSOURCES) \
 $(TLALPHABETSOURCES)
-# !ENABLE_ZLIB actually works!
+
+
 if ENABLE_HTS
+libtldevel_la_SOURCES += $(TLHTSWRAPSOURCES)
+else
+if ENABLE_ZLIB
 libtldevel_la_SOURCES += $(TLSEQIOSOURCES)
 endif
+endif
+
+
+
