@@ -6,6 +6,7 @@ int main(int argc, char *argv[])
 {
         struct file_handler* f = NULL;
         struct file_handler* f_out = NULL;
+        struct file_handler* f_out_bam = NULL;
         struct tl_seq_buffer* sb = NULL;
 
         if(argc > 1){
@@ -13,6 +14,10 @@ int main(int argc, char *argv[])
 
 
                 RUN(open_fasta_fastq_file(&f_out, "Dummy.fastq.gz", TLSEQIO_WRITE ));
+
+#ifdef HAVE_HTS
+                RUN(open_sam_bam(&f_out_bam, "Dummy.bam", TLSEQIO_WRITE ));
+#endif
                 //int total_r = 0;
                 //int total_w = 0;
                 while(1){
@@ -42,11 +47,17 @@ int main(int argc, char *argv[])
                         //total_w+= sb->num_seq;
                         //LOG_MSG("%d %d",total_r,total_w);
                         RUN(write_fasta_fastq(sb, f_out));
+                        #ifdef HAVE_HTS
+                        RUN(write_bam(sb,f_out_bam));
+                        #endif
                 }
 
                 free_tl_seq_buffer(sb);
                 RUN(close_seq_file(&f));
                 RUN(close_seq_file(&f_out));
+#ifdef HAVE_HTS
+                RUN(close_seq_file(&f_out_bam));
+#endif
                 //fprintf(stdout,"%p",f);
         }
 

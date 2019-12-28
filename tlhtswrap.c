@@ -1,5 +1,5 @@
 
-
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <zlib.h>
@@ -26,7 +26,7 @@ KSEQ_INIT(gzFile, gzread)
 
 #define bam1_seq_seti(s, i, c) ( (s)[(i)>>1] = ((s)[(i)>>1] & 0xf<<(((i)&1)<<2)) | (c)<<((~(i)&1)<<2) )
 
-
+static void tlseq_to_bam_t(struct tl_seq *seq, bam1_t *b);
 struct file_handler{
         kseq_t *kfasta;
         gzFile fp_fa;
@@ -168,7 +168,7 @@ int read_fasta_fastq_file(struct file_handler* fh, struct tl_seq_buffer** seq_bu
                          tmp[i] = ks->seq.s[i];
                 }
                 tmp[ks->seq.l] =0;
-
+                sb->sequences[sb->num_seq]->len = ks->seq.l;
                 if(ks->qual.l){
                         sb->is_fastq = 1;
                         tmp = sb->sequences[sb->num_seq]->qual;
@@ -210,7 +210,7 @@ int write_fasta_fastq(struct tl_seq_buffer* sb, struct file_handler* fh)
         fp_out = fh->fp_out;
         r = 0;
         for(i = 0; i < sb->num_seq;i++){
-
+                fprintf(stdout,"LEN:%d\n", sb->sequences[i]->len);
                 fp_out->line.l = 0;
                 r |= kputc('@', &fp_out->line) < 0;
                 r |= kputs(sb->sequences[i]->name, &fp_out->line) < 0;
@@ -247,6 +247,38 @@ ERROR:
         return FAIL;
 }
 
+int write_bam(struct tl_seq_buffer* sb, struct file_handler* fh)
+{
+
+
+        sam_hdr_t* header;
+        htsFile* fp_out;
+        int res;
+        int i,r;
+
+        ASSERT(sb != NULL, "No sequence buffer");
+
+        ASSERT(fh->fp_out != NULL, "file handle is NULL");
+        fp_out = fh->fp_out;
+        header = fh->header;
+
+
+        r = 0;
+        for(i = 0; i < sb->num_seq;i++){
+                bam1_t *q = bam_init1();
+
+                tlseq_to_bam_t(sb->sequences[i], q);
+
+                res = sam_write1(fp_out, header, q);
+                bam_destroy1(q);
+
+        }
+
+        return OK;
+ERROR:
+        return FAIL;
+}
+
 int close_seq_file(struct file_handler** fh)
 {
         struct file_handler* f_hand = NULL;
@@ -274,4 +306,47 @@ int close_seq_file(struct file_handler** fh)
         return OK;
 ERROR:
         return FAIL;
+}
+
+
+
+
+
+void tlseq_to_bam_t(struct tl_seq *seq, bam1_t *b)
+{
+        int len;
+        int seq_l = seq->len; // seq length after trim the barcode
+        LOG_MSG("LEN:%d\n",seq->len);
+        len = strnlen(seq->name, TL_SEQ_MAX_NAME_LEN);
+        b->l_data = len + 1 + (int)(1.5 * seq_l + (seq_l % 2 != 0)); // +1 includes the tailing '\0'
+        if (b->m_data < b->l_data)
+        {
+                b->m_data = b->l_data;
+                kroundup32(b->m_data);
+                b->data = (uint8_t*)realloc(b->data, b->m_data);
+        }
+        b->core.tid = -1;
+        b->core.pos = -1;
+        b->core.mtid = -1;
+        b->core.mpos = -1;
+        b->core.flag = BAM_FUNMAP;
+        b->core.l_qname = len + 1; // +1 includes the tailing '\0'
+        b->core.l_qseq = seq_l;
+        b->core.n_cigar = 0; // we have no cigar sequence
+        memcpy(b->data, seq->name, sizeof(char) * len); // first set qname
+        b->data[len] = '\0';
+        uint8_t *s = bam_get_seq(b);
+        int i = 0;
+        for (i = 0; i < b->core.l_qseq; ++i) // set sequence
+        {
+                bam1_seq_seti(s, i, seq_nt16_table[(int)seq->seq[i]]);
+                fprintf(stdout,"%d\n",s[i]);
+        }
+
+        s = bam_get_qual(b);
+
+        for (i = 0; i < b->core.l_qseq; ++i) // set quality
+        {
+                s[i] = seq->qual[i]-33;
+        }
 }
