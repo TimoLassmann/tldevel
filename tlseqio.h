@@ -11,10 +11,6 @@
 #endif
 
 
-#include <zlib.h>
-
-
-
 #define TLSEQIO_READ 0
 
 #define TLSEQIO_WRITE 1

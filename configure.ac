@@ -13,12 +13,10 @@ AM_SILENT_RULES([no])
 LT_INIT
 AC_CONFIG_MACRO_DIRS([m4])
 
+
 m4_include([m4/ax_check_zlib.m4])
 m4_include([m4/ax_check_compile_flag.m4])
-m4_include([m4/ax_set_compile_flags.m4])
-
-
-
+m4_include([m4/tldevel_set_compile_flags.m4])
 
 
 AX_CHECK_ZLIB(
@@ -32,12 +30,11 @@ AM_CONDITIONAL([ENABLE_ZLIB], [test "$zlib_cv_zlib_h" = "yes"])
 ,
 AC_MSG_WARN([Zlib not found!!!]))
 
+
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-lm':
 AC_CHECK_LIB([m], [log])
 AC_CHECK_LIB([pthread], [pthread_create])
-
-#AC_CHECK_LIB([hts],[fai_build])
 
 # Checks for header files.
 AC_CHECK_HEADERS([stdlib.h])
@@ -73,6 +70,44 @@ AC_CHECK_FUNCS([strdup])
 AC_CHECK_FUNCS([strtol])
 
 
+AC_ARG_WITH([htsdir],
+  [AS_HELP_STRING([--with-htsdir=DIR],
+    [use the HTSlib source tree or installation in DIR]),
+    ],
+  [], [with_htsdir=no])
+
+AS_IF([test "$with_htsdir" = "no"],[
+   AC_CHECK_HEADER([htslib/sam.h],
+      [AC_CHECK_LIB(hts, hts_version, [ax_cv_htslib=yes], [ax_cv_htslib=no])],
+      [ax_cv_htslib=no], [;])
+
+   AM_CONDITIONAL([ENABLE_HTS], [test "$ax_cv_htslib" = "yes"])
+
+   AS_IF([test "$ax_cv_htslib" = "yes"],[
+      LIBS="-lhts $LIBS"
+      AC_DEFINE([HAVE_HTS], [1],[Define to 1 if you have `z' library (-lz)])
+   ])
+],[
+
+  HTSDIR=$with_htsdir
+  if test -f "$HTSDIR/hts.c" && test -f "$HTSDIR/htslib/hts.h"; then
+    ax_cv_local_htslib=yes
+    else
+    ax_cv_local_htslib=no
+  fi
+
+   AS_IF([test "$ax_cv_local_htslib" = "no"],
+      [AC_MSG_ERROR([Local hts library was not found here: $HTSDIR  ])],
+   [
+   CPPFLAGS="$CPPFLAGS -I${HTSDIR}/htslib"
+   LDFLAGS="$LDFLAGS -L${HTSDIR}"
+   LIBS="-lhts $LIBS"
+   ]
+   )
+
+   AM_CONDITIONAL([ENABLE_HTS], [test "$ax_cv_local_htslib" = "yes"])
+])
+
 
 # non-standard stuff
 
@@ -92,9 +127,6 @@ AX_ENABLE_DEBUG
 
 AX_VALGRIND_DFLT([memcheck], [on])
 AX_VALGRIND_CHECK
-
-
-#AC_CANONICAL_HOST
 
 AC_SUBST([DATE]) DATE="`date`"
 
@@ -118,6 +150,7 @@ AC_CONFIG_HEADERS([config.h])
 
 AC_OUTPUT
 
+
 AC_MSG_NOTICE([---------------------------------------------------------])
 AC_MSG_NOTICE([Configuration complete - $PACKAGE_NAME-$PACKAGE_VERSION])
 AC_MSG_NOTICE([])
@@ -134,4 +167,18 @@ AC_MSG_NOTICE([               LDFLAGS: $LDFLAGS])
 AC_MSG_NOTICE([    Installation point: $prefix])
 AC_MSG_NOTICE([---------------------------------------------------------])
 
+AS_IF([test "$ax_cv_htslib" = "no"],[
+   AC_MSG_NOTICE([])
+   AC_MSG_NOTICE([---------------------------------------------------------])
+   AC_MSG_WARN([Could not find the hts library!])
+   AC_MSG_WARN([The tldevel library will be compiled without:])
+   AC_MSG_WARN([- fasta I/O])
+   AC_MSG_WARN([- fastq I/O])
+   AC_MSG_WARN([- SAM/BAM/CRAM I/O])
+   AC_MSG_WARN([download & install the library from here: ])
+   AC_MSG_WARN([https://github.com/samtools/htslib])
+   AC_MSG_WARN([and re-run configure])
+   AC_MSG_NOTICE([---------------------------------------------------------])
+   AC_MSG_NOTICE([])
+])
 

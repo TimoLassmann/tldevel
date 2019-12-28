@@ -12,6 +12,10 @@ AM_LDFLAGS += -Wno-undef
 lib_LTLIBRARIES = libtldevel.la
 #noinst_LIBRARIES = libtldevel.a
 
+#     HTSLIB_CPPFLAGS     Preprocessor flags for compiling with HTSlib
+#     HTSLIB_LDFLAGS      Linker flags for linking with HTSlib
+
+
 TLHASHTABLESOURCES = tlhashtable.c
 TLMINHASHSOURCES = tlminhash.c
 TLDEVELSOURCES = tldevel.c
@@ -54,6 +58,6 @@ $(TLCHECKPOINTSOURCES) \
 $(TLMISCSOURCES) \
 $(TLALPHABETSOURCES)
 # !ENABLE_ZLIB actually works!
-if ENABLE_ZLIB
+if ENABLE_HTS
 libtldevel_la_SOURCES += $(TLSEQIOSOURCES)
 endif

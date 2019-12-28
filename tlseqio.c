@@ -1,9 +1,12 @@
 
-#include <string.h>
-
 
 #include "tldevel.h"
+#include <zlib.h>
+#include <string.h>
+
 #include "tlmisc.h"
+
+
 
 #define TLSEQIO_IMPORT
 #include "tlseqio.h"
@@ -44,7 +47,6 @@ struct file_handler{
         int write_state;
         int gz;
 };
-
 static int detect_fasta_fastq(const char* b, int len, int* type);
 
 static int read_sequences(struct file_handler*fh, struct tl_seq_buffer* sb, int num);
