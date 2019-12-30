@@ -71,7 +71,6 @@ int get_dim2(void* ptr,int* d)
         int alloc_1D_array_size_ ##type (type **array, int dim1) {      \
                 mem_i* h = NULL;                                        \
                 void* tmp = NULL;                                       \
-                LOG_MSG("running somethign");                           \
                 ASSERT(dim1 >= 1,"DIM1 is too small: %d",dim1);         \
                 if(*array == NULL){                                      \
                         MMALLOC(tmp,(dim1  * sizeof **array + sizeof(mem_i))); \
