@@ -210,7 +210,7 @@ int write_fasta_fastq(struct tl_seq_buffer* sb, struct file_handler* fh)
         fp_out = fh->fp_out;
         r = 0;
         for(i = 0; i < sb->num_seq;i++){
-                fprintf(stdout,"LEN:%d\n", sb->sequences[i]->len);
+                //fprintf(stdout,"LEN:%d\n", sb->sequences[i]->len);
                 fp_out->line.l = 0;
                 r |= kputc('@', &fp_out->line) < 0;
                 r |= kputs(sb->sequences[i]->name, &fp_out->line) < 0;
