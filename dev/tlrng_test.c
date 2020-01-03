@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
         }
 
         printHistogram(values,num_val);
-
+        MFREE(values);
 
         free_rng(rng);
         free_rng(rng_second);
