@@ -64,6 +64,8 @@ int tl_random_int(struct rng_state* rng,int a)
         return (int) (tl_random_double(rng) * a);
 }
 
+/* from:  */
+//https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
 double tl_random_gaussian(struct rng_state* rng, double mu, double sigma)
 {
         rng->gen = !rng->gen;
