@@ -18,6 +18,7 @@ EXTERN struct rng_state* init_rng_from_rng(struct rng_state* rng);
 EXTERN void free_rng(struct rng_state* rng);
 
 EXTERN double tl_random_double(struct rng_state* rng);
+EXTERN double tl_random_gaussian(struct rng_state* rng, double mu, double sigma);
 EXTERN int tl_random_int(struct rng_state* rng,int a);
 
 #undef TLRNG_IMPORT

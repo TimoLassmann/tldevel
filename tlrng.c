@@ -2,6 +2,11 @@
 #include <time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <math.h>
+
+
+
+#define M_2PI 2.0*M_PI
 
 #include "tldevel.h"
 
@@ -30,6 +35,8 @@ See <http://creativecommons.org/publicdomain/zero/1.0/>. */
 
 struct rng_state{
         uint64_t s[4];
+        uint8_t gen;
+        double z1;
 };
 
 
@@ -57,6 +64,28 @@ int tl_random_int(struct rng_state* rng,int a)
         return (int) (tl_random_double(rng) * a);
 }
 
+double tl_random_gaussian(struct rng_state* rng, double mu, double sigma)
+{
+        rng->gen = !rng->gen;
+
+        if (!rng->gen){
+                return rng->z1 * sigma + mu;
+        }
+
+        double u1, u2;
+        do{
+                u1 = tl_random_double(rng);//  rand() * (1.0 / RAND_MAX);
+                u2 = tl_random_double(rng);//rand() * (1.0 / RAND_MAX);
+        } while (u1 <= DBL_EPSILON);
+
+        double z0;
+        z0 = sqrt(-2.0 * log(u1)) * cos(M_2PI * u2);
+        rng->z1 = sqrt(-2.0 * log(u1)) * sin(M_2PI * u2);
+
+        return z0 * sigma + mu;
+}
+
+
 
 struct rng_state* init_rng(uint64_t seed)
 {
@@ -65,6 +94,8 @@ struct rng_state* init_rng(uint64_t seed)
         uint64_t sanity;
 
         MMALLOC(s, sizeof(struct rng_state));
+        s->gen = 0;
+        s->z1 = 0.0f;
         if(!seed){
                 seed = choose_arbitrary_seed();
         }
@@ -116,6 +147,8 @@ struct rng_state* init_rng_from_rng(struct rng_state* rng)
 
         for(i = 0; i < 4;i++){
                 s->s[i] = rng->s[i];
+                s->gen = 0;
+                s->z1 = 0.0;
         }
         jump(s);
         return s;
