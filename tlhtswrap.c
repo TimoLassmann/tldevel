@@ -233,6 +233,10 @@ int write_fasta_fastq(struct tl_seq_buffer* sb, struct file_handler* fh)
                 fp_out->line.l = 0;
                 r |= kputc('@', &fp_out->line) < 0;
                 r |= kputs(sb->sequences[i]->name, &fp_out->line) < 0;
+                if(sb->sequences[i]->aux){
+                        r |= kputc(' ', &fp_out->line) < 0;
+                        r |= kputs(sb->sequences[i]->aux, &fp_out->line) < 0;
+                }
                 r |= kputc('\n', &fp_out->line) < 0;
                 r |= kputs(sb->sequences[i]->seq, &fp_out->line) < 0;
                 r |= kputc('\n', &fp_out->line) < 0;
