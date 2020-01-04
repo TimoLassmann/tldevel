@@ -216,7 +216,7 @@ struct rbtree_node* search_node(struct rbtree_root* root, struct rbtree_node* n,
                 c = root->compare(root->key(n->data_node),key);
                 if(c == 0){
                         return n;
-                }else if(c > 0){
+                }else if(c < 0){
                         //DPRINTF3("going right.");
                         if(n->right){
 
@@ -412,7 +412,7 @@ struct rbtree_node* insert_val (struct rbtree_root* root, struct rbtree_node* n,
                 if(c){
                         n->right = insert_val(root, n->right , datanode);
                 }
-        }else if(c > 0){
+        }else if(c < 0){
                 n->right = insert_val(root, n->right , datanode);
         }else{
                 n->left = insert_val(root, n->left , datanode);
