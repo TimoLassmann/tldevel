@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
 
                                 sb->sequences[i]->aux = NULL;
                                 MMALLOC(sb->sequences[i]->aux,sizeof(char) * 1024);
-                                snprintf(sb->sequences[i]->aux,1024,"ZZ:Z:ABCD WW:Z:OTTO");
+                                snprintf(sb->sequences[i]->aux,1024,"FP:Z:CACG BC:Z:ACAGTG FP:Z:GGGG");
 
                         }
 

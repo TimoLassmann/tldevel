@@ -386,7 +386,7 @@ int tlseq_to_bam_t(struct tl_seq *seq, bam1_t *b)
                         aux_len = 0;
                         for(j = i+5; j < len;j++){
                                 if(seq->aux[j] == ' '){
-                                        data[aux_len] = 0;
+
                                         break;
                                 }
                                 data[aux_len] = (uint8_t)seq->aux[j];
@@ -395,6 +395,7 @@ int tlseq_to_bam_t(struct tl_seq *seq, bam1_t *b)
                                         ERROR_MSG("No space left in aux");
                                 }
                         }
+                        data[aux_len] = 0;
                         //fprintf(stdout,"%d Inseting: %c%c %c %d \n",i,tag[0],tag[1],type,aux_len);
                         bam_aux_append(b, tag, type, aux_len+1, data);
                         i+= 5 + aux_len;
