@@ -31,12 +31,9 @@ EXTERN int open_sam_bam(struct file_handler** fh, char* filename, int mode);
 EXTERN int read_fasta_fastq_file(struct file_handler* fh, struct tl_seq_buffer** seq_buf, int num);
 EXTERN int close_seq_file(struct file_handler** fh);
 
-EXTERN int write_fasta_fastq(struct tl_seq_buffer* sb, struct file_handler* fh);
+EXTERN int write_seq_buf(struct tl_seq_buffer* sb, struct file_handler* fh);
 
-#ifdef HAVE_HTS
-EXTERN int open_sam_bam(struct file_handler** fh, char* filename, int mode);
-EXTERN int write_bam(struct tl_seq_buffer* sb, struct file_handler* fh);
-#endif
+
 
 EXTERN int echo_file(struct file_handler* f);
 #undef TLSEQIO_IMPORT

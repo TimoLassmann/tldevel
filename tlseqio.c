@@ -48,7 +48,7 @@ struct file_handler{
         int gz;
 };
 static int detect_fasta_fastq(const char* b, int len, int* type);
-
+static int write_fasta_fastq(struct tl_seq_buffer* sb, struct file_handler* fh);
 static int read_sequences(struct file_handler*fh, struct tl_seq_buffer* sb, int num);
 
 static int parse_buf_fasta(struct file_handler* fh, struct tl_seq_buffer* sb,int num);
@@ -61,6 +61,14 @@ static void free_io_handler(struct file_handler* f);
 
 static int write_fasta_to_buf(struct tl_seq* seq, char* buf, int* index,int* write_ok);
 static int write_fastq_to_buf(struct tl_seq* seq, char* buf, int* index,int* write_ok);
+
+int write_seq_buf(struct tl_seq_buffer* sb, struct file_handler* fh)
+{
+        RUN(write_fasta_fastq(sb,fh));
+        return OK;
+ERROR:
+        return FAIL;
+}
 
 int open_fasta_fastq_file(struct file_handler** fh,char* filename, int mode)
 {
@@ -105,6 +113,7 @@ ERROR:
         free_io_handler(f);
         return FAIL;
 }
+
 int open_sam_bam(struct file_handler** fh, char* filename, int mode)
 {
         ERROR_MSG("Reading from sam/bam only supported if tldevel is compiled with hts");

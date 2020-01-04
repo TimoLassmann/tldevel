@@ -90,6 +90,7 @@ int alloc_tl_seq(struct tl_seq** sequence)
         s->seq = NULL;
         s->qual = NULL;
         s->name = NULL;
+        s->aux = NULL;
         MMALLOC(s->seq, sizeof(char)* s->malloc_len);
         MMALLOC(s->qual, sizeof(char) * s->malloc_len);
         MMALLOC(s->name, sizeof(char) * TL_SEQ_MAX_NAME_LEN);

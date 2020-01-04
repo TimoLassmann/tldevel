@@ -26,14 +26,21 @@ KSEQ_INIT(gzFile, gzread)
 
 #define bam1_seq_seti(s, i, c) ( (s)[(i)>>1] = ((s)[(i)>>1] & 0xf<<(((i)&1)<<2)) | (c)<<((~(i)&1)<<2) )
 
-static void tlseq_to_bam_t(struct tl_seq *seq, bam1_t *b);
+
+
 struct file_handler{
         kseq_t *kfasta;
         gzFile fp_fa;
         samFile *fp_out;
         sam_hdr_t* header;
         int mode;
+        uint8_t bam;
 };
+
+
+static int tlseq_to_bam_t(struct tl_seq *seq, bam1_t *b);
+static int write_fasta_fastq(struct tl_seq_buffer* sb, struct file_handler* fh);
+static int write_bam(struct tl_seq_buffer* sb, struct file_handler* fh);
 
 
 int open_fasta_fastq_file(struct file_handler** fh, char* filename, int mode)
@@ -48,7 +55,7 @@ int open_fasta_fastq_file(struct file_handler** fh, char* filename, int mode)
         f_hand->fp_out = NULL;
         f_hand->header = NULL;
         f_hand->kfasta = NULL;
-
+        f_hand->bam = 0;
         switch (mode) {
         case TLSEQIO_READ: {
                 ASSERT(my_file_exists(filename) == 1,"File %s does not exist");
@@ -88,7 +95,7 @@ int open_sam_bam(struct file_handler** fh, char* filename, int mode)
         f_hand->fp_out = NULL;
         f_hand->header = NULL;
         f_hand->kfasta = NULL;
-
+        f_hand->bam = 1;
         switch (mode) {
         case TLSEQIO_READ: {
                 ERROR_MSG("Reading from sam/ bam is currently not supported");
@@ -196,6 +203,18 @@ ERROR:
         return FAIL;
 }
 
+int write_seq_buf(struct tl_seq_buffer* sb, struct file_handler* fh)
+{
+        if(fh->bam){
+                RUN(write_bam(sb, fh));
+        }else{
+                RUN(write_fasta_fastq(sb, fh));
+        }
+        return OK;
+ERROR:
+        return FAIL;
+}
+
 
 int write_fasta_fastq(struct tl_seq_buffer* sb, struct file_handler* fh)
 {
@@ -267,7 +286,7 @@ int write_bam(struct tl_seq_buffer* sb, struct file_handler* fh)
         for(i = 0; i < sb->num_seq;i++){
                 bam1_t *q = bam_init1();
 
-                tlseq_to_bam_t(sb->sequences[i], q);
+                RUN(tlseq_to_bam_t(sb->sequences[i], q));
 
                 res = sam_write1(fp_out, header, q);
                 bam_destroy1(q);
@@ -308,15 +327,12 @@ ERROR:
         return FAIL;
 }
 
-
-
-
-
-void tlseq_to_bam_t(struct tl_seq *seq, bam1_t *b)
+int tlseq_to_bam_t(struct tl_seq *seq, bam1_t *b)
 {
         int len;
         int seq_l = seq->len; // seq length after trim the barcode
-        LOG_MSG("LEN:%d\n",seq->len);
+
+        //LOG_MSG("LEN:%d\n",seq->len);
         len = strnlen(seq->name, TL_SEQ_MAX_NAME_LEN);
         b->l_data = len + 1 + (int)(1.5 * seq_l + (seq_l % 2 != 0)); // +1 includes the tailing '\0'
         if (b->m_data < b->l_data)
@@ -340,13 +356,49 @@ void tlseq_to_bam_t(struct tl_seq *seq, bam1_t *b)
         for (i = 0; i < b->core.l_qseq; ++i) // set sequence
         {
                 bam1_seq_seti(s, i, seq_nt16_table[(int)seq->seq[i]]);
-                fprintf(stdout,"%d\n",s[i]);
+                //fprintf(stdout,"%d\n",s[i]);
         }
 
         s = bam_get_qual(b);
 
-        for (i = 0; i < b->core.l_qseq; ++i) // set quality
-        {
+        for (i = 0; i < b->core.l_qseq; ++i){
                 s[i] = seq->qual[i]-33;
         }
+
+        if(seq->aux){
+                len = strlen(seq->aux);
+                int j = 0;
+                int c;
+                char tag[2];
+                char type;
+                int aux_len;
+                uint8_t data[256];
+                for(i = 0;i < len;i++){
+                        tag[0] = seq->aux[i+0];
+                        tag[1] = seq->aux[i+1];
+                        ASSERT(seq->aux[i+2] == ':', "Tag is not formatted correctly: %s",seq->aux);
+                        type = seq->aux[i+3];
+                        ASSERT(seq->aux[i+4] == ':', "Tag is not formatted correctly: %s",seq->aux);
+                        aux_len = 0;
+                        for(j = i+5; j < len;j++){
+                                if(seq->aux[j] == ' '){
+                                        break;
+                                }
+                                data[aux_len] = (uint8_t)seq->aux[j];
+                                aux_len++;
+                                if(aux_len == 256){
+                                        ERROR_MSG("No space left in aux");
+                                }
+                        }
+                        //fprintf(stdout,"%d Inseting: %c%c %c %d \n",i,tag[0],tag[1],type,aux_len);
+                        bam_aux_append(b, tag, type, aux_len+1, data);
+                        i+= 5 + aux_len;
+
+                }
+                //int bam_aux_append(bam1_t *b, const char tag[2], char type, int len, const uint8_t *data);
+        }
+        return OK;
+ERROR:
+
+        return FAIL;
 }

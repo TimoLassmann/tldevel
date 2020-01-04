@@ -8,11 +8,11 @@
 #define EXTERN extern
 #endif
 
-
 struct tl_seq{
         char* seq;
         char* name;
         char* qual;
+        char* aux;
         int malloc_len;
         int len;
 };

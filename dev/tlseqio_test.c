@@ -8,16 +8,16 @@ int main(int argc, char *argv[])
         struct file_handler* f_out = NULL;
         struct file_handler* f_out_bam = NULL;
         struct tl_seq_buffer* sb = NULL;
-
+        int i;
         if(argc > 1){
                 RUN(open_fasta_fastq_file(&f, argv[1], TLSEQIO_READ));
 
 
                 RUN(open_fasta_fastq_file(&f_out, "Dummy.fastq.gz", TLSEQIO_WRITE ));
 
-#ifdef HAVE_HTS
+//#ifdef HAVE_HTS
                 RUN(open_sam_bam(&f_out_bam, "Dummy.bam", TLSEQIO_WRITE ));
-#endif
+//#endif
                 //int total_r = 0;
                 //int total_w = 0;
                 while(1){
@@ -25,20 +25,13 @@ int main(int argc, char *argv[])
                         RUN(read_fasta_fastq_file(f, &sb, 1000));
                         //total_r+= sb->num_seq;
                         LOG_MSG("Finished reading chunk: found %d ",sb->num_seq);
-                        /*for(i = 0; i < sb->num_seq;i++){
+                        for(i = 0; i < sb->num_seq;i++){
 
-                                fprintf(stdout,"%s\n", sb->sequences[i]->name);
-                                for(j = 0; j < sb->sequences[i]->len;j++){
-                                        fprintf(stdout,"%c",(char)sb->sequences[i]->seq[j]);
-                                }
-                                fprintf(stdout,"\n");
+                                sb->sequences[i]->aux = NULL;
+                                MMALLOC(sb->sequences[i]->aux,sizeof(char) * 1024);
+                                snprintf(sb->sequences[i]->aux,1024,"ZZ:Z:ABCD WW:Z:OTTO");
 
-                                for(j = 0; j < sb->sequences[i]->len;j++){
-                                        fprintf(stdout,"%c",sb->sequences[i]->qual[j]);
-                                }
-                                fprintf(stdout,"\n");
-
-                        }*/
+                        }
 
 
                         if(sb->num_seq == 0){
@@ -46,18 +39,23 @@ int main(int argc, char *argv[])
                         }
                         //total_w+= sb->num_seq;
                         //LOG_MSG("%d %d",total_r,total_w);
-                        RUN(write_fasta_fastq(sb, f_out));
-                        #ifdef HAVE_HTS
-                        RUN(write_bam(sb,f_out_bam));
-                        #endif
+                        RUN(write_seq_buf(sb,f_out));
+                            //RUN(write_fasta_fastq(sb, f_out));
+                            //#ifdef HAVE_HTS
+                        RUN(write_seq_buf(sb,f_out_bam));
+                            //#endif
+                        for(i = 0; i < sb->num_seq;i++){
+                                MFREE(sb->sequences[i]->aux);
+                        }
+
                 }
 
                 free_tl_seq_buffer(sb);
                 RUN(close_seq_file(&f));
                 RUN(close_seq_file(&f_out));
-#ifdef HAVE_HTS
+//#ifdef HAVE_HTS
                 RUN(close_seq_file(&f_out_bam));
-#endif
+//#endif
                 //fprintf(stdout,"%p",f);
         }
 
