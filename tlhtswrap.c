@@ -317,7 +317,7 @@ int close_seq_file(struct file_handler** fh)
                 hts_close(f_hand->fp_out);
         }
         if(f_hand->header){
-
+                sam_hdr_destroy(f_hand->header);
         }
         if(f_hand->kfasta){
                 kseq_destroy(f_hand->kfasta);
@@ -386,6 +386,7 @@ int tlseq_to_bam_t(struct tl_seq *seq, bam1_t *b)
                         aux_len = 0;
                         for(j = i+5; j < len;j++){
                                 if(seq->aux[j] == ' '){
+                                        data[aux_len] = 0;
                                         break;
                                 }
                                 data[aux_len] = (uint8_t)seq->aux[j];
