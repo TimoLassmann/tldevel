@@ -31,6 +31,11 @@ TLHTSWRAPSOURCES = tlhtswrap.c tlseqbuffer.c
 #lib_LTLIBRARIES = libgettext.la
 #libgettext_la_SOURCES = gettext.c gettext.h …
 
+# From klib
+
+KSTRING_SOURCES =  kstring.c 
+
+
 include_HEADERS = \
 tlhashtable.h \
 tlminhash.h \
@@ -41,8 +46,8 @@ tlbitvec.h \
 tlrbtree.h \
 tlcheckpoint.h \
 tlmisc.h \
-tlalphabet.h
-
+tlalphabet.h \
+kstring.h
 if ENABLE_HTS
 include_HEADERS += tlseqio.h tlseqbuffer.h
 else
@@ -63,8 +68,8 @@ $(TLBITVECSOURCES) \
 $(TLRBTREESOURCES) \
 $(TLCHECKPOINTSOURCES) \
 $(TLMISCSOURCES) \
-$(TLALPHABETSOURCES)
-
+$(TLALPHABETSOURCES) \
+$(KSTRING_SOURCES)
 
 if ENABLE_HTS
 libtldevel_la_SOURCES += $(TLHTSWRAPSOURCES)

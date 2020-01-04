@@ -17,13 +17,19 @@ hash_test \
 minhash_test \
 alphabet_test \
 seqio_test \
-demo
+demo \
+kstring_test
 
 TESTS = $(TESTLIST)
 
 check_PROGRAMS = $(TESTLIST)
 
-demo_SOURCES = demo.c
+demo_SOURCES= demo.c
+
+kstring_test_sources = kstring_test.c
+kstring_test_CPPFLAGS = $(AM_CPPFLAGS)
+kstring_test_LDADD = ../libtldevel.la
+
 
 tldevel_test_SOURCES = tldevel_test.c
 tldevel_test_CPPFLAGS = $(AM_CPPFLAGS)
