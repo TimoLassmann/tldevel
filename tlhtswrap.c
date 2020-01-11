@@ -134,8 +134,8 @@ int read_fasta_fastq_file(struct file_handler* fh, struct tl_seq_buffer** seq_bu
         kseq_t *ks;
         int l;
         int i;
-        int j;
-        int c;
+        //int j;
+        //int c;
         char* tmp;
         ASSERT(fh!= NULL, "No file handler");
         ASSERT(num > 0, "Need to read more than %d sequences",num);
@@ -197,6 +197,9 @@ int read_fasta_fastq_file(struct file_handler* fh, struct tl_seq_buffer** seq_bu
                 }
         }
 
+        if(sb->base_quality_offset == 0){
+                RUN(detect_format(sb));
+        }
         *seq_buf = sb;
         return OK;
 ERROR:
@@ -277,7 +280,7 @@ int write_bam(struct tl_seq_buffer* sb, struct file_handler* fh)
         sam_hdr_t* header;
         htsFile* fp_out;
         int res;
-        int i,r;
+        int i;
 
         ASSERT(sb != NULL, "No sequence buffer");
 
@@ -285,8 +288,6 @@ int write_bam(struct tl_seq_buffer* sb, struct file_handler* fh)
         fp_out = fh->fp_out;
         header = fh->header;
 
-
-        r = 0;
         for(i = 0; i < sb->num_seq;i++){
                 bam1_t *q = bam_init1();
 
@@ -372,7 +373,7 @@ int tlseq_to_bam_t(struct tl_seq *seq, bam1_t *b)
         if(seq->aux){
                 len = strlen(seq->aux);
                 int j = 0;
-                int c;
+                //int c;
                 char tag[2];
                 char type;
                 int aux_len;

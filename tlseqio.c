@@ -148,6 +148,11 @@ int read_fasta_fastq_file(struct file_handler* fh, struct tl_seq_buffer** seq_bu
         /* reading  */
         RUN(read_sequences(fh,sb,num));
 
+        if(sb->base_quality_offset == 0){
+                RUN(detect_format(sb));
+        }
+
+
         *seq_buf = sb;
         return OK;
 ERROR:

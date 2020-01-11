@@ -156,10 +156,6 @@ EXTERN int get_dim2(void* ptr, int* d);
 #define macro_dispatcher__(func, nargs) func ## nargs
 */
 
-
-
-
-
 #define ALLOC_1D_ARRAY_DEF(type)                                  \
         EXTERN int alloc_1D_array_size_ ##type (type **array, int dim1)
 

@@ -23,6 +23,8 @@ int main(int argc, char *argv[])
                 while(1){
 
                         RUN(read_fasta_fastq_file(f, &sb, 1000));
+
+                        detect_format(sb);
                         //total_r+= sb->num_seq;
                         LOG_MSG("Finished reading chunk: found %d ",sb->num_seq);
                         for(i = 0; i < sb->num_seq;i++){

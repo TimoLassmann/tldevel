@@ -33,7 +33,7 @@ TLHTSWRAPSOURCES = tlhtswrap.c tlseqbuffer.c
 
 # From klib
 
-KSTRING_SOURCES =  kstring.c 
+KSTRING_SOURCES =  kstring.c
 
 
 include_HEADERS = \
