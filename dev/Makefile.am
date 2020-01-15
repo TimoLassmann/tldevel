@@ -18,7 +18,8 @@ minhash_test \
 alphabet_test \
 seqio_test \
 demo \
-kstring_test
+kstring_test \
+khash_test
 
 TESTS = $(TESTLIST)
 
@@ -26,7 +27,12 @@ check_PROGRAMS = $(TESTLIST)
 
 demo_SOURCES= demo.c
 
-kstring_test_sources = kstring_test.c
+khash_test_SOURCES = khash_test.c
+khash_test_CPPFLAGS = $(AM_CPPFLAGS)
+khash_test_LDADD = ../libtldevel.la
+
+
+kstring_test_SOURCES = kstring_test.c
 kstring_test_CPPFLAGS = $(AM_CPPFLAGS)
 kstring_test_LDADD = ../libtldevel.la
 

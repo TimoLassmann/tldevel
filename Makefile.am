@@ -47,7 +47,9 @@ tlrbtree.h \
 tlcheckpoint.h \
 tlmisc.h \
 tlalphabet.h \
-kstring.h
+kstring.h \
+khash.h
+
 if ENABLE_HTS
 include_HEADERS += tlseqio.h tlseqbuffer.h
 else

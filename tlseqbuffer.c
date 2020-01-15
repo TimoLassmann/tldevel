@@ -56,6 +56,10 @@ int detect_format(struct tl_seq_buffer* sb)
                 int illumina_15_line;
         } res;
 
+
+        if(sb->num_seq == 0){
+                return OK;
+        }
         /* init */
         res.illumina15_name = 0;
         res.illumina18_name = 0;
