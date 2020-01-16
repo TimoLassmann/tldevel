@@ -226,11 +226,7 @@ int detect_format(struct tl_seq_buffer* sb)
         return OK;
 }
 
-
-
-
 /* Memory functions  */
-
 int alloc_tl_seq_buffer(struct tl_seq_buffer** seq_buf, int size)
 {
         struct tl_seq_buffer* sb = NULL;

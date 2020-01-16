@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <time.h>
 #include <math.h>
 #include <float.h>
@@ -153,6 +154,7 @@ EXTERN int get_dim2(void* ptr, int* d);
 
 #define macro_dispatcher(func, ...) macro_dispatcher_(func, VA_NUM_ARGS(__VA_ARGS__))
 #define macro_dispatcher_(func, nargs) macro_dispatcher__(func, nargs)
+
 #define macro_dispatcher__(func, nargs) func ## nargs
 */
 
@@ -160,6 +162,7 @@ EXTERN int get_dim2(void* ptr, int* d);
         EXTERN int alloc_1D_array_size_ ##type (type **array, int dim1)
 
 ALLOC_1D_ARRAY_DEF(char);
+ALLOC_1D_ARRAY_DEF(uint8_t);
 ALLOC_1D_ARRAY_DEF(int);
 ALLOC_1D_ARRAY_DEF(float);
 ALLOC_1D_ARRAY_DEF(double);
@@ -168,6 +171,7 @@ ALLOC_1D_ARRAY_DEF(double);
         EXTERN int alloc_2D_array_size_ ##type (type ***array, int dim1,int dim2)
 
 ALLOC_2D_ARRAY_DEF(char);
+ALLOC_2D_ARRAY_DEF(uint8_t);
 ALLOC_2D_ARRAY_DEF(int);
 ALLOC_2D_ARRAY_DEF(float);
 ALLOC_2D_ARRAY_DEF(double);
@@ -184,16 +188,19 @@ ALLOC_2D_ARRAY_DEF(double);
 
 
 FREE_VOID_DEF(char);
+FREE_VOID_DEF(uint8_t);
 FREE_VOID_DEF(int);
 FREE_VOID_DEF(float);
 FREE_VOID_DEF(double);
 
 FREE_1D_ARRAY_DEF(char);
+FREE_1D_ARRAY_DEF(uint8_t);
 FREE_1D_ARRAY_DEF(int);
 FREE_1D_ARRAY_DEF(float);
 FREE_1D_ARRAY_DEF(double);
 
 FREE_2D_ARRAY_DEF(char);
+FREE_2D_ARRAY_DEF(uint8_t);
 FREE_2D_ARRAY_DEF(int);
 FREE_2D_ARRAY_DEF(float);
 FREE_2D_ARRAY_DEF(double);
@@ -205,20 +212,22 @@ EXTERN int galloc_too_few_arg_error (void* p);
                        default: galloc_too_few_arg_error  \
                 )(X)
 
-#define p2(X,Y) _Generic((X),                                 \
-                         char**: alloc_1D_array_size_char,    \
-                         int**: alloc_1D_array_size_int,      \
-                         float**:  alloc_1D_array_size_float, \
-                         double**:alloc_1D_array_size_double, \
-                         default: galloc_unknown_type_error  \
+#define p2(X,Y) _Generic((X),                                     \
+                         char**: alloc_1D_array_size_char,        \
+                         uint8_t**: alloc_1D_array_size_uint8_t,  \
+                         int**: alloc_1D_array_size_int,          \
+                         float**:  alloc_1D_array_size_float,     \
+                         double**:alloc_1D_array_size_double,     \
+                         default: galloc_unknown_type_error       \
                 )(X,Y)
 
-#define p3(X,Y,Z) _Generic((X),                                 \
-                           char***: alloc_2D_array_size_char,    \
-                           int***: alloc_2D_array_size_int,      \
-                           float***:  alloc_2D_array_size_float, \
-                           double***:alloc_2D_array_size_double, \
-                           default: galloc_unknown_type_error   \
+#define p3(X,Y,Z) _Generic((X),                                     \
+                           char***: alloc_2D_array_size_char,       \
+                           uint8_t***: alloc_2D_array_size_uint8_t, \
+                           int***: alloc_2D_array_size_int,         \
+                           float***:  alloc_2D_array_size_float,    \
+                           double***:alloc_2D_array_size_double,    \
+                           default: galloc_unknown_type_error       \
                 )(X,Y,Z)
 
 
@@ -236,19 +245,22 @@ EXTERN int galloc_too_few_arg_error (void* p);
 
 
 
-#define gfree(X) _Generic((&X),                            \
-                          char*: gfree_void_char,          \
-                          int*: gfree_void_int,            \
-                          float*: gfree_void_float,        \
-                          double*: gfree_void_double,      \
-                          char**: free_1d_array_char,      \
-                          int**: free_1d_array_int,        \
-                          float**: free_1d_array_float,    \
-                          double**: free_1d_array_double,  \
-                          char***: free_2d_array_char,     \
-                          int***: free_2d_array_int,       \
-                          float***: free_2d_array_float,   \
-                          double***: free_2d_array_double  \
+#define gfree(X) _Generic((&X),                               \
+                          char*: gfree_void_char,             \
+                          uint8_t*: gfree_void_uint8_t,       \
+                          int*: gfree_void_int,               \
+                          float*: gfree_void_float,           \
+                          double*: gfree_void_double,         \
+                          char**: free_1d_array_char,         \
+                          uint8_t**: free_1d_array_uint8_t,   \
+                          int**: free_1d_array_int,           \
+                          float**: free_1d_array_float,       \
+                          double**: free_1d_array_double,     \
+                          char***: free_2d_array_char,        \
+                          uint8_t***: free_2d_array_uint8_t,  \
+                          int***: free_2d_array_int,          \
+                          float***: free_2d_array_float,      \
+                          double***: free_2d_array_double     \
                 )(&X)
 
 /* functions  */

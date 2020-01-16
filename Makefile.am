@@ -28,6 +28,7 @@ TLMISCSOURCES = tlmisc.c
 TLALPHABETSOURCES = tlalphabet.c
 TLSEQIOSOURCES = tlseqio.c tlseqbuffer.c
 TLHTSWRAPSOURCES = tlhtswrap.c tlseqbuffer.c
+TLHDF5WRAPSOURCES = tlhdf5wrap.c 
 #lib_LTLIBRARIES = libgettext.la
 #libgettext_la_SOURCES = gettext.c gettext.h …
 
@@ -59,6 +60,9 @@ endif
 endif
 
 
+if ENABLE_HDF5
+include_HEADERS += tlhdf5wrap.h tlhdf5wrap_types.h
+endif
 
 libtldevel_la_SOURCES = \
 $(TLHASHTABLESOURCES) \
@@ -81,5 +85,7 @@ libtldevel_la_SOURCES += $(TLSEQIOSOURCES)
 endif
 endif
 
-
+if ENABLE_HDF5
+libtldevel_la_SOURCES += $(TLHDF5WRAPSOURCES)
+endif
 

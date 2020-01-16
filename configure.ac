@@ -16,8 +16,31 @@ AC_CONFIG_MACRO_DIRS([m4])
 
 m4_include([m4/ax_check_zlib.m4])
 m4_include([m4/ax_check_compile_flag.m4])
+m4_include([m4/ax_lib_hdf5.m4])
 m4_include([m4/tldevel_set_compile_flags.m4])
 
+
+AX_ENABLE_DEBUG
+
+AX_LIB_HDF5([serial])
+if test "$with_hdf5" = "yes"; then
+
+dnl CC="$HDF5_CC"
+CFLAGS="${CFLAGS} ${HDF5_CFLAGS}"
+CPPFLAGS="${CPPFLAGS} ${HDF5_CFLAGS}"
+LDFLAGS="${LDFLAGS} ${HDF5_LDFLAGS}"
+LIBS="${LIBS} ${HDF5_LIBS}"
+else
+AC_MSG_ERROR([
+
+Unable to find HDF5, we need parallel HDF5.
+Install on fedora:
+sudo dnf install hdf5 hdf5-devel
+
+])
+fi
+
+AM_CONDITIONAL([ENABLE_HDF5], [test "$with_hdf5" = "yes"])
 
 AX_CHECK_ZLIB(
 [
@@ -124,7 +147,7 @@ DEAD_STRIP="-Wl,--gc-sections -Wl,--as-needed"
 esac
 AC_SUBST(DEAD_STRIP)
 
-AX_ENABLE_DEBUG
+
 
 AX_VALGRIND_DFLT([memcheck], [on])
 AX_VALGRIND_CHECK
@@ -179,6 +202,17 @@ AS_IF([test "$ax_cv_htslib" = "no"],[
    AC_MSG_WARN([download & install the library from here: ])
    AC_MSG_WARN([https://github.com/samtools/htslib])
    AC_MSG_WARN([and re-run configure])
+   AC_MSG_NOTICE([---------------------------------------------------------])
+   AC_MSG_NOTICE([])
+])
+
+
+AS_IF([test "$with_hdf5" = "no"],[
+   AC_MSG_NOTICE([])
+   AC_MSG_NOTICE([---------------------------------------------------------])
+   AC_MSG_WARN([Could not find the HDF5 library!])
+   AC_MSG_WARN([The tldevel library will be compiled without:])
+   AC_MSG_WARN([- hdf5 support ])
    AC_MSG_NOTICE([---------------------------------------------------------])
    AC_MSG_NOTICE([])
 ])
