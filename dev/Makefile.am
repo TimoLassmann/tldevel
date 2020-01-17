@@ -19,13 +19,18 @@ alphabet_test \
 seqio_test \
 demo \
 kstring_test \
-khash_test
+khash_test \
+hdf5_test
 
 TESTS = $(TESTLIST)
 
 check_PROGRAMS = $(TESTLIST)
 
 demo_SOURCES= demo.c
+
+hdf5_test_SOURCES = tlhdf5wrap_test.c
+hdf5_test_CPPFLAGS = $(AM_CPPFLAGS)
+hdf5_test_LDADD = ../libtldevel.la
 
 khash_test_SOURCES = khash_test.c
 khash_test_CPPFLAGS = $(AM_CPPFLAGS)
