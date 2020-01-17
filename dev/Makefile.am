@@ -19,8 +19,13 @@ alphabet_test \
 seqio_test \
 demo \
 kstring_test \
-khash_test \
-hdf5_test
+khash_test 
+
+
+if ENABLE_HDF5
+TESTLIST+= hdf5_test
+endif
+
 
 TESTS = $(TESTLIST)
 
