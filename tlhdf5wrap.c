@@ -24,26 +24,52 @@ static int clear_hdf5_attribute(struct hdf5_attribute* h);
 
 
 
+static int startof_galloc_char_s(char* x, void** ptr);
+static int startof_galloc_int_s(int* x, void** ptr);
+static int startof_galloc_float_s(float* x, void** ptr);
+static int startof_galloc_double_s(double* x, void** ptr);
+static int startof_galloc_char_ss(char** x, void** ptr);
+static int startof_galloc_int_ss(int** x, void** ptr);
+static int startof_galloc_float_ss(float** x, void** ptr);
+static int startof_galloc_double_ss(double** x, void** ptr);
+
+static int startof_galloc_unknown(void* x, void** ptr);
+
+#define HDFWRAP_START_GALLOC(P,T) _Generic((P),                         \
+                                           char*: startof_galloc_char_s, \
+                                           char**: startof_galloc_char_ss, \
+                                           int*: startof_galloc_int_s , \
+                                           int**: startof_galloc_int_ss, \
+                                           float*: startof_galloc_float_s, \
+                                           float**: startof_galloc_float_ss, \
+                                           double*: startof_galloc_double_s, \
+                                           double**: startof_galloc_double_ss, \
+                                           default: startof_galloc_unknown \
+                )(P,T)
+
+
+
+
 static int set_type_char(hid_t* type);
 static int set_type_int(hid_t* type);
 static int set_type_float(hid_t* type);
 static int set_type_double(hid_t* type);
 
-#define HDFWRAP_SET_TYPE(P,T) _Generic((P),     \
-                char: set_type_char,            \
-                char*: set_type_char,           \
-                char**: set_type_char,          \
-                int: set_type_int,              \
-                int*: set_type_int,             \
-                int**: set_type_int,            \
-                float: set_type_float,          \
-                float*: set_type_float,         \
-                float**: set_type_float,        \
-                double: set_type_double,        \
-                double*: set_type_double,       \
-                double**: set_type_double,      \
-                default: set_type_unknown       \
-)(T)
+#define HDFWRAP_SET_TYPE(P,T) _Generic((P),                       \
+                                       char: set_type_char,       \
+                                       char*: set_type_char,      \
+                                       char**: set_type_char,     \
+                                       int: set_type_int,         \
+                                       int*: set_type_int,        \
+                                       int**: set_type_int,       \
+                                       float: set_type_float,     \
+                                       float*: set_type_float,    \
+                                       float**: set_type_float,   \
+                                       double: set_type_double,   \
+                                       double*: set_type_double,  \
+                                       double**: set_type_double, \
+                                       default: set_type_unknown  \
+                )(T)
 
 
 int set_type_char(hid_t* type)
@@ -74,127 +100,138 @@ int set_type_double(hid_t* type)
 int set_type_unknown(hid_t* type)
 {
 
-        WARNING_MSG("Could not determine type!");
+        WARNING_MSG("Could not determine type! (%d)",type);
         return FAIL;
 }
 
-int add_dataset_int(struct hdf5_data* hdf5_data, char* group, char* name, int** data)
-{
-        int i;
-        int d1,d2;
-        //LOG_MSG("Looking for %s", group);
-        RUN(hdf5wrap_open_group(hdf5_data, group));
+#define HDF5WRAP_ADD_BODY                                               \
+        int i;                                                          \
+        int d1,d2;                                                      \
+        void* ptr = NULL;                                               \
+                                                                        \
+        RUN(hdf5wrap_open_group(hdf5_data, group));                     \
+                                                                        \
+        RUN(get_dim1(data, &d1));                                       \
+        RUN(get_dim2(data, &d2));                                       \
+                                                                        \
+        hdf5_data->dim[0] = d1;                                         \
+        hdf5_data->dim[1] = d2;                                         \
+        hdf5_data->chunk_dim[0] = d1;                                   \
+        hdf5_data->chunk_dim[1] = d2;                                   \
+                                                                        \
+        hdf5_data->rank = 1;                                            \
+        if(d2){                                                         \
+                hdf5_data->rank = 2;                                    \
+        }                                                               \
+                                                                        \
+        HDFWRAP_SET_TYPE(data,&hdf5_data->native_type);                 \
+                                                                        \
+        for(i = 0; i< hdf5_data->rank;i++){                             \
+                if(hdf5_data->chunk_dim[i] >  hdf5_data->dim[i]){       \
+                        ERROR_MSG("chunk dimenson exceeds dataset dimension:%d (rank) %d %d \n", i,hdf5_data->chunk_dim[i], hdf5_data->dim[i] ); \
+                }                                                       \
+                if(hdf5_data->chunk_dim[i] == 0){                       \
+                        hdf5_data->chunk_dim[i] = hdf5_data->dim[i];    \
+                }                                                       \
+        }                                                               \
+                                                                        \
+                                                                        \
+        snprintf(hdf5_data->dataset_name , HDF5GLUE_MAX_NAME_LEN,"%s",name); \
+        hdf5_data->status = H5Lexists(hdf5_data->group, hdf5_data->dataset_name, H5P_DEFAULT); \
+                                                                        \
+        if(!hdf5_data->status){                                         \
+        snprintf(hdf5_data->dataset_name , HDF5GLUE_MAX_NAME_LEN,"%s",name); \
+        if((hdf5_data->dataspace = H5Screate_simple(hdf5_data->rank,  hdf5_data->dim , NULL)) < 0)ERROR_MSG("H5Screate_simple failed."); \
+                                                                        \
+        if((hdf5_data->datatype = H5Tcopy(hdf5_data->native_type )) < 0) ERROR_MSG("H5Tcopy failed"); \
+                                                                        \
+        if((hdf5_data->status = H5Tset_order(hdf5_data->datatype, H5T_ORDER_LE)) < 0) ERROR_MSG("H5Tset_order failed."); \
+                                                                        \
+        if((hdf5_data->plist = H5Pcreate (H5P_DATASET_CREATE)) < 0) ERROR_MSG("H5Pcreate failed."); \
+                                                                        \
+        if((hdf5_data->status = H5Pset_shuffle (hdf5_data->plist )) < 0 )ERROR_MSG("H5Pset_shuffle failed."); \
+                                                                        \
+        if((hdf5_data->status = H5Pset_deflate (hdf5_data->plist, 2)) < 0 )ERROR_MSG("H5Pset_deflate failed."); \
+        if((hdf5_data->status = H5Pset_chunk (hdf5_data->plist, hdf5_data->rank,  hdf5_data->chunk_dim)) < 0 )ERROR_MSG("H5Pset_chunk failed."); \
+                                                                        \
+                                                                        \
+        if((hdf5_data->dataset = H5Dcreate(hdf5_data->group, hdf5_data->dataset_name, hdf5_data->datatype, hdf5_data->dataspace,    H5P_DEFAULT, hdf5_data->plist , H5P_DEFAULT)) < 0 )ERROR_MSG("H5Dcreate failed"); \
+                                                                        \
+           HDFWRAP_START_GALLOC(data,&ptr);                       \
+           LOG_MSG("PTR in body: %p", ptr);                             \
+           if((hdf5_data->status  = H5Dwrite(hdf5_data->dataset,hdf5_data->native_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr)) < 0) ERROR_MSG("H5Dwrite failed"); \
+                                                                        \
+        /* closing stuff */                                             \
+        if((hdf5_data->status = H5Sclose(hdf5_data->dataspace)) < 0) ERROR_MSG("H5Sclose failed"); \
+        if((hdf5_data->status = H5Pclose(hdf5_data->plist)) < 0) ERROR_MSG("H5Pclose failed"); \
+        if((hdf5_data->status = H5Tclose(hdf5_data->datatype)) < 0) ERROR_MSG("H5Tclose failed"); \
+        if((hdf5_data->status = H5Dclose(hdf5_data->dataset)) < 0) ERROR_MSG("H5Dclose failed"); \
+        }else{                                                          \
+                 if((hdf5_data->dataset = H5Dopen(hdf5_data->group,hdf5_data->dataset_name ,H5P_DEFAULT)) == -1)ERROR_MSG("H5Dopen failed\n"); \
+                                                                        \
+                 hdf5_data->datatype  = H5Dget_type(hdf5_data->dataset );     /* datatype handle */ \
+                                                                        \
+                 if(!H5Tequal(hdf5_data->datatype, hdf5_data->native_type)){ \
+                         WARNING_MSG("Writing into an existing dataset failed"); \
+                         WARNING_MSG("Data type is different!");        \
+                         if((hdf5_data->status = H5Dclose(hdf5_data->dataset)) < 0) ERROR_MSG("H5Dclose failed"); \
+                         ERROR_MSG("Overwriting failed");               \
+                 }                                                      \
+                 LOG_MSG("%d %d", hdf5_data->datatype, hdf5_data->native_type); \
+                 hdf5_data->dataspace = H5Dget_space(hdf5_data->dataset); \
+                 hdf5_data->rank      = H5Sget_simple_extent_ndims(hdf5_data->dataspace); \
+                 hdf5_data->status  = H5Sget_simple_extent_dims(hdf5_data->dataspace,hdf5_data->dim , NULL); \
+                                                                        \
+                 HDFWRAP_START_GALLOC(data,&ptr);                       \
+                 if(d1 == (int) hdf5_data->dim[0] && d2 == (int)hdf5_data->dim[1]){ \
+                         if((hdf5_data->status  = H5Dwrite(hdf5_data->dataset,hdf5_data->native_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr)) < 0) ERROR_MSG("H5Dwrite failed"); \
+                                                                        \
+                                                                        \
+                 }else{                                                 \
+                         WARNING_MSG("Writing into an existing dataset failed"); \
+                         WARNING_MSG("Dims in file are: %d %d",hdf5_data->dim[0],hdf5_data->dim[1]); \
+                         WARNING_MSG("Dims in data are: %d %d",d1,d2);  \
+                                                                        \
+                         if((hdf5_data->status = H5Dclose(hdf5_data->dataset)) < 0) ERROR_MSG("H5Dclose failed"); \
+                         ERROR_MSG("Overwriting failed");               \
+                 }                                                      \
+                                                                        \
+                 if((hdf5_data->status = H5Dclose(hdf5_data->dataset)) < 0) ERROR_MSG("H5Dclose failed"); \
+         }                                                              \
+                                                                        \
+         hdf5wrap_close_group(hdf5_data);                               \
+         return OK;                                                     \
+ERROR:                                                                  \
+return FAIL;
 
-        //LOG_MSG("All good Looking for %s", group);
 
-        RUN(get_dim1(data, &d1));
-        RUN(get_dim2(data, &d2));
+#define ADD_ARRAY(type)                                                 \
+        int hdf5wrap_add_1D_dataset_ ##type(struct hdf5_data* hdf5_data, char* group, char* name, type* data) \
+        {                                                               \
+                HDF5WRAP_ADD_BODY                                       \
+                        }
 
-        hdf5_data->dim[0] = d1;
-        hdf5_data->dim[1] = d2;
-        hdf5_data->chunk_dim[0] = d1;
-        hdf5_data->chunk_dim[1] = d2;
-
-        hdf5_data->rank = 1;
-        if(d2){
-                hdf5_data->rank = 2;
-        }
-
-        HDFWRAP_SET_TYPE(data,&hdf5_data->native_type);
-
-        for(i = 0; i< hdf5_data->rank;i++){
-                if(hdf5_data->chunk_dim[i] >  hdf5_data->dim[i]){
-                        ERROR_MSG("chunk dimenson exceeds dataset dimension:%d (rank) %d %d \n", i,hdf5_data->chunk_dim[i], hdf5_data->dim[i] );
-                }
-                if(hdf5_data->chunk_dim[i] == 0){
-                        hdf5_data->chunk_dim[i] = hdf5_data->dim[i];
-                }
-        }
+        ADD_ARRAY(char)
+        ADD_ARRAY(int)
+        ADD_ARRAY(float)
+        ADD_ARRAY(double)
 
 
-        snprintf(hdf5_data->dataset_name , HDF5GLUE_MAX_NAME_LEN,"%s",name);
-        hdf5_data->status = H5Lexists(hdf5_data->group, hdf5_data->dataset_name, H5P_DEFAULT);
-        //LOG_MSG("exist: %d", hdf5_data->status);
-        if(!hdf5_data->status){
-                snprintf(hdf5_data->dataset_name , HDF5GLUE_MAX_NAME_LEN,"%s",name);
-                if((hdf5_data->dataspace = H5Screate_simple(hdf5_data->rank,  hdf5_data->dim , NULL)) < 0)ERROR_MSG("H5Screate_simple failed.");
-
-                if((hdf5_data->datatype = H5Tcopy(hdf5_data->native_type )) < 0) ERROR_MSG("H5Tcopy failed");
-
-                if((hdf5_data->status = H5Tset_order(hdf5_data->datatype, H5T_ORDER_LE)) < 0) ERROR_MSG("H5Tset_order failed.");
-
-                if((hdf5_data->plist = H5Pcreate (H5P_DATASET_CREATE)) < 0) ERROR_MSG("H5Pcreate failed.");
-
-                if((hdf5_data->status = H5Pset_shuffle (hdf5_data->plist )) < 0 )ERROR_MSG("H5Pset_shuffle failed.");
-
-                if((hdf5_data->status = H5Pset_deflate (hdf5_data->plist, 2)) < 0 )ERROR_MSG("H5Pset_deflate failed.");
-                if((hdf5_data->status = H5Pset_chunk (hdf5_data->plist, hdf5_data->rank,  hdf5_data->chunk_dim)) < 0 )ERROR_MSG("H5Pset_chunk failed.");
+#undef ADD_ARRAY
 
 
-                if((hdf5_data->dataset = H5Dcreate(hdf5_data->group, hdf5_data->dataset_name, hdf5_data->datatype, hdf5_data->dataspace,    H5P_DEFAULT, hdf5_data->plist , H5P_DEFAULT)) < 0 )ERROR_MSG("H5Dcreate failed");
-                //hdf5_data->plist
-                if((hdf5_data->status  = H5Dwrite(hdf5_data->dataset,hdf5_data->native_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, &data[0][0])) < 0) ERROR_MSG("H5Dwrite failed");
+#define ADD_ARRAY(type)                                                 \
+        int hdf5wrap_add_2D_dataset_ ##type(struct hdf5_data* hdf5_data, char* group, char* name, type** data) \
+        {                                                               \
+                HDF5WRAP_ADD_BODY                                       \
+                        }
 
-                /* closing stuff */
-                if((hdf5_data->status = H5Sclose(hdf5_data->dataspace)) < 0) ERROR_MSG("H5Sclose failed");
-                if((hdf5_data->status = H5Pclose(hdf5_data->plist)) < 0) ERROR_MSG("H5Pclose failed");
-                if((hdf5_data->status = H5Tclose(hdf5_data->datatype)) < 0) ERROR_MSG("H5Tclose failed");
-                if((hdf5_data->status = H5Dclose(hdf5_data->dataset)) < 0) ERROR_MSG("H5Dclose failed");
-        }else{
-                if((hdf5_data->dataset = H5Dopen(hdf5_data->group,hdf5_data->dataset_name ,H5P_DEFAULT)) == -1)ERROR_MSG("H5Dopen failed\n");
+        ADD_ARRAY(char)
+        ADD_ARRAY(int)
+        ADD_ARRAY(float)
+        ADD_ARRAY(double)
 
-                hdf5_data->datatype  = H5Dget_type(hdf5_data->dataset );     /* datatype handle */
-
-                if(!H5Tequal(hdf5_data->datatype, hdf5_data->native_type)){
-                        WARNING_MSG("Writing into an existing dataset failed");
-                        WARNING_MSG("Data type is different!");
-                        if((hdf5_data->status = H5Dclose(hdf5_data->dataset)) < 0) ERROR_MSG("H5Dclose failed");
-                        ERROR_MSG("Overwriting failed");
-                }
-                LOG_MSG("%d %d", hdf5_data->datatype, hdf5_data->native_type);
-                hdf5_data->dataspace = H5Dget_space(hdf5_data->dataset);
-                hdf5_data->rank      = H5Sget_simple_extent_ndims(hdf5_data->dataspace);
-                hdf5_data->status  = H5Sget_simple_extent_dims(hdf5_data->dataspace,hdf5_data->dim , NULL);
-
-                if(d1 == hdf5_data->dim[0] && d2 == hdf5_data->dim[1]){
-                        if((hdf5_data->status  = H5Dwrite(hdf5_data->dataset,hdf5_data->native_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, &data[0][0])) < 0) ERROR_MSG("H5Dwrite failed");
-
-                }else{
-                        WARNING_MSG("Writing into an existing dataset failed");
-                        WARNING_MSG("Dims in file are: %d %d",hdf5_data->dim[0],hdf5_data->dim[1]);
-                        WARNING_MSG("Dims in data are: %d %d",d1,d2);
-
-                        if((hdf5_data->status = H5Dclose(hdf5_data->dataset)) < 0) ERROR_MSG("H5Dclose failed");
-                        ERROR_MSG("Overwriting failed");
-                }
-
-                if((hdf5_data->status = H5Dclose(hdf5_data->dataset)) < 0) ERROR_MSG("H5Dclose failed");
-        }
-
-        hdf5wrap_close_group(hdf5_data);
-        //LOG_MSG("End");
-        return OK;
-ERROR:
-        return FAIL;
-}
-
-
-/*
-
- Example: Use the following steps to verify the existence of the link datasetD in the group group1/group2/softlink_to_group3/, where group1 is a member of the group specified by loc_id:
-
-    First use H5Lexists to verify that group1 exists.
-    If group1 exists, use H5Lexists again, this time with name set to group1/group2, to verify thatgroup2 exists.
-    If group2 exists, use H5Lexists with name set to group1/group2/softlink_to_group3 to verify that softlink_to_group3 exists.
-
-    If softlink_to_group3 exists, you can now safely use H5Lexists with name set to group1/group2/softlink_to_group3/datasetD to verify that the target link, datasetD, exists
-
-*/
-int hdf5wrap_exits(struct hdf5_data* hdf5_data, char*name)
-{
-        H5Lexists(hdf5_data->file, name, H5P_DEFAULT);
-}
-
+#undef ADD_1D_ARRAY
 
 int hdf5wrap_open_group(struct hdf5_data* hdf5_data, char* groupname)
 {
@@ -467,23 +504,11 @@ int close_hdf5_file(struct hdf5_data** h)
 
         hdf5_data  = *h;
 
-
-        //LOG_MSG("data: %p", (void*) hdf5_data);
-        //LOG_MSG("close");
-        /* close everything that can be closed  */
-        //if(hdf5_data->fapl){
-        //if((hdf5_data->status = H5Pclose(hdf5_data->fapl)) < 0) ERROR_MSG("H5Pclose failed");
-        //}
-        //if(hdf5_data->file){
-        //if((hdf5_data->status = H5Fclose(hdf5_data->file)) < 0) ERROR_MSG("H5Fclose failed");
-        //}
         if(hdf5_data){
                 free_hdf5_data(hdf5_data);
         }
         *h = NULL;
         return OK;
-ERROR:
-        return FAIL;
 }
 
 
@@ -568,6 +593,64 @@ int clear_hdf5_attribute(struct hdf5_attribute* h)
         h->int_val = 0;
         h->double_val = 0.0;
         h->type = HDF5GLUE_TYPE_UNKNOWN;
+        return OK;
+ERROR:
+        return FAIL;
+}
+
+
+int startof_galloc_char_s(char* x, void** ptr)
+{
+        *ptr = &x[0];
+        return OK;
+}
+
+int startof_galloc_int_s(int* x, void** ptr)
+{
+        *ptr = &x[0];
+        return OK;
+}
+
+int startof_galloc_float_s(float* x, void** ptr)
+{
+        *ptr = &x[0];
+        return OK;
+}
+
+int startof_galloc_double_s(double* x, void** ptr)
+{
+        *ptr = &x[0];
+        return OK;
+}
+
+int startof_galloc_char_ss(char** x, void** ptr)
+{
+        *ptr = &x[0][0];
+        return OK;
+}
+
+int startof_galloc_int_ss(int** x, void** ptr)
+{
+        LOG_MSG("PTR in galloc: %p", (void*) &x[0][0]);
+        *ptr = &x[0][0];
+        return OK;
+}
+
+int startof_galloc_float_ss(float** x, void** ptr)
+{
+        *ptr = &x[0][0];
+        return OK;
+}
+
+int startof_galloc_double_ss(double** x, void** ptr)
+{
+        *ptr = &x[0][0];
+        return OK;
+}
+
+int startof_galloc_unknown(void* x, void** ptr)
+{
+        ERROR_MSG("unknown data type: %p %p", x,*ptr);
         return OK;
 ERROR:
         return FAIL;

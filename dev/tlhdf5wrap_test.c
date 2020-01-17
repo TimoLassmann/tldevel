@@ -13,9 +13,9 @@ int main(int argc, char *argv[])
         RUN(HDFWRAP_ADD_ATTRIBUTE(d,"/","fourty four",44));
         RUN(HDFWRAP_ADD_ATTRIBUTE(d,"/","otto","otto"));
 
-            RUN(HDFWRAP_ADD_ATTRIBUTE(d,"/group10/subsectionA","otto","otto"));
+        RUN(HDFWRAP_ADD_ATTRIBUTE(d,"/group10/subsectionA","otto","otto"));
 
-            RUN(HDFWRAP_ADD_ATTRIBUTE(d,"/g1/g2/g4","pi",3.14));
+        RUN(HDFWRAP_ADD_ATTRIBUTE(d,"/g1/g2/g4","pi",3.14));
 
         //RUN(hdf5wrap)
         int** test = NULL;
@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
                 }
         }
         //LOG_MSG("Got here");
-        RUN(add_dataset_int(d,"/","INT2D", test));
+        RUN(HDFWRAP_ADD_DATA(d,"/","INT2D", test));
 
         c =1000;
         for(i = 0;i < 10;i++){
@@ -38,8 +38,8 @@ int main(int argc, char *argv[])
                         c--;
                 }
         }
-        //LOG_MSG("Got here");
-        RUN(add_dataset_int(d,"/","INT2D", test));
+//LOG_MSG("Got here");
+        RUN(HDFWRAP_ADD_DATA(d,"/","INT2D", test));
 
         gfree(test);
 
@@ -49,10 +49,12 @@ int main(int argc, char *argv[])
         c = 0;
         for(i = 0;i < 10;i++){
                 for(j = 0;j < 10;j++){
-                        g[i][j]=c;
+                        g[i][j]= (float) c / 0.9957f;
                         c++;
                 }
         }
+        RUN(HDFWRAP_ADD_DATA(d,"/floaty/here","FLOAT2D", g));
+        RUN(HDFWRAP_ADD_ATTRIBUTE(d,"/floaty/here","FLT_ATTR", "This is a float matrix"));
         //RUN(add_dataset_int(d,"/","INT2D", g));
         close_hdf5_file(&d);
         gfree(g);
