@@ -1,0 +1,4 @@
+	Version 1.2.0:
+
+	- added hdf5 support
+	- added sam/bam support via htslib

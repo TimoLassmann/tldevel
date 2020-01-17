@@ -75,6 +75,8 @@ int main(int argc, char *argv[])
         char* string = NULL;
         RUN(HDFWRAP_READ_ATTRIBUTE(d,"/floaty/here","FLT_ATTR", &string));
         LOG_MSG("atrribute : %s",string);
+
+        MFREE(string);
         gfree(donkey);
         close_hdf5_file(&d);
         gfree(g);
