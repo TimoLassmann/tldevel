@@ -82,6 +82,6 @@ minhash_test_CPPFLAGS = $(AM_CPPFLAGS)
 minhash_test_LDADD = ../libtldevel.la
 
 CLEANFILES = \
-	MAIN_0.chk
-
+	MAIN_0.chk \
+  hdf5testfile.h5
 

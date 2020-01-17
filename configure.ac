@@ -31,7 +31,7 @@ CPPFLAGS="${CPPFLAGS} ${HDF5_CFLAGS}"
 LDFLAGS="${LDFLAGS} ${HDF5_LDFLAGS}"
 LIBS="${LIBS} ${HDF5_LIBS}"
 else
-AC_MSG_ERROR([
+AC_MSG_WARN([
 
 Unable to find HDF5, we need parallel HDF5.
 Install on fedora:

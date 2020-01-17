@@ -12,17 +12,42 @@
 
 #include "tlhdf5wrap_types.h"
 
+/* important intermediate functions */
 
+/* open / close groups - these are called by all MACROS:
+
+HDFWRAP_WRITE_DATA
+HDFWRAP_READ_DATA
+HDFWRAP_WRITE_ATTRIBUTE
+HDFWRAP_READ_ATTRIBUTE
+
+to resolve the path to the data / attribute
+
+ */
 static int hdf5wrap_open_group(struct hdf5_data* hdf5_data, char* groupname);
 static int hdf5wrap_close_group(struct hdf5_data* hdf5_data);
 
+/* Functions to read write attributes - called by:
 
+HDFWRAP_WRITE_ATTRIBUTE
+HDFWRAP_READ_ATTRIBUTE
+
+
+ */
+
+static int hdf5_write_attributes(struct hdf5_data* hdf5_data, char* target);
+static int hdf5_read_attributes(struct hdf5_data* hdf5_data, char* group);
+static int clear_hdf5_attribute(struct hdf5_attribute* h);
+
+/* allocating the hdf5 data structure - this is really more of a file handler...  */
 static int alloc_hdf5_data(struct hdf5_data** h);
 static void free_hdf5_data(struct hdf5_data* hdf5_data);
 
-static int clear_hdf5_attribute(struct hdf5_attribute* h);
 
-
+/* to write an array / matrix in hdf5 I need to pass a reference to first start of the memory block.
+   this is &x[0] for arrays and &x[0][0] for things allocated with galloc.
+   The function below + the generic function allow this to happen.
+ */
 
 static int startof_galloc_char_s(char* x, void** ptr);
 static int startof_galloc_int_s(int* x, void** ptr);
@@ -32,7 +57,6 @@ static int startof_galloc_char_ss(char** x, void** ptr);
 static int startof_galloc_int_ss(int** x, void** ptr);
 static int startof_galloc_float_ss(float** x, void** ptr);
 static int startof_galloc_double_ss(double** x, void** ptr);
-
 static int startof_galloc_unknown(void* x, void** ptr);
 
 #define HDFWRAP_START_GALLOC(P,T) _Generic((P),                         \
@@ -47,64 +71,40 @@ static int startof_galloc_unknown(void* x, void** ptr);
                                            default: startof_galloc_unknown \
                 )(P,T)
 
-
-
+/* These functions determine the native hdf5 data type from the C data type  */
 
 static int set_type_char(hid_t* type);
 static int set_type_int(hid_t* type);
 static int set_type_float(hid_t* type);
 static int set_type_double(hid_t* type);
+static int set_type_unknown(hid_t* type);
+
 
 #define HDFWRAP_SET_TYPE(P,T) _Generic((P),                       \
                                        char: set_type_char,       \
                                        char*: set_type_char,      \
                                        char**: set_type_char,     \
+                                       char***: set_type_char,     \
                                        int: set_type_int,         \
                                        int*: set_type_int,        \
                                        int**: set_type_int,       \
+                                       int***: set_type_int,       \
                                        float: set_type_float,     \
                                        float*: set_type_float,    \
                                        float**: set_type_float,   \
+                                       float***: set_type_float,   \
                                        double: set_type_double,   \
                                        double*: set_type_double,  \
                                        double**: set_type_double, \
+                                       double***: set_type_double, \
                                        default: set_type_unknown  \
                 )(T)
 
 
-int set_type_char(hid_t* type)
-{
-        *type = H5T_NATIVE_CHAR;
-        return OK;
-}
 
-int set_type_int(hid_t* type)
-{
-        *type = H5T_NATIVE_INT;
-        return OK;
-}
-
-int set_type_float(hid_t* type)
-{
-        *type = H5T_NATIVE_FLOAT;
-        return OK;
-}
-
-int set_type_double(hid_t* type)
-{
-        *type = H5T_NATIVE_DOUBLE;
-        return OK;
-}
-
-
-int set_type_unknown(hid_t* type)
-{
-
-        WARNING_MSG("Could not determine type! (%d)",type);
-        return FAIL;
-}
-
-#define HDF5WRAP_ADD_BODY                                               \
+/* This is the body of the ADD data functions */
+/* I separated this out because it is shared among all 'add' functions (which I should really rename to read) */
+#define HDF5WRAP_ADD_BODY do {                                          \
         int i;                                                          \
         int d1,d2;                                                      \
         void* ptr = NULL;                                               \
@@ -199,19 +199,21 @@ int set_type_unknown(hid_t* type)
                  if((hdf5_data->status = H5Dclose(hdf5_data->dataset)) < 0) ERROR_MSG("H5Dclose failed"); \
          }                                                              \
                                                                         \
-         hdf5wrap_close_group(hdf5_data);                               \
-         return OK;                                                     \
-ERROR:                                                                  \
-return FAIL;
+        hdf5wrap_close_group(hdf5_data);                                \
+        return OK;                                                      \
+        ERROR:                                                          \
+        return FAIL;                                                    \
+        } while (0)
 
+/* The add functions - the input parameters will have different types but the rest is the same  */
 
 #define ADD_ARRAY(type)                                                 \
         int hdf5wrap_add_1D_dataset_ ##type(struct hdf5_data* hdf5_data, char* group, char* name, type* data) \
         {                                                               \
-                HDF5WRAP_ADD_BODY                                       \
-                        }
+                HDF5WRAP_ADD_BODY;                                      \
+        }
 
-        ADD_ARRAY(char)
+ADD_ARRAY(char)
         ADD_ARRAY(int)
         ADD_ARRAY(float)
         ADD_ARRAY(double)
@@ -223,15 +225,106 @@ return FAIL;
 #define ADD_ARRAY(type)                                                 \
         int hdf5wrap_add_2D_dataset_ ##type(struct hdf5_data* hdf5_data, char* group, char* name, type** data) \
         {                                                               \
-                HDF5WRAP_ADD_BODY                                       \
-                        }
+                HDF5WRAP_ADD_BODY;                                      \
+        }
 
         ADD_ARRAY(char)
-        ADD_ARRAY(int)
-        ADD_ARRAY(float)
-        ADD_ARRAY(double)
+ADD_ARRAY(int)
+ADD_ARRAY(float)
+ADD_ARRAY(double)
 
 #undef ADD_1D_ARRAY
+
+
+/* Read function */
+#define READ_ARRAY(type)                                                \
+        int hdf5wrap_read_1D_dataset_ ##type(struct hdf5_data* hdf5_data, char* group, char* name, type** data) \
+        {                                                               \
+                void* ptr = NULL;                                       \
+                type* p = NULL;                                          \
+                RUN(hdf5wrap_open_group(hdf5_data, group));             \
+                if((hdf5_data->dataset = H5Dopen(hdf5_data->group,name,H5P_DEFAULT)) == -1)ERROR_MSG("H5Dopen failed\n"); \
+                hdf5_data->datatype  = H5Dget_type(hdf5_data->dataset ); \
+                HDFWRAP_SET_TYPE(data,&hdf5_data->native_type);         \
+                if(!H5Tequal(hdf5_data->datatype, hdf5_data->native_type)){ \
+                        WARNING_MSG("The type of the data in the file doesn't match the type of the pointer"); \
+                        if((hdf5_data->status = H5Dclose(hdf5_data->dataset)) < 0) ERROR_MSG("H5Dclose failed"); \
+                        ERROR_MSG("Reading failed");                    \
+                }                                                       \
+                                                                        \
+                hdf5_data->dataspace = H5Dget_space(hdf5_data->dataset); \
+                hdf5_data->rank      = H5Sget_simple_extent_ndims(hdf5_data->dataspace); \
+                hdf5_data->status  = H5Sget_simple_extent_dims(hdf5_data->dataspace,hdf5_data->dim , NULL); \
+                                                                        \
+                hdf5_data->data = NULL;                                 \
+                                                                        \
+                RUN(galloc(p, hdf5_data->dim[0],hdf5_data->dim[1]));    \
+                HDFWRAP_START_GALLOC(p,&ptr);                           \
+                hdf5_data->status = H5Dread(hdf5_data->dataset, hdf5_data->datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT,ptr); \
+                                                                        \
+                if((hdf5_data->status = H5Tclose(hdf5_data->datatype)) < 0) ERROR_MSG("H5Tclose failed"); \
+                if((hdf5_data->status = H5Dclose(hdf5_data->dataset)) < 0) ERROR_MSG("H5Dclose failed"); \
+                                                                        \
+                hdf5wrap_close_group(hdf5_data);                        \
+                                                                        \
+                *data = p;                                              \
+                                                                        \
+                return OK;                                              \
+        ERROR:                                                          \
+                return FAIL;                                            \
+        }
+
+        READ_ARRAY(char)
+READ_ARRAY(int)
+READ_ARRAY(float)
+READ_ARRAY(double)
+
+#undef READ_ARRAY
+
+#define READ_ARRAY(type)                                                \
+        int hdf5wrap_read_2D_dataset_ ##type(struct hdf5_data* hdf5_data, char* group, char* name, type*** data) \
+        {                                                               \
+                void* ptr = NULL;                                       \
+                type** p = NULL;                                          \
+                RUN(hdf5wrap_open_group(hdf5_data, group));             \
+                if((hdf5_data->dataset = H5Dopen(hdf5_data->group,name,H5P_DEFAULT)) == -1)ERROR_MSG("H5Dopen failed\n"); \
+                hdf5_data->datatype  = H5Dget_type(hdf5_data->dataset ); \
+                HDFWRAP_SET_TYPE(data,&hdf5_data->native_type);         \
+                if(!H5Tequal(hdf5_data->datatype, hdf5_data->native_type)){ \
+                        WARNING_MSG("The type of the data in the file doesn't match the type of the pointer"); \
+                        if((hdf5_data->status = H5Dclose(hdf5_data->dataset)) < 0) ERROR_MSG("H5Dclose failed"); \
+                        ERROR_MSG("Reading failed");                    \
+                }                                                       \
+                                                                        \
+                hdf5_data->dataspace = H5Dget_space(hdf5_data->dataset); \
+                hdf5_data->rank      = H5Sget_simple_extent_ndims(hdf5_data->dataspace); \
+                hdf5_data->status  = H5Sget_simple_extent_dims(hdf5_data->dataspace,hdf5_data->dim , NULL); \
+                                                                        \
+                hdf5_data->data = NULL;                                 \
+                                                                        \
+                RUN(galloc(&p, hdf5_data->dim[0],hdf5_data->dim[1]));    \
+                HDFWRAP_START_GALLOC(p,&ptr);                           \
+                hdf5_data->status = H5Dread(hdf5_data->dataset, hdf5_data->datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT,ptr); \
+                                                                        \
+                if((hdf5_data->status = H5Tclose(hdf5_data->datatype)) < 0) ERROR_MSG("H5Tclose failed"); \
+                if((hdf5_data->status = H5Dclose(hdf5_data->dataset)) < 0) ERROR_MSG("H5Dclose failed"); \
+                                                                        \
+                hdf5wrap_close_group(hdf5_data);                        \
+                                                                        \
+                *data = p;                                              \
+                                                                        \
+                return OK;                                              \
+        ERROR:                                                          \
+                return FAIL;                                            \
+        }
+
+        READ_ARRAY(char)
+READ_ARRAY(int)
+READ_ARRAY(float)
+READ_ARRAY(double)
+
+#undef READ_ARRAY
+
 
 int hdf5wrap_open_group(struct hdf5_data* hdf5_data, char* groupname)
 {
@@ -295,6 +388,81 @@ ERROR:
 }
 
 
+int hdf5wrap_read_attribute_int(struct hdf5_data* hdf5_data, char* group, char* name, int* x)
+{
+        int i,f;
+        RUN(hdf5_read_attributes(hdf5_data, group));
+        if(hdf5_data->num_attr == 0){
+                ERROR_MSG("No attributes found in group %s", group);
+        }
+        f = 0 ;
+        for(i = 0; i < hdf5_data->num_attr;i++){
+                if(!strncmp(name, hdf5_data->attr[i]->attr_name, HDF5GLUE_MAX_NAME_LEN)){
+                        *x = hdf5_data->attr[i]->int_val;
+                        f =1;
+                        break;
+                }
+        }
+        if(!f){
+                ERROR_MSG("could not find attribute %s in %s", name,group);
+        }
+        return OK;
+ERROR:
+        return FAIL;
+}
+
+int hdf5wrap_read_attribute_double(struct hdf5_data* hdf5_data, char* group, char* name, double* x)
+{
+        int i,f;
+        RUN(hdf5_read_attributes(hdf5_data, group));
+        if(hdf5_data->num_attr == 0){
+                ERROR_MSG("No attributes found in group %s", group);
+        }
+        f = 0 ;
+        for(i = 0; i < hdf5_data->num_attr;i++){
+                if(!strncmp(name, hdf5_data->attr[i]->attr_name, HDF5GLUE_MAX_NAME_LEN)){
+                        *x = hdf5_data->attr[i]->double_val;
+                        f =1;
+                        break;
+                }
+        }
+        if(!f){
+                ERROR_MSG("could not find attribute %s in %s", name,group);
+        }
+        return OK;
+ERROR:
+        return FAIL;
+}
+
+int hdf5wrap_read_attribute_string(struct hdf5_data* hdf5_data, char* group, char* name, char** x)
+{
+        int i,f,l;
+        char* tmp = NULL;
+        RUN(hdf5_read_attributes(hdf5_data, group));
+        if(hdf5_data->num_attr == 0){
+                ERROR_MSG("No attributes found in group %s", group);
+        }
+        f = 0 ;
+        for(i = 0; i < hdf5_data->num_attr;i++){
+                if(!strncmp(name, hdf5_data->attr[i]->attr_name, HDF5GLUE_MAX_NAME_LEN)){
+                        l = strnlen(hdf5_data->attr[i]->string, HDF5GLUE_MAX_CONTENT_LEN);
+                        MMALLOC(tmp, sizeof(char) *(l+1));
+                        memcpy(tmp, hdf5_data->attr[i]->string, l);
+                        tmp[l] = 0;
+                        *x = tmp;
+                        f =1;
+                        break;
+                }
+        }
+        if(!f){
+                ERROR_MSG("could not find attribute %s in %s", name,group);
+        }
+        return OK;
+ERROR:
+        return FAIL;
+}
+
+
 int hdf5wrap_add_attribute_int(struct hdf5_data* hdf5_data, char* group, char* name, int x)
 {
         struct hdf5_attribute* h = NULL;
@@ -349,20 +517,18 @@ ERROR:
         return FAIL;
 }
 
-int hdf5_read_attributes(struct hdf5_data* hdf5_data, char* target)
+
+int hdf5_read_attributes(struct hdf5_data* hdf5_data, char* group)
 {
         H5O_info_t oinfo;
         hid_t atype,atype_mem;
         H5T_class_t type_class;
         int i;
 
-        RUN(hdf5wrap_open_group(hdf5_data, target));
-
-
+        RUN(hdf5wrap_open_group(hdf5_data, group));
         hdf5_data->status = H5Oget_info(hdf5_data->group , &oinfo);
         hdf5_data->num_attr = 0;
         for(i = 0; i < (int)oinfo.num_attrs; i++) {
-
                 if(i == hdf5_data->num_attr_mem){
                         break;
                 }
@@ -404,12 +570,10 @@ int hdf5_write_attributes(struct hdf5_data* hdf5_data, char* target)
         hid_t atype;
         hid_t attr;
 
-
         int len;
 
         RUN(hdf5wrap_open_group(hdf5_data, target));
 
-        //LOG_MSG("writing: %d", hdf5_data->num_attr);
         for(i = 0;i < hdf5_data->num_attr;i++){
                 switch (hdf5_data->attr[i]->type) {
                 case HDF5GLUE_TYPE_CHAR:
@@ -474,6 +638,18 @@ int hdf5_write_attributes(struct hdf5_data* hdf5_data, char* target)
 ERROR:
         return FAIL;
 }
+
+int clear_hdf5_attribute(struct hdf5_attribute* h)
+{
+        ASSERT(h != NULL, "No attribute");
+        h->int_val = 0;
+        h->double_val = 0.0;
+        h->type = HDF5GLUE_TYPE_UNKNOWN;
+        return OK;
+ERROR:
+        return FAIL;
+}
+
 
 int open_hdf5_file(struct hdf5_data** h, char* filename)
 {
@@ -587,16 +763,6 @@ void free_hdf5_data(struct hdf5_data* hdf5_data)
 }
 
 
-int clear_hdf5_attribute(struct hdf5_attribute* h)
-{
-        ASSERT(h != NULL, "No attribute");
-        h->int_val = 0;
-        h->double_val = 0.0;
-        h->type = HDF5GLUE_TYPE_UNKNOWN;
-        return OK;
-ERROR:
-        return FAIL;
-}
 
 
 int startof_galloc_char_s(char* x, void** ptr)
@@ -653,5 +819,40 @@ int startof_galloc_unknown(void* x, void** ptr)
         ERROR_MSG("unknown data type: %p %p", x,*ptr);
         return OK;
 ERROR:
+        return FAIL;
+}
+
+
+
+
+int set_type_char(hid_t* type)
+{
+        *type = H5T_NATIVE_CHAR;
+        return OK;
+}
+
+int set_type_int(hid_t* type)
+{
+        *type = H5T_NATIVE_INT;
+        return OK;
+}
+
+int set_type_float(hid_t* type)
+{
+        *type = H5T_NATIVE_FLOAT;
+        return OK;
+}
+
+int set_type_double(hid_t* type)
+{
+        *type = H5T_NATIVE_DOUBLE;
+        return OK;
+}
+
+
+int set_type_unknown(hid_t* type)
+{
+
+        WARNING_MSG("Could not determine type! (%d)",type);
         return FAIL;
 }
