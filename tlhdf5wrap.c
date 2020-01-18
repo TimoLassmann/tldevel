@@ -158,7 +158,6 @@ static int set_type_unknown(hid_t* type);
         if((hdf5_data->dataset = H5Dcreate(hdf5_data->group, hdf5_data->dataset_name, hdf5_data->datatype, hdf5_data->dataspace,    H5P_DEFAULT, hdf5_data->plist , H5P_DEFAULT)) < 0 )ERROR_MSG("H5Dcreate failed"); \
                                                                         \
            HDFWRAP_START_GALLOC(data,&ptr);                       \
-           LOG_MSG("PTR in body: %p", ptr);                             \
            if((hdf5_data->status  = H5Dwrite(hdf5_data->dataset,hdf5_data->native_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr)) < 0) ERROR_MSG("H5Dwrite failed"); \
                                                                         \
         /* closing stuff */                                             \
@@ -177,7 +176,6 @@ static int set_type_unknown(hid_t* type);
                          if((hdf5_data->status = H5Dclose(hdf5_data->dataset)) < 0) ERROR_MSG("H5Dclose failed"); \
                          ERROR_MSG("Overwriting failed");               \
                  }                                                      \
-                 LOG_MSG("%d %d", hdf5_data->datatype, hdf5_data->native_type); \
                  hdf5_data->dataspace = H5Dget_space(hdf5_data->dataset); \
                  hdf5_data->rank      = H5Sget_simple_extent_ndims(hdf5_data->dataspace); \
                  hdf5_data->status  = H5Sget_simple_extent_dims(hdf5_data->dataspace,hdf5_data->dim , NULL); \
@@ -797,7 +795,6 @@ int startof_galloc_char_ss(char** x, void** ptr)
 
 int startof_galloc_int_ss(int** x, void** ptr)
 {
-        LOG_MSG("PTR in galloc: %p", (void*) &x[0][0]);
         *ptr = &x[0][0];
         return OK;
 }
@@ -854,5 +851,90 @@ int set_type_unknown(hid_t* type)
 {
 
         WARNING_MSG("Could not determine type! (%d)",type);
+        return FAIL;
+}
+
+
+
+static herr_t op_func (hid_t loc_id, const char *name, const H5L_info_t *info, void *operator_data);
+
+int hdf5wrap_search(struct hdf5_data* hdf5_data,char* target, char** location)
+{
+        char* look[2];
+        look[0] = target;
+        look[1] = NULL;
+
+        if((hdf5_data->status = H5Lvisit (hdf5_data->file, H5_INDEX_NAME, H5_ITER_NATIVE,  op_func, &look)) < 0) ERROR_MSG("H5Literate failed");
+
+
+        if(look[1]){
+                *location = look[1];
+        }else{
+                *location = NULL;
+        }
+        return OK;
+
+ERROR:
+        return FAIL;
+
+}
+
+
+herr_t op_func (hid_t loc_id, const char *name, const H5L_info_t *info, void *operator_data)
+{
+        herr_t status;
+        H5O_info_t infobuf;
+        char** look = (char**)operator_data;
+
+        int len_t,len_q;
+
+        status = H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT);
+        if(status <0){
+                ERROR_MSG(" H5Oget_info_by_name failed." );
+        }
+
+        switch (infobuf.type){
+        case H5O_TYPE_GROUP:
+                len_t = strnlen(name, HDF5GLUE_MAX_NAME_LEN);
+                len_q = strnlen( look[0], HDF5GLUE_MAX_NAME_LEN);
+                if(len_t >= len_q){ /* match is possible */
+                        if(!strncmp(name + (len_t - len_q), look[0], HDF5GLUE_MAX_NAME_LEN)){
+                                if(look[1]){
+                                        WARNING_MSG("Multiple matches found:");
+                                        WARNING_MSG(" - %s", look[1]);
+                                        WARNING_MSG(" - %s", name);
+                                }else{
+                                        MMALLOC(look[1], sizeof(char) * (len_t+1));
+                                        memcpy(look[1], name, len_t);
+                                        look[1][len_t] =0;
+                                }
+                        }
+                }
+                break;
+        case H5O_TYPE_DATASET:
+                len_t = strnlen(name, HDF5GLUE_MAX_NAME_LEN);
+                len_q = strnlen( look[0], HDF5GLUE_MAX_NAME_LEN);
+                if(len_t >= len_q){ /* match is possible */
+                        if(!strncmp(name + (len_t - len_q), look[0], HDF5GLUE_MAX_NAME_LEN)){
+                                if(look[1]){
+                                        WARNING_MSG("Multiple matches found:");
+                                        WARNING_MSG(" - %s", look[1]);
+                                        WARNING_MSG(" - %s", name);
+                                }else{
+                                        MMALLOC(look[1], sizeof(char) * (len_t+1));
+                                        memcpy(look[1], name, len_t);
+                                        look[1][len_t] =0;
+                                }
+                        }
+                }
+                break;
+        case H5O_TYPE_NAMED_DATATYPE:
+                break;
+        case H5O_TYPE_UNKNOWN:
+        case H5O_TYPE_NTYPES:
+                break;
+        }
+        return OK;
+ERROR:
         return FAIL;
 }

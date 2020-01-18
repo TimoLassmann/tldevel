@@ -43,8 +43,8 @@ struct hdf5_data;
 EXTERN int open_hdf5_file(struct hdf5_data** h, char* filename);
 EXTERN int close_hdf5_file(struct hdf5_data** h);
 
-
-
+//EXTERN int search(struct hdf5_data* hdf5_data);
+EXTERN int hdf5wrap_search(struct hdf5_data* hdf5_data,char* target, char** location);
 #define ADD_DATA_DEF(type)                                              \
         EXTERN int hdf5wrap_add_1D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type* data)
 

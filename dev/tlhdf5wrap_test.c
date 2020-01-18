@@ -54,6 +54,7 @@ int main(int argc, char *argv[])
                 }
         }
         RUN(HDFWRAP_WRITE_DATA(d,"/floaty/here","FLOAT2D", g));
+        RUN(HDFWRAP_WRITE_DATA(d,"/floaty/there","FLOAT2D", g));
         RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/floaty/here","FLT_ATTR", "This is a float matrix"));
         //RUN(add_dataset_int(d,"/","INT2D", g));
 
@@ -77,7 +78,17 @@ int main(int argc, char *argv[])
         LOG_MSG("atrribute : %s",string);
 
         MFREE(string);
+        string  = NULL;
+
+
         gfree(donkey);
+
+        hdf5wrap_search(d, "FLOAT2D",&string);
+
+        if(string){
+                LOG_MSG("found at %s",string);
+                MFREE(string);
+        }
         close_hdf5_file(&d);
         gfree(g);
         gfree(test);
