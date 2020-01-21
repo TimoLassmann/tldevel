@@ -678,11 +678,15 @@ int close_hdf5_file(struct hdf5_data** h)
 
         hdf5_data  = *h;
 
+
         if(hdf5_data){
+                if(H5Fclose(hdf5_data->file) < 0) ERROR_MSG("Close failed");
                 free_hdf5_data(hdf5_data);
         }
         *h = NULL;
         return OK;
+ERROR:
+        return FAIL;
 }
 
 

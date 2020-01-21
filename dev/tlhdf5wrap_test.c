@@ -83,13 +83,16 @@ int main(int argc, char *argv[])
 
         gfree(donkey);
 
-        hdf5wrap_search(d, "FLOAT2D",&string);
+        H5Fflush(d->file,H5F_SCOPE_GLOBAL);
+
+        RUN(hdf5wrap_search(d, "FLOAT2D",&string));
 
         if(string){
                 LOG_MSG("found at %s",string);
                 MFREE(string);
         }
-        close_hdf5_file(&d);
+        RUN(close_hdf5_file(&d));
+
         gfree(g);
         gfree(test);
         return EXIT_SUCCESS;
@@ -97,5 +100,4 @@ ERROR:
         gfree(test);
         close_hdf5_file(&d);
         return EXIT_FAILURE;
-
 }

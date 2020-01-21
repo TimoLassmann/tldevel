@@ -89,3 +89,5 @@ if ENABLE_HDF5
 libtldevel_la_SOURCES += $(TLHDF5WRAPSOURCES)
 endif
 
+
+libtldevel_la_LIBADD = $(LIBS)
