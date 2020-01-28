@@ -190,26 +190,24 @@ int detect_format(struct tl_seq_buffer* sb)
 
 
         }
-        if(res.illumina18_name > res.illumina15_name){
-                if(res.illumina_18_line > res.illumina_15_line){
-                        sb->base_quality_offset = 33;
-                }else{
-                        sb->base_quality_offset = 0;
-                }
+        if(res.illumina18_name > res.illumina15_name || res.illumina_18_line > res.illumina_15_line){
+                sb->base_quality_offset = 33;
+        }else{
+                sb->base_quality_offset = 0;
         }
-        if(res.illumina15_name > res.illumina18_name){
-                if(res.illumina_15_line > res.illumina_18_line){
-                        sb->base_quality_offset = 64;
-                }else{
-                        sb->base_quality_offset = 0;
-                }
+
+        if(res.illumina15_name > res.illumina18_name || res.illumina_15_line > res.illumina_18_line){
+                sb->base_quality_offset = 64;
+        }else{
+                sb->base_quality_offset = 0;
         }
+
 
         if(sb->base_quality_offset == 0){
 
                 WARNING_MSG("Could not detect file format.");
                 WARNING_MSG("This is the file info:");
-                WARNING_MSG("Among %s sequences there are:", sb->num_seq);
+                WARNING_MSG("Among %d sequences there are:", sb->num_seq);
                 WARNING_MSG("%d\tIllumina 1.8 read names", res.illumina18_name);
                 WARNING_MSG("%d\tIllumina 1.5 read names", res.illumina15_name);
                 WARNING_MSG("%d\tDNA lines", res.dna_line);

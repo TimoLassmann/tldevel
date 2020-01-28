@@ -97,6 +97,7 @@ int get_dim2(void* ptr,int* d)
 
 
 ALLOC_1D_ARRAY(char)
+ALLOC_1D_ARRAY(uint8_t)
 ALLOC_1D_ARRAY(int)
 ALLOC_1D_ARRAY(float)
 ALLOC_1D_ARRAY(double)
@@ -165,6 +166,7 @@ ALLOC_1D_ARRAY(double)
         }
 
 ALLOC_2D_ARRAY(char)
+ALLOC_2D_ARRAY(uint8_t)
 ALLOC_2D_ARRAY(int)
 ALLOC_2D_ARRAY(float)
 ALLOC_2D_ARRAY(double)
@@ -176,6 +178,7 @@ ALLOC_2D_ARRAY(double)
         }
 
 FREE_VOID(char)
+FREE_VOID(uint8_t)
 FREE_VOID(int)
 FREE_VOID(float)
 FREE_VOID(double)
@@ -191,6 +194,7 @@ FREE_VOID(double)
         }
 
 FREE_1D_ARRAY(char)
+FREE_1D_ARRAY(uint8_t)
 FREE_1D_ARRAY(int)
 FREE_1D_ARRAY(float)
 FREE_1D_ARRAY(double)
@@ -210,6 +214,7 @@ FREE_1D_ARRAY(double)
 
 
 FREE_2D_ARRAY(char)
+FREE_2D_ARRAY(uint8_t)
 FREE_2D_ARRAY(int)
 FREE_2D_ARRAY(float)
 FREE_2D_ARRAY(double)
