@@ -190,18 +190,20 @@ int detect_format(struct tl_seq_buffer* sb)
 
 
         }
-        if(res.illumina18_name > res.illumina15_name || res.illumina_18_line > res.illumina_15_line){
-                sb->base_quality_offset = 33;
-        }else{
-                sb->base_quality_offset = 0;
+        if(res.illumina18_name > res.illumina15_name){
+                if(res.illumina_18_line > res.illumina_15_line){
+                        sb->base_quality_offset = 33;
+                }else{
+                        sb->base_quality_offset = 0;
+                }
         }
-
-        if(res.illumina15_name > res.illumina18_name || res.illumina_15_line > res.illumina_18_line){
-                sb->base_quality_offset = 64;
-        }else{
-                sb->base_quality_offset = 0;
+        if(res.illumina15_name > res.illumina18_name){
+                if(res.illumina_15_line > res.illumina_18_line){
+                        sb->base_quality_offset = 64;
+                }else{
+                        sb->base_quality_offset = 0;
+                }
         }
-
 
         if(sb->base_quality_offset == 0){
 
@@ -216,10 +218,24 @@ int detect_format(struct tl_seq_buffer* sb)
                 WARNING_MSG("%d\tIllumina 1.5 base quality lines.", res.illumina_15_line);
 
                 WARNING_MSG("");
+                if(res.illumina18_name || res.illumina15_name){
+                        if(res.illumina18_name > res.illumina15_name){
+                                WARNING_MSG("Will assume the base qualities are in standard Sanger format (Phred + 33)");
+                                sb->base_quality_offset = 33;
 
-                WARNING_MSG("Will assume the base qualities are in standard Sanger format (Phred + 33)");
+                        }else{
+                                WARNING_MSG("Will assume the base qualities are in older Illumina format (Phred + 64)");
+                                sb->base_quality_offset = 64;
+                        }
 
-                sb->base_quality_offset = 33;
+                }else{
+                        WARNING_MSG("Will assume the base qualities are in standard Sanger format (Phred + 33)");
+                        sb->base_quality_offset = 33;
+                }
+
+                //WARNING_MSG("Will assume the base qualities are in standard Sanger format (Phred + 33)");
+
+
         }
         return OK;
 }
