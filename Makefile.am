@@ -32,7 +32,7 @@ TLHDF5WRAPSOURCES = tlhdf5wrap.h tlhdf5wrap_types.h tlhdf5wrap.c
 
 KSTRING_SOURCES =  kstring.h kstring.c
 KHASH_SOURCES = khash.h
-
+KSA_SOURCES = ksa.c ksa.h
 
 libtldevel_la_SOURCES = \
 $(TLHASHTABLESOURCES) \
@@ -46,7 +46,8 @@ $(TLCHECKPOINTSOURCES) \
 $(TLMISCSOURCES) \
 $(TLALPHABETSOURCES) \
 $(KSTRING_SOURCES) \
-$(KHASH_SOURCES)
+$(KHASH_SOURCES) \
+$(KSA_SOURCES) 
 
 if ENABLE_HTS
 libtldevel_la_SOURCES += $(TLHTSWRAPSOURCES)

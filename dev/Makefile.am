@@ -19,7 +19,8 @@ alphabet_test \
 seqio_test \
 demo \
 kstring_test \
-khash_test 
+khash_test \
+ksa_test
 
 
 if ENABLE_HDF5
@@ -36,6 +37,11 @@ demo_SOURCES= demo.c
 hdf5_test_SOURCES = tlhdf5wrap_test.c
 hdf5_test_CPPFLAGS = $(AM_CPPFLAGS)
 hdf5_test_LDADD = ../libtldevel.la
+
+ksa_test_SOURCES = ksa_test.c
+ksa_test_CPPFLAGS = $(AM_CPPFLAGS)
+ksa_test_LDADD = ../libtldevel.la
+
 
 khash_test_SOURCES = khash_test.c
 khash_test_CPPFLAGS = $(AM_CPPFLAGS)
