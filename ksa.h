@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+
+
 typedef int64_t saint_t;
 #define SAINT_MAX INT64_MAX
 #define SAIS_CORE ksa_core64
