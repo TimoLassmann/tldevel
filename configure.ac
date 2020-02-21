@@ -58,6 +58,7 @@ AC_MSG_WARN([Zlib not found!!!]))
 # FIXME: Replace `main' with a function in `-lm':
 AC_CHECK_LIB([m], [log])
 AC_CHECK_LIB([pthread], [pthread_create])
+AC_SEARCH_LIBS([clock_gettime],[rt])
 
 # Checks for header files.
 AC_CHECK_HEADERS([stdlib.h])

@@ -166,7 +166,7 @@ int read_fasta_fastq_file(struct file_handler* fh, struct tl_seq_buffer** seq_bu
                         snprintf(tmp, TL_SEQ_MAX_NAME_LEN, "%s", ks->name.s);
                 }
 
-                while(ks->seq.l > sb->sequences[sb->num_seq]->malloc_len){
+                while(ks->seq.l+1 > sb->sequences[sb->num_seq]->malloc_len){
                         RUN(resize_tl_seq(sb->sequences[sb->num_seq]));
                 }
                 tmp = sb->sequences[sb->num_seq]->seq;
