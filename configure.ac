@@ -19,7 +19,6 @@ m4_include([m4/ax_check_compile_flag.m4])
 m4_include([m4/ax_lib_hdf5.m4])
 m4_include([m4/tldevel_set_compile_flags.m4])
 
-
 AX_ENABLE_DEBUG
 
 AX_LIB_HDF5([serial])
