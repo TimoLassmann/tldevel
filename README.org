@@ -3,9 +3,6 @@
 #+PROPERTY: header-args :eval never-export
 #+PROPERTY:    header-args:sh  :tangle no
 
-
-[[https://github.com/TimoLassmann/tldevel/workflows/C/C++%20CI/badge.svg][C/C++ CI]]
-
 * Introduction
 
   Libtldevel is a library I use to develop C programs. It contains wrappers around memory allocation functions and modules to do various things. 
