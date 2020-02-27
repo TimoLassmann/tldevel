@@ -3,7 +3,8 @@
 #+PROPERTY: header-args :eval never-export
 #+PROPERTY:    header-args:sh  :tangle no
 
-![C/C++ CI](https://github.com/TimoLassmann/tldevel/workflows/C/C++%20CI/badge.svg)
+
+[[https://github.com/TimoLassmann/tldevel/workflows/C/C++%20CI/badge.svg][C/C++ CI]]
 
 * Introduction
 
