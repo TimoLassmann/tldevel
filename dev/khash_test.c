@@ -82,7 +82,6 @@ int main() {
                 }else{
                         kh_value(h2, k).a = 1;
                         kh_value(h2, k).b = 0;
-
                         //fprintf(stdout,"set to 1 \n");
                 }
         }

@@ -152,7 +152,7 @@ struct rng_state* init_rng_from_rng(struct rng_state* rng)
                 s->gen = 0;
                 s->z1 = 0.0;
         }
-        jump(s);
+        jump(rng);
         return s;
 ERROR:
         return NULL;
