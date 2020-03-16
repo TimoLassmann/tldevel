@@ -20,7 +20,8 @@ seqio_test \
 demo \
 kstring_test \
 khash_test \
-ksa_test
+ksa_test \
+esl_stopwatch_test
 
 
 if ENABLE_HDF5
@@ -33,6 +34,10 @@ TESTS = $(TESTLIST)
 check_PROGRAMS = $(TESTLIST)
 
 demo_SOURCES= demo.c
+
+esl_stopwatch_test_SOURCES = eslStopWatchTest.c
+esl_stopwatch_test_CPPFLAGS = $(AM_CPPFLAGS)
+esl_stopwatch_test_LDADD = ../libtldevel.la
 
 hdf5_test_SOURCES = tlhdf5wrap_test.c
 hdf5_test_CPPFLAGS = $(AM_CPPFLAGS)

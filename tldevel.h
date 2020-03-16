@@ -93,12 +93,12 @@ EXTERN int nearly_equal_double(double a, double b);
 
 
 /* Functions to declare and use a timer */
-
+/*
 #define DECLARE_TIMER(n) struct timespec ts1_##n; struct timespec ts2_##n;
 #define START_TIMER(n) clock_gettime(CLOCK_MONOTONIC_RAW, &ts1_##n);
 #define STOP_TIMER(n) clock_gettime(CLOCK_MONOTONIC_RAW, &ts2_##n);
 #define GET_TIMING(n) (double)(ts2_##n.tv_sec - ts1_##n.tv_sec) + ((double)  ts2_##n.tv_nsec - ts1_##n.tv_nsec) / 1000000000.0
-
+*/
 /* Memory functions  */
 
 #define MFREE(p) do {                                           \

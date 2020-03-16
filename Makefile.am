@@ -34,6 +34,8 @@ KSTRING_SOURCES =  kstring.h kstring.c
 KHASH_SOURCES = khash.h
 KSA_SOURCES = ksa.c ksa.h
 
+ESL_TIMER_SOURCES = esl_stopwatch.h esl_stopwatch.c
+
 libtldevel_la_SOURCES = \
 $(TLHASHTABLESOURCES) \
 $(TLMINHASHSOURCES) \
@@ -47,7 +49,8 @@ $(TLMISCSOURCES) \
 $(TLALPHABETSOURCES) \
 $(KSTRING_SOURCES) \
 $(KHASH_SOURCES) \
-$(KSA_SOURCES)
+$(KSA_SOURCES) \
+$(ESL_TIMER_SOURCES)
 
 if ENABLE_HTS
 libtldevel_la_SOURCES += $(TLHTSWRAPSOURCES)

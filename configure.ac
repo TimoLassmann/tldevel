@@ -1,4 +1,4 @@
-AC_INIT([tldevel], [1.2.2])
+AC_INIT([tldevel], [1.2.3])
 AC_CONFIG_AUX_DIR([.])
 AM_INIT_AUTOMAKE
 AC_PROG_CC
@@ -57,8 +57,12 @@ AC_MSG_WARN([Zlib not found!!!]))
 # FIXME: Replace `main' with a function in `-lm':
 AC_CHECK_LIB([m], [log])
 AC_CHECK_LIB([pthread], [pthread_create])
-AC_SEARCH_LIBS([clock_gettime],[rt])
 
+AC_SEARCH_LIBS(clock_gettime, [rt posix4])
+
+
+AC_CHECK_HEADERS([mach/mach.h])
+AC_CHECK_HEADERS([sys/time.h])
 # Checks for header files.
 AC_CHECK_HEADERS([stdlib.h])
 AC_CHECK_HEADERS([string.h])
@@ -92,7 +96,8 @@ AC_CHECK_FUNCS([strstr])
 
 AC_CHECK_FUNCS([strdup])
 AC_CHECK_FUNCS([strtol])
-
+AC_CHECK_FUNCS([gethrtime])
+AC_CHECK_FUNCS([gettimeofday])
 
 AC_ARG_WITH([htsdir],
   [AS_HELP_STRING([--with-htsdir=DIR],

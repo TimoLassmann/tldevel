@@ -5,9 +5,15 @@
 
 * Introduction
 
-  Libtldevel is a library I use to develop C programs. It contains wrappers around memory allocation functions and modules to do various things. 
-  This is a library I use to develop C programs. 
+  Libtldevel is a library I use to develop C programs. It contains wrappers around memory allocation functions and modules to do various other things.
 
+  The library includes code from: 
+
+  [[https://github.com/attractivechaos/klib][klib]] - by attractive chaos 
+
+  [[https://github.com/EddyRivasLab/easel][easel]] - from the Sean Eddy / Elena Rivas lab 
+  
+   
 * Installation
 
   To use this library, unpack it in the root directory of your C project. Rename the unpacked =tldevel-XXX=  =tldevel= and make add the macro "ax_with_tldevel.m4" to a =m4= directory in your project. In =configure.ac=:
@@ -120,3 +126,5 @@
   At some point I should add wrappers and/or test scripts for GNU [[https://adtinfo.org/][=libavl=]].
 
   
+
+* References 
