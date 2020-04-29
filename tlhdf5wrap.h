@@ -45,70 +45,140 @@ EXTERN int close_hdf5_file(struct hdf5_data** h);
 
 //EXTERN int search(struct hdf5_data* hdf5_data);
 EXTERN int hdf5wrap_search(struct hdf5_data* hdf5_data,char* target, char** location);
+
 #define ADD_DATA_DEF(type)                                              \
-        EXTERN int hdf5wrap_add_1D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type* data)
+        EXTERN int hdf5wrap_add_0D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type data)
 
 ADD_DATA_DEF(char);
+//ADD_DATA_DEF(signed char);
+//ADD_DATA_DEF(unsigned char);
 ADD_DATA_DEF(int);
+ADD_DATA_DEF(uint8_t);
+ADD_DATA_DEF(int8_t);
+ADD_DATA_DEF(int16_t);
+ADD_DATA_DEF(long);
+//ADD_DATA_DEF(unsigned long);
+//ADD_DATA_DEF(long long);
 ADD_DATA_DEF(float);
 ADD_DATA_DEF(double);
 
 #undef ADD_DATA_DEF
 
-#define ADD_DATA_DEF(type)                                              \
-        EXTERN int hdf5wrap_add_2D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type** data)
 
-ADD_DATA_DEF(char);
-ADD_DATA_DEF(int);
-ADD_DATA_DEF(float);
-ADD_DATA_DEF(double);
+#define ADD_DATA_DEF(type)                                              \
+        EXTERN int hdf5wrap_add_0D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type data); \
+EXTERN int hdf5wrap_add_1D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type* data); \
+EXTERN int hdf5wrap_add_2D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type** data);
+
+ADD_DATA_DEF(char)
+ADD_DATA_DEF(int8_t)
+ADD_DATA_DEF(uint8_t)
+ADD_DATA_DEF(int16_t)
+ADD_DATA_DEF(uint16_t)
+ADD_DATA_DEF(int32_t)
+ADD_DATA_DEF(uint32_t)
+ADD_DATA_DEF(int64_t)
+ADD_DATA_DEF(uint64_t)
+ADD_DATA_DEF(float)
+ADD_DATA_DEF(double)
 
 #undef ADD_DATA_DEF
 
-#define HDFWRAP_WRITE_DATA(F,G,N,V) _Generic((V),                         \
-                                           char*: hdf5wrap_add_1D_dataset_char, \
-                                           int*: hdf5wrap_add_1D_dataset_int, \
-                                           float*:   hdf5wrap_add_1D_dataset_float, \
-                                           double*:  hdf5wrap_add_1D_dataset_double, \
-                                           char**: hdf5wrap_add_2D_dataset_char, \
-                                           int**: hdf5wrap_add_2D_dataset_int, \
-                                           float**:   hdf5wrap_add_2D_dataset_float, \
-                                           double**:  hdf5wrap_add_2D_dataset_double \
+
+#define HDFWRAP_WRITE_DATA(F,G,N,V) _Generic((V),                       \
+                char: hdf5wrap_add_0D_dataset_char,                     \
+                char*: hdf5wrap_add_1D_dataset_char,                    \
+                char**: hdf5wrap_add_2D_dataset_char,                   \
+                int8_t: hdf5wrap_add_0D_dataset_int8_t,                       \
+                int8_t*: hdf5wrap_add_1D_dataset_int8_t,                      \
+                int8_t**: hdf5wrap_add_2D_dataset_int8_t,                     \
+                uint8_t: hdf5wrap_add_0D_dataset_uint8_t,                       \
+                uint8_t*: hdf5wrap_add_1D_dataset_uint8_t,                      \
+                uint8_t**: hdf5wrap_add_2D_dataset_uint8_t,                     \
+                int16_t: hdf5wrap_add_0D_dataset_int16_t,                       \
+                int16_t*: hdf5wrap_add_1D_dataset_int16_t,                      \
+                int16_t**: hdf5wrap_add_2D_dataset_int16_t,                     \
+                uint16_t: hdf5wrap_add_0D_dataset_uint16_t,                       \
+                uint16_t*: hdf5wrap_add_1D_dataset_uint16_t,                      \
+                uint16_t**: hdf5wrap_add_2D_dataset_uint16_t,                     \
+                int32_t: hdf5wrap_add_0D_dataset_int32_t,                       \
+                int32_t*: hdf5wrap_add_1D_dataset_int32_t,                      \
+                int32_t**: hdf5wrap_add_2D_dataset_int32_t,                     \
+                uint32_t: hdf5wrap_add_0D_dataset_uint32_t,                       \
+                uint32_t*: hdf5wrap_add_1D_dataset_uint32_t,                      \
+                uint32_t**: hdf5wrap_add_2D_dataset_uint32_t,                     \
+                int64_t: hdf5wrap_add_0D_dataset_int64_t,                       \
+                int64_t*: hdf5wrap_add_1D_dataset_int64_t,                      \
+                int64_t**: hdf5wrap_add_2D_dataset_int64_t,                     \
+                uint64_t: hdf5wrap_add_0D_dataset_uint64_t,                       \
+                uint64_t*: hdf5wrap_add_1D_dataset_uint64_t,                      \
+                uint64_t**: hdf5wrap_add_2D_dataset_uint64_t,                     \
+                float:   hdf5wrap_add_0D_dataset_float,                 \
+                float*:   hdf5wrap_add_1D_dataset_float,                \
+                float**:   hdf5wrap_add_2D_dataset_float,               \
+                double:  hdf5wrap_add_0D_dataset_double,                \
+                double*:  hdf5wrap_add_1D_dataset_double,               \
+                double**:  hdf5wrap_add_2D_dataset_double               \
                 )(F,G,N,V)
 
 
-#define ADD_DATA_DEF(type)                                              \
-        EXTERN int hdf5wrap_read_1D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type** data)
-
-ADD_DATA_DEF(char);
-ADD_DATA_DEF(int);
-ADD_DATA_DEF(float);
-ADD_DATA_DEF(double);
-
-#undef ADD_DATA_DEF
-
-#define ADD_DATA_DEF(type)                                              \
-        EXTERN int hdf5wrap_read_2D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type*** data)
-
-ADD_DATA_DEF(char);
-ADD_DATA_DEF(int);
-ADD_DATA_DEF(float);
-ADD_DATA_DEF(double);
-
-#undef ADD_DATA_DEF
+#define READ_ARRAY(type)                                              \
+        EXTERN int hdf5wrap_read_0D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type* data); \
+        EXTERN int hdf5wrap_read_1D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type** data); \
+EXTERN int hdf5wrap_read_2D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type*** data);
 
 
-#define HDFWRAP_READ_DATA(F,G,N,V) _Generic((V),                         \
-                                           char**: hdf5wrap_read_1D_dataset_char, \
-                                           int**: hdf5wrap_read_1D_dataset_int, \
-                                           float**:   hdf5wrap_read_1D_dataset_float, \
-                                           double**:  hdf5wrap_read_1D_dataset_double, \
-                                           char***: hdf5wrap_read_2D_dataset_char, \
-                                           int***: hdf5wrap_read_2D_dataset_int, \
-                                           float***:   hdf5wrap_read_2D_dataset_float, \
-                                           double***:  hdf5wrap_read_2D_dataset_double \
+READ_ARRAY(char)
+READ_ARRAY(int8_t)
+READ_ARRAY(uint8_t)
+READ_ARRAY(int16_t)
+READ_ARRAY(uint16_t)
+READ_ARRAY(int32_t)
+READ_ARRAY(uint32_t)
+READ_ARRAY(int64_t)
+READ_ARRAY(uint64_t)
+READ_ARRAY(float)
+READ_ARRAY(double)
+
+
+#undef READ_ARRAY
+
+
+#define HDFWRAP_READ_DATA(F,G,N,V) _Generic((V),                        \
+                                            char*: hdf5wrap_read_0D_dataset_char, \
+                                            char**: hdf5wrap_read_1D_dataset_char, \
+                                            char***: hdf5wrap_read_2D_dataset_char, \
+                                            int8_t*: hdf5wrap_read_0D_dataset_int8_t, \
+                                            int8_t**: hdf5wrap_read_1D_dataset_int8_t, \
+                                            int8_t***: hdf5wrap_read_2D_dataset_int8_t, \
+                                            uint8_t*: hdf5wrap_read_0D_dataset_uint8_t, \
+                                            uint8_t**: hdf5wrap_read_1D_dataset_uint8_t, \
+                                            uint8_t***: hdf5wrap_read_2D_dataset_uint8_t, \
+                                            int16_t*: hdf5wrap_read_0D_dataset_int16_t, \
+                                            int16_t**: hdf5wrap_read_1D_dataset_int16_t, \
+                                            int16_t***: hdf5wrap_read_2D_dataset_int16_t, \
+                                            uint16_t*: hdf5wrap_read_0D_dataset_uint16_t, \
+                                            uint16_t**: hdf5wrap_read_1D_dataset_uint16_t, \
+                                            uint16_t***: hdf5wrap_read_2D_dataset_uint16_t, \
+                                            int32_t*: hdf5wrap_read_0D_dataset_int32_t, \
+                                            int32_t**: hdf5wrap_read_1D_dataset_int32_t, \
+                                            int32_t***: hdf5wrap_read_2D_dataset_int32_t, \
+                                            uint32_t*: hdf5wrap_read_0D_dataset_uint32_t, \
+                                            uint32_t**: hdf5wrap_read_1D_dataset_uint32_t, \
+                                            uint32_t***: hdf5wrap_read_2D_dataset_uint32_t, \
+                                            int64_t*: hdf5wrap_read_0D_dataset_int64_t, \
+                                            int64_t**: hdf5wrap_read_1D_dataset_int64_t, \
+                                            int64_t***: hdf5wrap_read_2D_dataset_int64_t, \
+                                            uint64_t*: hdf5wrap_read_0D_dataset_uint64_t, \
+                                            uint64_t**: hdf5wrap_read_1D_dataset_uint64_t, \
+                                            uint64_t***: hdf5wrap_read_2D_dataset_uint64_t, \
+                                            float*:   hdf5wrap_read_0D_dataset_float, \
+                                            float**:   hdf5wrap_read_1D_dataset_float, \
+                                            float***:   hdf5wrap_read_2D_dataset_float, \
+                                            double*:  hdf5wrap_read_0D_dataset_double, \
+                                            double**:  hdf5wrap_read_1D_dataset_double, \
+                                            double***:  hdf5wrap_read_2D_dataset_double \
                 )(F,G,N,V)
-
 
 
 EXTERN int hdf5wrap_add_attribute_int(struct hdf5_data* hdf5_data,char* group, char* name,int x);

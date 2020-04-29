@@ -18,6 +18,22 @@ int main(int argc, char *argv[])
         RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/g1/g2/g4","pi",3.14));
 
         //RUN(hdf5wrap)
+        int16_t sint = 23;
+        short int sint2 = 22;
+
+        RUN(HDFWRAP_WRITE_DATA(d,"/","INT0", 22));
+
+        RUN(HDFWRAP_WRITE_DATA(d,"/","sINT0", sint));
+        RUN(HDFWRAP_WRITE_DATA(d,"/","sINT1", sint2));
+
+        char test_char = 'A';
+        uint8_t test_char2 = 65;
+
+        RUN(HDFWRAP_WRITE_DATA(d,"/","chartype", test_char));
+        RUN(HDFWRAP_WRITE_DATA(d,"/","uint8_t", test_char2));
+
+
+
         int** test = NULL;
         int i,j,c;
         RUN(galloc(&test,10,10));
@@ -93,6 +109,26 @@ int main(int argc, char *argv[])
         }
         RUN(close_hdf5_file(&d));
 
+
+        d = NULL;
+        RUN(open_hdf5_file(&d,"hdf5testfile.h5"));
+
+        sint = 0;
+        sint2 = 0;
+
+
+
+        RUN(HDFWRAP_READ_DATA(d,"/","sINT0", &sint));
+        RUN(HDFWRAP_READ_DATA(d,"/","sINT1", &sint2));
+        LOG_MSG("Read %d %d", sint, sint2);
+        test_char = 0;
+        test_char2 = 0;
+
+
+        RUN(HDFWRAP_READ_DATA(d,"/","chartype", &test_char));
+        RUN(HDFWRAP_READ_DATA(d,"/","uint8_t", &test_char2));
+        LOG_MSG("Read %c %d", test_char, test_char2);
+        RUN(close_hdf5_file(&d));
         gfree(g);
         gfree(test);
         return EXIT_SUCCESS;
