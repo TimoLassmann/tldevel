@@ -5,7 +5,7 @@ AM_LDFLAGS += -Wno-undef
 
 @VALGRIND_CHECK_RULES@
 
-# AM_CPPFLAGS = -I$(top_srcdir)/ -I${top_builddir}
+AM_CFLAGS = -I$(top_srcdir)/ -I${top_builddir}
 
 TESTLIST = \
 tldevel_test \
