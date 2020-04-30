@@ -1,3 +1,9 @@
+2020-04-30  Timo Lassmann  <timo.lassmann@telethonkids.org.au>
+
+	* Version 1.2.4
+	Added more datatypes to the hdf5 interface. It is now
+	possible to create a dataset with a single data point. 
+
 2020-03-15  Timo Lassmann  <timo.lassmann@telethonkids.org.au>
 
 	* Version 1.2.3
