@@ -12,10 +12,12 @@ int main(int argc, char *argv[])
 
         RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/","fourty four",44));
         RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/","otto","otto"));
+        RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/","pi",3.14));
 
         RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/group10/subsectionA","otto","otto"));
 
         RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/g1/g2/g4","pi",3.14));
+        RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/g1/g2/g4","piINT",314));
 
         //RUN(hdf5wrap)
         int16_t sint = 23;
@@ -128,6 +130,18 @@ int main(int argc, char *argv[])
         RUN(HDFWRAP_READ_DATA(d,"/","chartype", &test_char));
         RUN(HDFWRAP_READ_DATA(d,"/","uint8_t", &test_char2));
         LOG_MSG("Read %c %d", test_char, test_char2);
+
+
+        //int x_int;
+        //double x_d;
+
+        //RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/g1/g2/g4","pi",3.14));
+        //hdf5_read_attributes_test(d,"/g1/g2/g4","pi",&x_int);
+        //hdf5_read_attributes_test(d,"/g1/g2/g4","piINT",&x_int);
+        //hdf5_read_attributes_test(d,"/g1/g2/g4","pi",&x_d);
+        //hdf5_read_attributes_test(d,"/g1/g2/g4","piINT",&x_d);
+
+
         RUN(close_hdf5_file(&d));
         gfree(g);
         gfree(test);

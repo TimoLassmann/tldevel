@@ -46,24 +46,6 @@ EXTERN int close_hdf5_file(struct hdf5_data** h);
 //EXTERN int search(struct hdf5_data* hdf5_data);
 EXTERN int hdf5wrap_search(struct hdf5_data* hdf5_data,char* target, char** location);
 
-#define ADD_DATA_DEF(type)                                              \
-        EXTERN int hdf5wrap_add_0D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type data)
-
-ADD_DATA_DEF(char);
-//ADD_DATA_DEF(signed char);
-//ADD_DATA_DEF(unsigned char);
-ADD_DATA_DEF(int);
-ADD_DATA_DEF(uint8_t);
-ADD_DATA_DEF(int8_t);
-ADD_DATA_DEF(int16_t);
-ADD_DATA_DEF(long);
-//ADD_DATA_DEF(unsigned long);
-//ADD_DATA_DEF(long long);
-ADD_DATA_DEF(float);
-ADD_DATA_DEF(double);
-
-#undef ADD_DATA_DEF
-
 
 #define ADD_DATA_DEF(type)                                              \
         EXTERN int hdf5wrap_add_0D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type data); \
@@ -181,29 +163,71 @@ READ_ARRAY(double)
                 )(F,G,N,V)
 
 
-EXTERN int hdf5wrap_add_attribute_int(struct hdf5_data* hdf5_data,char* group, char* name,int x);
-EXTERN int hdf5wrap_add_attribute_double(struct hdf5_data* hdf5_data,char* group, char* name,double x);
+#define ADD_ATTR(type)                                                  \
+        EXTERN int hdf5wrap_add_attribute_ ##type(struct hdf5_data* hdf5_data, char* group, char* name,type x);
+
+ADD_ATTR(int8_t)
+ADD_ATTR(uint8_t)
+ADD_ATTR(int16_t)
+ADD_ATTR(uint16_t)
+ADD_ATTR(int32_t)
+ADD_ATTR(uint32_t)
+ADD_ATTR(int64_t)
+ADD_ATTR(uint64_t)
+ADD_ATTR(float)
+ADD_ATTR(double)
+
+#undef ADD_ATTR
+
 EXTERN int hdf5wrap_add_attribute_string(struct hdf5_data* hdf5_data,char* group, char* name,char* x);
 
-#define HDFWRAP_WRITE_ATTRIBUTE(F,G,N,V) _Generic((V),                     \
-                                              int: hdf5wrap_add_attribute_int, \
-                                              double: hdf5wrap_add_attribute_double, \
-                                              char*: hdf5wrap_add_attribute_string \
+#define HDFWRAP_WRITE_ATTRIBUTE(F,G,N,V) _Generic((V),      \
+                int8_t: hdf5wrap_add_attribute_int8_t,      \
+                uint8_t: hdf5wrap_add_attribute_uint8_t,    \
+                int16_t: hdf5wrap_add_attribute_int16_t,    \
+                uint16_t: hdf5wrap_add_attribute_uint16_t,  \
+                int32_t: hdf5wrap_add_attribute_int32_t,    \
+                uint32_t: hdf5wrap_add_attribute_uint32_t,  \
+                int64_t: hdf5wrap_add_attribute_int64_t,    \
+                uint64_t: hdf5wrap_add_attribute_uint64_t,  \
+                float: hdf5wrap_add_attribute_float,        \
+                double: hdf5wrap_add_attribute_double,      \
+                char*: hdf5wrap_add_attribute_string        \
                 )(F,G,N,V)
 
 
-EXTERN int hdf5wrap_read_attribute_int(struct hdf5_data* hdf5_data, char* group, char* name, int* x);
-EXTERN int hdf5wrap_read_attribute_double(struct hdf5_data* hdf5_data, char* group, char* name, double* x);
-EXTERN int hdf5wrap_read_attribute_string(struct hdf5_data* hdf5_data, char* group, char* name, char** x);
+#define READ_ATTR(type)                                                  \
+        EXTERN int hdf5wrap_read_attribute_ ##type(struct hdf5_data* hdf5_data, char* group, char* name,type x);
+
+READ_ATTR(int8_t)
+READ_ATTR(uint8_t)
+READ_ATTR(int16_t)
+READ_ATTR(uint16_t)
+READ_ATTR(int32_t)
+READ_ATTR(uint32_t)
+READ_ATTR(int64_t)
+READ_ATTR(uint64_t)
+READ_ATTR(float)
+READ_ATTR(double)
+
+#undef READ_ATTR
+
+
+EXTERN int hdf5wrap_read_attribute_string(struct hdf5_data* hdf5_data, char* group,char* name, char** x);
 
 #define HDFWRAP_READ_ATTRIBUTE(F,G,N,V) _Generic((V),                     \
-                                              int*: hdf5wrap_read_attribute_int, \
-                                              double*: hdf5wrap_read_attribute_double, \
-                                              char**: hdf5wrap_read_attribute_string \
+                int8_t: hdf5wrap_read_attribute_int8_t,                  \
+                uint8_t: hdf5wrap_read_attribute_uint8_t,    \
+                int16_t: hdf5wrap_read_attribute_int16_t,    \
+                uint16_t: hdf5wrap_read_attribute_uint16_t,  \
+                int32_t: hdf5wrap_read_attribute_int32_t,    \
+                uint32_t: hdf5wrap_read_attribute_uint32_t,  \
+                int64_t: hdf5wrap_read_attribute_int64_t,    \
+                uint64_t: hdf5wrap_read_attribute_uint64_t,  \
+                float: hdf5wrap_read_attribute_float,        \
+                double: hdf5wrap_read_attribute_double,      \
+                char**: hdf5wrap_read_attribute_string        \
                 )(F,G,N,V)
-
-
-
 
 
 

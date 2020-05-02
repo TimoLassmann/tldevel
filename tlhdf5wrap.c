@@ -35,9 +35,9 @@ HDFWRAP_READ_ATTRIBUTE
 
  */
 
-static int hdf5_write_attributes(struct hdf5_data* hdf5_data, char* target);
-static int hdf5_read_attributes(struct hdf5_data* hdf5_data, char* group);
-static int clear_hdf5_attribute(struct hdf5_attribute* h);
+
+//static int hdf5_read_attributes(struct hdf5_data* hdf5_data, char* group);
+//static int clear_hdf5_attribute(struct hdf5_attribute* h);
 
 /* allocating the hdf5 data structure - this is really more of a file handler...  */
 static int alloc_hdf5_data(struct hdf5_data** h);
@@ -116,6 +116,10 @@ static int startof_galloc_unknown(void* x, void** ptr);
   H5T_NATIVE_ULONG 	unsigned long
 H5T_NATIVE_LLONG 	long long
 H5T_NATIVE_ULLONG 	unsigned long long
+
+
+
+
 */
 #define SETTYPR(t)                                      \
         static int set_type_ ## t(hid_t* type);
@@ -132,9 +136,9 @@ SETTYPR(uint64_t)
 SETTYPR(float)
 SETTYPR(double)
 
-#undef STARTOF_DATA
+#undef SETTYPR
 
-        static int set_type_unknown(hid_t* type);
+static int set_type_unknown(hid_t* type);
 
 
 
@@ -580,6 +584,163 @@ READ_ARRAY(double)
 #undef READ_ARRAY
 
 
+
+
+
+#define ADD_ATTR(type)                                                  \
+        int hdf5wrap_add_attribute_ ##type(struct hdf5_data* hdf5_data, char* group, char* name,type x) \
+        {                                                               \
+                hid_t aid;                                              \
+                hid_t attr;                                             \
+                RUN(hdf5wrap_open_group(hdf5_data, group));             \
+                HDFWRAP_SET_TYPE(x,&hdf5_data->native_type);            \
+                if( H5Aexists(hdf5_data->group, name)){                 \
+                        attr = H5Aopen(hdf5_data->group,name, H5P_DEFAULT); \
+                        hdf5_data->status = H5Awrite(attr,hdf5_data->native_type, &x); \
+                        hdf5_data->status = H5Aclose(attr);             \
+                }else{                                                  \
+                        aid  = H5Screate(H5S_SCALAR);                   \
+                        attr = H5Acreate(hdf5_data->group,name, hdf5_data->native_type, aid,  H5P_DEFAULT, H5P_DEFAULT); \
+                        hdf5_data->status = H5Awrite(attr,hdf5_data->native_type, &x); \
+                        hdf5_data->status = H5Sclose(aid);              \
+                        hdf5_data->status = H5Aclose(attr);             \
+                }                                                       \
+                hdf5wrap_close_group(hdf5_data);                        \
+                return OK;                                              \
+        ERROR:                                                          \
+                return FAIL;                                            \
+        }
+
+ADD_ATTR(int8_t)
+ADD_ATTR(uint8_t)
+ADD_ATTR(int16_t)
+ADD_ATTR(uint16_t)
+ADD_ATTR(int32_t)
+ADD_ATTR(uint32_t)
+ADD_ATTR(int64_t)
+ADD_ATTR(uint64_t)
+ADD_ATTR(float)
+ADD_ATTR(double)
+
+#undef ADD_ATTR
+
+
+
+int hdf5wrap_add_attribute_string(struct hdf5_data* hdf5_data,char* group, char* name,char* x)
+{
+        hid_t aid;
+        hid_t atype;
+        hid_t attr;
+        int len;
+        RUN(hdf5wrap_open_group(hdf5_data, group));
+
+        if( H5Aexists(hdf5_data->group, name)){
+                H5Adelete(hdf5_data->group,name);
+        }
+        len = strnlen(x, HDF5GLUE_MAX_CONTENT_LEN) + 1;
+
+
+        aid  = H5Screate(H5S_SCALAR);
+        atype = H5Tcopy(H5T_C_S1);
+        H5Tset_size(atype, len);
+        H5Tset_strpad(atype,H5T_STR_NULLTERM);
+        attr = H5Acreate(hdf5_data->group  ,name, atype, aid, H5P_DEFAULT, H5P_DEFAULT);
+        hdf5_data->status = H5Awrite(attr, atype, x);
+        hdf5_data->status = H5Sclose(aid);
+        hdf5_data->status = H5Tclose(atype);
+        hdf5_data->status = H5Aclose(attr);
+        hdf5wrap_close_group(hdf5_data);
+        return OK;
+ERROR:
+        return FAIL;
+}
+
+#define READ_ATTR(type)                                                 \
+        int hdf5_read_attributes_ ##type (struct hdf5_data* hdf5_data, char* group,char* name, type* x) \
+        {                                                               \
+                H5O_info_t oinfo;                                       \
+                hid_t atype;                                            \
+                H5T_class_t type_class;                                 \
+                int i;                                                  \
+                char attr_name[HDF5GLUE_MAX_NAME_LEN];                  \
+                RUN(hdf5wrap_open_group(hdf5_data, group));             \
+                hdf5_data->status = H5Oget_info(hdf5_data->group , &oinfo); \
+                for(i = 0; i < (int)oinfo.num_attrs; i++) {             \
+                        hdf5_data->attribute_id = H5Aopen_by_idx(hdf5_data->group, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, (hsize_t)i, H5P_DEFAULT, H5P_DEFAULT); \
+                        atype = H5Aget_type(hdf5_data->attribute_id);   \
+                        type_class = H5Tget_class(atype);               \
+                        H5Aget_name(hdf5_data->attribute_id ,HDF5GLUE_MAX_NAME_LEN,attr_name); \
+                        if(!strncmp(name,attr_name, HDF5GLUE_MAX_NAME_LEN)){ \
+                                HDFWRAP_SET_TYPE(x,&hdf5_data->native_type); \
+                                if(H5Tequal(hdf5_data->native_type, atype)){ \
+                                        hdf5_data->status = H5Aread(hdf5_data->attribute_id, hdf5_data->native_type, &x); \
+                                }else{                                  \
+                                        ERROR_MSG("Type mismatch");     \
+                                }                                       \
+                        }                                               \
+                        hdf5_data->status   = H5Aclose(hdf5_data->attribute_id); \
+                        hdf5_data->status   = H5Tclose(atype);          \
+                }                                                       \
+                return OK;                                              \
+        ERROR:                                                          \
+                return FAIL;                                            \
+        }
+
+
+READ_ATTR(int8_t)
+READ_ATTR(uint8_t)
+READ_ATTR(int16_t)
+READ_ATTR(uint16_t)
+READ_ATTR(int32_t)
+READ_ATTR(uint32_t)
+READ_ATTR(int64_t)
+READ_ATTR(uint64_t)
+READ_ATTR(float)
+READ_ATTR(double)
+
+#undef READ_ATTR
+
+
+int hdf5wrap_read_attribute_string(struct hdf5_data* hdf5_data, char* group,char* name, char** x)
+{
+        H5O_info_t oinfo;
+        hid_t atype,atype_mem;
+        H5T_class_t type_class;
+        int i;
+        char attr_name[HDF5GLUE_MAX_NAME_LEN];
+
+        RUN(hdf5wrap_open_group(hdf5_data, group));
+        hdf5_data->status = H5Oget_info(hdf5_data->group , &oinfo);
+        //hdf5_data->num_attr = 0;
+        for(i = 0; i < (int)oinfo.num_attrs; i++) {
+                hdf5_data->attribute_id = H5Aopen_by_idx(hdf5_data->group, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, (hsize_t)i, H5P_DEFAULT, H5P_DEFAULT);
+                atype = H5Aget_type(hdf5_data->attribute_id);
+                type_class = H5Tget_class(atype);
+                H5Aget_name(hdf5_data->attribute_id ,HDF5GLUE_MAX_NAME_LEN,attr_name);
+
+                if(!strncmp(name,attr_name, HDF5GLUE_MAX_NAME_LEN)){
+                        char buffer[HDF5GLUE_MAX_NAME_LEN];
+                        atype_mem = H5Tget_native_type(atype, H5T_DIR_ASCEND);
+                        hdf5_data->status   = H5Aread(hdf5_data->attribute_id, atype_mem, buffer);
+
+                        hdf5_data->status   = H5Tclose(atype_mem);
+                        int l = strnlen(buffer, HDF5GLUE_MAX_CONTENT_LEN);
+                        char* tmp = NULL;
+                        MMALLOC(tmp, sizeof(char) *(l+1));
+                        memcpy(tmp, buffer, l);
+                        tmp[l] = 0;
+                        *x = tmp;
+                }
+                hdf5_data->status   = H5Aclose(hdf5_data->attribute_id);
+                hdf5_data->status   = H5Tclose(atype);
+        }
+        return OK;
+ERROR:
+        return FAIL;
+}
+
+
+
 int hdf5wrap_open_group(struct hdf5_data* hdf5_data, char* groupname)
 {
 
@@ -641,270 +802,6 @@ ERROR:
         return FAIL;
 }
 
-
-int hdf5wrap_read_attribute_int(struct hdf5_data* hdf5_data, char* group, char* name, int* x)
-{
-        int i,f;
-        RUN(hdf5_read_attributes(hdf5_data, group));
-        if(hdf5_data->num_attr == 0){
-                ERROR_MSG("No attributes found in group %s", group);
-        }
-        f = 0 ;
-        for(i = 0; i < hdf5_data->num_attr;i++){
-                if(!strncmp(name, hdf5_data->attr[i]->attr_name, HDF5GLUE_MAX_NAME_LEN)){
-                        *x = hdf5_data->attr[i]->int_val;
-                        f =1;
-                        break;
-                }
-        }
-        if(!f){
-                ERROR_MSG("could not find attribute %s in %s", name,group);
-        }
-        return OK;
-ERROR:
-        return FAIL;
-}
-
-int hdf5wrap_read_attribute_double(struct hdf5_data* hdf5_data, char* group, char* name, double* x)
-{
-        int i,f;
-        RUN(hdf5_read_attributes(hdf5_data, group));
-        if(hdf5_data->num_attr == 0){
-                ERROR_MSG("No attributes found in group %s", group);
-        }
-        f = 0 ;
-        for(i = 0; i < hdf5_data->num_attr;i++){
-                if(!strncmp(name, hdf5_data->attr[i]->attr_name, HDF5GLUE_MAX_NAME_LEN)){
-                        *x = hdf5_data->attr[i]->double_val;
-                        f =1;
-                        break;
-                }
-        }
-        if(!f){
-                ERROR_MSG("could not find attribute %s in %s", name,group);
-        }
-        return OK;
-ERROR:
-        return FAIL;
-}
-
-int hdf5wrap_read_attribute_string(struct hdf5_data* hdf5_data, char* group, char* name, char** x)
-{
-        int i,f,l;
-        char* tmp = NULL;
-        RUN(hdf5_read_attributes(hdf5_data, group));
-        if(hdf5_data->num_attr == 0){
-                ERROR_MSG("No attributes found in group %s", group);
-        }
-        f = 0 ;
-        for(i = 0; i < hdf5_data->num_attr;i++){
-                if(!strncmp(name, hdf5_data->attr[i]->attr_name, HDF5GLUE_MAX_NAME_LEN)){
-                        l = strnlen(hdf5_data->attr[i]->string, HDF5GLUE_MAX_CONTENT_LEN);
-                        MMALLOC(tmp, sizeof(char) *(l+1));
-                        memcpy(tmp, hdf5_data->attr[i]->string, l);
-                        tmp[l] = 0;
-                        *x = tmp;
-                        f =1;
-                        break;
-                }
-        }
-        if(!f){
-                ERROR_MSG("could not find attribute %s in %s", name,group);
-        }
-        return OK;
-ERROR:
-        return FAIL;
-}
-
-
-int hdf5wrap_add_attribute_int(struct hdf5_data* hdf5_data, char* group, char* name, int x)
-{
-        struct hdf5_attribute* h = NULL;
-        int n = hdf5_data->num_attr;
-        ASSERT(n != hdf5_data->num_attr_mem,"No space to add more attributes...");
-        h = hdf5_data->attr[n];
-        RUN(clear_hdf5_attribute(h));
-        snprintf(h->attr_name, HDF5GLUE_MAX_NAME_LEN,"%s", name);
-        h->type = HDF5GLUE_TYPE_INT;
-        h->int_val = x;
-        hdf5_data->num_attr++;
-
-        RUN(hdf5_write_attributes(hdf5_data,group));
-        return OK;
-ERROR:
-        return FAIL;
-}
-
-int hdf5wrap_add_attribute_double(struct hdf5_data* hdf5_data, char* group, char* name,double x)
-{
-
-        struct hdf5_attribute* h = NULL;
-        int n = hdf5_data->num_attr;
-        ASSERT(n != hdf5_data->num_attr_mem,"No space to add more attributes...");
-        h = hdf5_data->attr[n];
-        RUN(clear_hdf5_attribute(h));
-        snprintf(h->attr_name, HDF5GLUE_MAX_NAME_LEN,"%s", name);
-        h->type = HDF5GLUE_TYPE_DOUBLE;
-        h->double_val = x;
-        hdf5_data->num_attr++;
-        RUN(hdf5_write_attributes(hdf5_data,group));
-        return OK;
-ERROR:
-        return FAIL;
-}
-
-
-int hdf5wrap_add_attribute_string(struct hdf5_data* hdf5_data,char* group, char* name,char* x)
-{
-        struct hdf5_attribute* h = NULL;
-        int n = hdf5_data->num_attr;
-        ASSERT(n != hdf5_data->num_attr_mem,"No space to add more attributes...");
-        h = hdf5_data->attr[n];
-        RUN(clear_hdf5_attribute(h));
-        snprintf(h->attr_name, HDF5GLUE_MAX_NAME_LEN,"%s", name);
-        h->type = HDF5GLUE_TYPE_CHAR;
-        snprintf(h->string, HDF5GLUE_MAX_CONTENT_LEN,"%s", x);
-        hdf5_data->num_attr++;
-        RUN(hdf5_write_attributes(hdf5_data,group));
-        return OK;
-ERROR:
-        return FAIL;
-}
-
-
-int hdf5_read_attributes(struct hdf5_data* hdf5_data, char* group)
-{
-        H5O_info_t oinfo;
-        hid_t atype,atype_mem;
-        H5T_class_t type_class;
-        int i;
-
-        RUN(hdf5wrap_open_group(hdf5_data, group));
-        hdf5_data->status = H5Oget_info(hdf5_data->group , &oinfo);
-        hdf5_data->num_attr = 0;
-        for(i = 0; i < (int)oinfo.num_attrs; i++) {
-                if(i == hdf5_data->num_attr_mem){
-                        break;
-                }
-
-                hdf5_data->attribute_id = H5Aopen_by_idx(hdf5_data->group, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, (hsize_t)i, H5P_DEFAULT, H5P_DEFAULT);
-                atype = H5Aget_type(hdf5_data->attribute_id);
-                type_class = H5Tget_class(atype);
-                H5Aget_name(hdf5_data->attribute_id , HDF5GLUE_MAX_NAME_LEN  , hdf5_data->attr[i]->attr_name);
-
-                if (type_class == H5T_STRING) {
-                        hdf5_data->attr[i]->type = HDF5GLUE_TYPE_CHAR;
-                        atype_mem = H5Tget_native_type(atype, H5T_DIR_ASCEND);
-                        hdf5_data->status   = H5Aread(hdf5_data->attribute_id, atype_mem, hdf5_data->attr[i]->string  );
-                        hdf5_data->status   = H5Tclose(atype_mem);
-                }
-
-                if(type_class == H5T_INTEGER){
-                        hdf5_data->attr[i]->type = HDF5GLUE_TYPE_INT;
-                        hdf5_data->status = H5Aread(hdf5_data->attribute_id, H5T_NATIVE_INT, &hdf5_data->attr[i]->int_val);
-                }
-                if(type_class == H5T_FLOAT){
-                        hdf5_data->attr[i]->type = HDF5GLUE_TYPE_DOUBLE;
-                        hdf5_data->status = H5Aread(hdf5_data->attribute_id, H5T_NATIVE_DOUBLE, &hdf5_data->attr[i]->double_val);
-                }
-
-                hdf5_data->num_attr++;
-                hdf5_data->status   = H5Aclose(hdf5_data->attribute_id);
-                hdf5_data->status   = H5Tclose(atype);
-        }
-        return OK;
-ERROR:
-        return FAIL;
-}
-
-int hdf5_write_attributes(struct hdf5_data* hdf5_data, char* target)
-{
-        int i;
-        hid_t aid;
-        hid_t atype;
-        hid_t attr;
-
-        int len;
-
-        RUN(hdf5wrap_open_group(hdf5_data, target));
-
-        for(i = 0;i < hdf5_data->num_attr;i++){
-                switch (hdf5_data->attr[i]->type) {
-                case HDF5GLUE_TYPE_CHAR:
-                        if( H5Aexists(hdf5_data->group, hdf5_data->attr[i]->attr_name)){
-                                H5Adelete(hdf5_data->group,hdf5_data->attr[i]->attr_name);
-                        }
-                        len = strnlen(hdf5_data->attr[i]->string, HDF5GLUE_MAX_CONTENT_LEN) + 1;
-                        atype = H5Tcopy(H5T_C_S1);
-
-
-                        aid  = H5Screate(H5S_SCALAR);
-                        atype = H5Tcopy(H5T_C_S1);
-                        H5Tset_size(atype, len);
-                        H5Tset_strpad(atype,H5T_STR_NULLTERM);
-                        attr = H5Acreate(hdf5_data->group  ,hdf5_data->attr[i]->attr_name, atype, aid, H5P_DEFAULT, H5P_DEFAULT);
-                        hdf5_data->status = H5Awrite(attr, atype, hdf5_data->attr[i]->string);
-                        hdf5_data->status = H5Sclose(aid);
-                        hdf5_data->status = H5Tclose(atype);
-                        hdf5_data->status = H5Aclose(attr);
-
-                        break;
-                case HDF5GLUE_TYPE_INT:
-                        //LOG_MSG("witre: %d" ,hdf5_data->attr[i]->int_val);
-                        if( H5Aexists(hdf5_data->group, hdf5_data->attr[i]->attr_name)){
-                                attr = H5Aopen(hdf5_data->group,hdf5_data->attr[i]->attr_name, H5P_DEFAULT);
-                                hdf5_data->status = H5Awrite(attr, H5T_NATIVE_INT, &hdf5_data->attr[i]->int_val);
-                                hdf5_data->status = H5Aclose(attr);
-                        }else{
-                                aid  = H5Screate(H5S_SCALAR);
-                                attr = H5Acreate(hdf5_data->group,hdf5_data->attr[i]->attr_name, H5T_NATIVE_INT, aid,  H5P_DEFAULT, H5P_DEFAULT);
-                                if(attr < 0){
-                                        ERROR_MSG("Create attribute %s failed - perhaps it exists already?");
-                                }
-                                hdf5_data->status = H5Awrite(attr, H5T_NATIVE_INT, &hdf5_data->attr[i]->int_val);
-                                hdf5_data->status = H5Sclose(aid);
-                                hdf5_data->status = H5Aclose(attr);
-
-                        }
-
-                        break;
-                case HDF5GLUE_TYPE_DOUBLE:
-                        if( H5Aexists(hdf5_data->group, hdf5_data->attr[i]->attr_name)){
-                                attr = H5Aopen(hdf5_data->group,hdf5_data->attr[i]->attr_name, H5P_DEFAULT);
-                                hdf5_data->status = H5Awrite(attr, H5T_NATIVE_DOUBLE, &hdf5_data->attr[i]->double_val);
-                                hdf5_data->status = H5Aclose(attr);
-                        }else{
-
-                                aid  = H5Screate(H5S_SCALAR);
-                                attr = H5Acreate(hdf5_data->group,hdf5_data->attr[i]->attr_name, H5T_NATIVE_DOUBLE, aid,  H5P_DEFAULT, H5P_DEFAULT);
-                                hdf5_data->status = H5Awrite(attr, H5T_NATIVE_DOUBLE, &hdf5_data->attr[i]->double_val);
-                                hdf5_data->status = H5Sclose(aid);
-                                hdf5_data->status = H5Aclose(attr);
-                        }
-                        break;
-                default:
-                        break;
-                }
-        }
-        hdf5_data->num_attr = 0;
-        hdf5wrap_close_group(hdf5_data);
-        return OK;
-ERROR:
-        return FAIL;
-}
-
-int clear_hdf5_attribute(struct hdf5_attribute* h)
-{
-        ASSERT(h != NULL, "No attribute");
-        h->int_val = 0;
-        h->double_val = 0.0;
-        h->type = HDF5GLUE_TYPE_UNKNOWN;
-        return OK;
-ERROR:
-        return FAIL;
-}
-
-
 int open_hdf5_file(struct hdf5_data** h, char* filename)
 {
         struct hdf5_data* hdf5_data = NULL;
@@ -919,7 +816,6 @@ int open_hdf5_file(struct hdf5_data** h, char* filename)
                 if((hdf5_data->file = H5Fopen(filename, H5F_ACC_RDWR, H5P_DEFAULT)) == -1)ERROR_MSG("H5Fopen failed");
         }else{
                 snprintf(hdf5_data->file_name , HDF5GLUE_MAX_NAME_LEN,"%s",filename);
-
                 if((hdf5_data->file = H5Fcreate(hdf5_data->file_name, H5F_ACC_TRUNC, H5P_DEFAULT,H5P_DEFAULT)) < 0)  ERROR_MSG("H5Fcreate failed: %s\n",hdf5_data->file_name);
         }
         *h = hdf5_data;
@@ -953,18 +849,6 @@ int alloc_hdf5_data(struct hdf5_data** h)
 
 
         MMALLOC(hdf5_data, sizeof(struct hdf5_data));
-
-        hdf5_data->attr = NULL;
-        hdf5_data->num_attr = 0;
-        hdf5_data->num_attr_mem = 128;
-
-        MMALLOC(hdf5_data->attr , sizeof(struct hdf5_attribute*) * hdf5_data->num_attr_mem);
-
-
-        for(i = 0; i < hdf5_data->num_attr_mem;i++){
-                hdf5_data->attr[i] = NULL;
-                MMALLOC(hdf5_data->attr[i],  sizeof(struct hdf5_attribute));
-        }
 
         for(i = 0; i < HDF5GLUE_MAX_DIM;i++){
                 hdf5_data->dim[i] = 0;
@@ -1004,18 +888,10 @@ void free_hdf5_data(struct hdf5_data* hdf5_data)
 
         int i;
         if(hdf5_data){
-                for(i = 0; i < hdf5_data->num_attr_mem;i++){
-                        //hdf5_data->attr = NULL;
-                        MFREE(hdf5_data->attr[i]);//, sizeof(struct hdf5_attribute));
-
-                }
-                MFREE(hdf5_data->attr);// , sizeof(struct hdf5_attribute*) * hdf5_data->num_attr_mem);
-
                 if(hdf5_data->grp_names){
                         gfree(hdf5_data->grp_names->names);
                         MFREE(hdf5_data->grp_names);
                 }
-
                 MFREE(hdf5_data);
         }
 }
@@ -1059,8 +935,6 @@ int startof_galloc_unknown(void* x, void** ptr)
 ERROR:
         return FAIL;
 }
-
-
 
 
 int set_type_char(hid_t* type)

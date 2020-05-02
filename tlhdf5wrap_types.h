@@ -17,13 +17,13 @@
 #define HDF5GLUE_TYPE_DOUBLE 5
 
 
-struct hdf5_attribute{
+/*struct hdf5_attribute{
         char attr_name[HDF5GLUE_MAX_NAME_LEN];
         char string[HDF5GLUE_MAX_CONTENT_LEN];
         int int_val;
         double double_val;
         int type;
-};
+        };*/
 
 struct hdf5_group_names{
         char** names;
@@ -42,10 +42,10 @@ struct hdf5_data{
         hsize_t dim[HDF5GLUE_MAX_DIM];
         hsize_t chunk_dim[HDF5GLUE_MAX_DIM];
         struct hdf5_group_names* grp_names;
-        struct hdf5_attribute** attr;
+        //struct hdf5_attribute** attr;
         void* data;
-        int num_attr;
-        int num_attr_mem;
+        //int num_attr;
+        //int num_attr_mem;
         int rank;
 
         hid_t fapl;
