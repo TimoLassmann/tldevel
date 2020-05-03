@@ -48,7 +48,6 @@ int galloc_too_few_arg_error (void* p)
 
 int get_dim1(void* ptr,int* d)
 {
-
         if(ptr){
                 *d = ((mem_i*)((void*) ((char*)ptr - sizeof(mem_i))))->dim1;
                 return OK;
@@ -58,7 +57,6 @@ int get_dim1(void* ptr,int* d)
 
 int get_dim2(void* ptr,int* d)
 {
-
         if(ptr){
                 *d = ((mem_i*)((void*) ((char*)ptr - sizeof(mem_i))))->dim2;
                 return OK;
@@ -91,16 +89,24 @@ int get_dim2(void* ptr,int* d)
                 *array= (type*)  ((char*)tmp + sizeof(mem_i));          \
                 return OK;                                              \
         ERROR:                                                          \
-                gfree(*array);                                          \
+                gfree(*array);                                         \
                 return FAIL;                                            \
         }
 
 
 ALLOC_1D_ARRAY(char)
+ALLOC_1D_ARRAY(int8_t)
 ALLOC_1D_ARRAY(uint8_t)
-ALLOC_1D_ARRAY(int)
+ALLOC_1D_ARRAY(int16_t)
+ALLOC_1D_ARRAY(uint16_t)
+ALLOC_1D_ARRAY(int32_t)
+ALLOC_1D_ARRAY(uint32_t)
+ALLOC_1D_ARRAY(int64_t)
+ALLOC_1D_ARRAY(uint64_t)
 ALLOC_1D_ARRAY(float)
 ALLOC_1D_ARRAY(double)
+
+#undef ALLOC_1D_ARRAY
 
 #define ALLOC_2D_ARRAY(type)                                            \
         int alloc_2D_array_size_ ##type (type ***array, int dim1,int dim2) { \
@@ -166,8 +172,14 @@ ALLOC_1D_ARRAY(double)
         }
 
 ALLOC_2D_ARRAY(char)
+ALLOC_2D_ARRAY(int8_t)
 ALLOC_2D_ARRAY(uint8_t)
-ALLOC_2D_ARRAY(int)
+ALLOC_2D_ARRAY(int16_t)
+ALLOC_2D_ARRAY(uint16_t)
+ALLOC_2D_ARRAY(int32_t)
+ALLOC_2D_ARRAY(uint32_t)
+ALLOC_2D_ARRAY(int64_t)
+ALLOC_2D_ARRAY(uint64_t)
 ALLOC_2D_ARRAY(float)
 ALLOC_2D_ARRAY(double)
 
@@ -178,10 +190,18 @@ ALLOC_2D_ARRAY(double)
         }
 
 FREE_VOID(char)
+FREE_VOID(int8_t)
 FREE_VOID(uint8_t)
-FREE_VOID(int)
+FREE_VOID(int16_t)
+FREE_VOID(uint16_t)
+FREE_VOID(int32_t)
+FREE_VOID(uint32_t)
+FREE_VOID(int64_t)
+FREE_VOID(uint64_t)
 FREE_VOID(float)
 FREE_VOID(double)
+
+#undef FREE_VOID
 
 
 #define FREE_1D_ARRAY(type)                               \
@@ -193,11 +213,20 @@ FREE_VOID(double)
                 }                                                       \
         }
 
+
 FREE_1D_ARRAY(char)
+FREE_1D_ARRAY(int8_t)
 FREE_1D_ARRAY(uint8_t)
-FREE_1D_ARRAY(int)
+FREE_1D_ARRAY(int16_t)
+FREE_1D_ARRAY(uint16_t)
+FREE_1D_ARRAY(int32_t)
+FREE_1D_ARRAY(uint32_t)
+FREE_1D_ARRAY(int64_t)
+FREE_1D_ARRAY(uint64_t)
 FREE_1D_ARRAY(float)
 FREE_1D_ARRAY(double)
+
+#undef FREE_1D_ARRAY
 
 
 #define FREE_2D_ARRAY(type)                               \
@@ -212,12 +241,19 @@ FREE_1D_ARRAY(double)
         }                                                         \
         }
 
-
 FREE_2D_ARRAY(char)
+FREE_2D_ARRAY(int8_t)
 FREE_2D_ARRAY(uint8_t)
-FREE_2D_ARRAY(int)
+FREE_2D_ARRAY(int16_t)
+FREE_2D_ARRAY(uint16_t)
+FREE_2D_ARRAY(int32_t)
+FREE_2D_ARRAY(uint32_t)
+FREE_2D_ARRAY(int64_t)
+FREE_2D_ARRAY(uint64_t)
 FREE_2D_ARRAY(float)
 FREE_2D_ARRAY(double)
+
+#undef FREE_2D_ARRAY
 
 void error(const char *location, const char *format, ...)
 {

@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
                 LOG_MSG("galloc correctly reported error");
         }
 
-        uint64_t** otto = NULL;
+        uint64_t*** otto = NULL;
 
         status = galloc(&otto, 19,10);
         if(status == OK){

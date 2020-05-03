@@ -158,52 +158,27 @@ EXTERN int get_dim2(void* ptr, int* d);
 #define macro_dispatcher__(func, nargs) func ## nargs
 */
 
-#define ALLOC_1D_ARRAY_DEF(type)                                  \
-        EXTERN int alloc_1D_array_size_ ##type (type **array, int dim1)
 
-ALLOC_1D_ARRAY_DEF(char);
-ALLOC_1D_ARRAY_DEF(uint8_t);
-ALLOC_1D_ARRAY_DEF(int);
-ALLOC_1D_ARRAY_DEF(float);
-ALLOC_1D_ARRAY_DEF(double);
+#define FUNC_DEF(type)                                    \
+        EXTERN int alloc_1D_array_size_ ##type (type **array, int dim1); \
+        EXTERN int alloc_2D_array_size_ ##type (type ***array, int dim1,int dim2); \
+        EXTERN void gfree_void_ ##type(type *a);          \
+        EXTERN void free_1d_array_ ##type(type **array);  \
+        EXTERN void free_2d_array_ ##type(type ***array);
 
-#define ALLOC_2D_ARRAY_DEF(type)                                        \
-        EXTERN int alloc_2D_array_size_ ##type (type ***array, int dim1,int dim2)
+FUNC_DEF(char)
+FUNC_DEF(int8_t)
+FUNC_DEF(uint8_t)
+FUNC_DEF(int16_t)
+FUNC_DEF(uint16_t)
+FUNC_DEF(int32_t)
+FUNC_DEF(uint32_t)
+FUNC_DEF(int64_t)
+FUNC_DEF(uint64_t)
+FUNC_DEF(float)
+FUNC_DEF(double)
 
-ALLOC_2D_ARRAY_DEF(char);
-ALLOC_2D_ARRAY_DEF(uint8_t);
-ALLOC_2D_ARRAY_DEF(int);
-ALLOC_2D_ARRAY_DEF(float);
-ALLOC_2D_ARRAY_DEF(double);
-
-
-#define FREE_VOID_DEF(type)                     \
-        EXTERN void gfree_void_ ##type(type *a)
-
-#define FREE_1D_ARRAY_DEF(type)                 \
-        EXTERN void free_1d_array_ ##type(type **array)
-
-#define FREE_2D_ARRAY_DEF(type)                   \
-        EXTERN void free_2d_array_ ##type(type ***array)
-
-
-FREE_VOID_DEF(char);
-FREE_VOID_DEF(uint8_t);
-FREE_VOID_DEF(int);
-FREE_VOID_DEF(float);
-FREE_VOID_DEF(double);
-
-FREE_1D_ARRAY_DEF(char);
-FREE_1D_ARRAY_DEF(uint8_t);
-FREE_1D_ARRAY_DEF(int);
-FREE_1D_ARRAY_DEF(float);
-FREE_1D_ARRAY_DEF(double);
-
-FREE_2D_ARRAY_DEF(char);
-FREE_2D_ARRAY_DEF(uint8_t);
-FREE_2D_ARRAY_DEF(int);
-FREE_2D_ARRAY_DEF(float);
-FREE_2D_ARRAY_DEF(double);
+#undef FUNC_DEF
 
 EXTERN int galloc_unknown_type_error (void* p, ...);
 EXTERN int galloc_too_few_arg_error (void* p);
@@ -212,22 +187,34 @@ EXTERN int galloc_too_few_arg_error (void* p);
                        default: galloc_too_few_arg_error  \
                 )(X)
 
-#define p2(X,Y) _Generic((X),                                     \
-                         char**: alloc_1D_array_size_char,        \
-                         uint8_t**: alloc_1D_array_size_uint8_t,  \
-                         int**: alloc_1D_array_size_int,          \
-                         float**:  alloc_1D_array_size_float,     \
-                         double**:alloc_1D_array_size_double,     \
-                         default: galloc_unknown_type_error       \
+#define p2(X,Y) _Generic((X),                                       \
+                         char**: alloc_1D_array_size_char,          \
+                         int8_t**: alloc_1D_array_size_int8_t,      \
+                         uint8_t**: alloc_1D_array_size_uint8_t,    \
+                         int16_t**: alloc_1D_array_size_int16_t,    \
+                         uint16_t**: alloc_1D_array_size_uint16_t,  \
+                         int32_t**: alloc_1D_array_size_int32_t,    \
+                         uint32_t**: alloc_1D_array_size_uint32_t,  \
+                         int64_t**: alloc_1D_array_size_int64_t,    \
+                         uint64_t**: alloc_1D_array_size_uint64_t,  \
+                         float**: alloc_1D_array_size_float,        \
+                         double**: alloc_1D_array_size_double,      \
+                         default: galloc_unknown_type_error         \
                 )(X,Y)
 
-#define p3(X,Y,Z) _Generic((X),                                     \
-                           char***: alloc_2D_array_size_char,       \
-                           uint8_t***: alloc_2D_array_size_uint8_t, \
-                           int***: alloc_2D_array_size_int,         \
-                           float***:  alloc_2D_array_size_float,    \
-                           double***:alloc_2D_array_size_double,    \
-                           default: galloc_unknown_type_error       \
+#define p3(X,Y,Z) _Generic((X),                                       \
+                           char***: alloc_2D_array_size_char,         \
+                           int8_t***: alloc_2D_array_size_int8_t,     \
+                           uint8_t***: alloc_2D_array_size_uint8_t,   \
+                           int16_t***: alloc_2D_array_size_int16_t,   \
+                           uint16_t***: alloc_2D_array_size_uint16_t, \
+                           int32_t***: alloc_2D_array_size_int32_t,   \
+                           uint32_t***: alloc_2D_array_size_uint32_t, \
+                           int64_t***: alloc_2D_array_size_int64_t,   \
+                           uint64_t***: alloc_2D_array_size_uint64_t, \
+                           float***: alloc_2D_array_size_float,       \
+                           double***: alloc_2D_array_size_double,     \
+                           default: galloc_unknown_type_error         \
                 )(X,Y,Z)
 
 
@@ -246,21 +233,39 @@ EXTERN int galloc_too_few_arg_error (void* p);
 
 
 #define gfree(X) _Generic((&X),                               \
-                          char*: gfree_void_char,             \
-                          uint8_t*: gfree_void_uint8_t,       \
-                          int*: gfree_void_int,               \
-                          float*: gfree_void_float,           \
-                          double*: gfree_void_double,         \
-                          char**: free_1d_array_char,         \
-                          uint8_t**: free_1d_array_uint8_t,   \
-                          int**: free_1d_array_int,           \
-                          float**: free_1d_array_float,       \
-                          double**: free_1d_array_double,     \
-                          char***: free_2d_array_char,        \
-                          uint8_t***: free_2d_array_uint8_t,  \
-                          int***: free_2d_array_int,          \
-                          float***: free_2d_array_float,      \
-                          double***: free_2d_array_double     \
+                char*: gfree_void_char,\
+                int8_t*: gfree_void_int8_t,\
+                uint8_t*: gfree_void_uint8_t,\
+                int16_t*: gfree_void_int16_t,\
+                uint16_t*: gfree_void_uint16_t,\
+                int32_t*: gfree_void_int32_t,\
+                uint32_t*: gfree_void_uint32_t,\
+                int64_t*: gfree_void_int64_t,\
+                uint64_t*: gfree_void_uint64_t,\
+                float*: gfree_void_float,\
+                double*: gfree_void_double,\
+                char**: free_1d_array_char,\
+                int8_t**: free_1d_array_int8_t,\
+                uint8_t**: free_1d_array_uint8_t,\
+                int16_t**: free_1d_array_int16_t, \
+                uint16_t**: free_1d_array_uint16_t, \
+                int32_t**: free_1d_array_int32_t,\
+                uint32_t**: free_1d_array_uint32_t,\
+                int64_t**: free_1d_array_int64_t,\
+                uint64_t**: free_1d_array_uint64_t,\
+                float**: free_1d_array_float,\
+                double**: free_1d_array_double, \
+                char***: free_2d_array_char,      \
+                int8_t***: free_2d_array_int8_t,\
+                uint8_t***: free_2d_array_uint8_t,\
+                int16_t***: free_2d_array_int16_t, \
+                uint16_t***: free_2d_array_uint16_t, \
+                int32_t***: free_2d_array_int32_t,\
+                uint32_t***: free_2d_array_uint32_t,\
+                int64_t***: free_2d_array_int64_t,\
+                uint64_t***: free_2d_array_uint64_t,\
+                float***: free_2d_array_float,\
+                double***: free_2d_array_double \
                 )(&X)
 
 /* functions  */
