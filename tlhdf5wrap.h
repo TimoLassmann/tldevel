@@ -197,7 +197,8 @@ EXTERN int hdf5wrap_add_attribute_string(struct hdf5_data* hdf5_data,char* group
 
 
 #define READ_ATTR(type)                                                  \
-        EXTERN int hdf5wrap_read_attribute_ ##type(struct hdf5_data* hdf5_data, char* group, char* name,type x);
+        EXTERN int hdf5wrap_read_attribute_ ##type(struct hdf5_data* hdf5_data, char* group, char* name,type* x);
+
 
 READ_ATTR(int8_t)
 READ_ATTR(uint8_t)
@@ -216,16 +217,16 @@ READ_ATTR(double)
 EXTERN int hdf5wrap_read_attribute_string(struct hdf5_data* hdf5_data, char* group,char* name, char** x);
 
 #define HDFWRAP_READ_ATTRIBUTE(F,G,N,V) _Generic((V),                     \
-                int8_t: hdf5wrap_read_attribute_int8_t,                  \
-                uint8_t: hdf5wrap_read_attribute_uint8_t,    \
-                int16_t: hdf5wrap_read_attribute_int16_t,    \
-                uint16_t: hdf5wrap_read_attribute_uint16_t,  \
-                int32_t: hdf5wrap_read_attribute_int32_t,    \
-                uint32_t: hdf5wrap_read_attribute_uint32_t,  \
-                int64_t: hdf5wrap_read_attribute_int64_t,    \
-                uint64_t: hdf5wrap_read_attribute_uint64_t,  \
-                float: hdf5wrap_read_attribute_float,        \
-                double: hdf5wrap_read_attribute_double,      \
+                int8_t*: hdf5wrap_read_attribute_int8_t,                  \
+                uint8_t*: hdf5wrap_read_attribute_uint8_t,    \
+                int16_t*: hdf5wrap_read_attribute_int16_t,    \
+                uint16_t*: hdf5wrap_read_attribute_uint16_t,  \
+                int32_t*: hdf5wrap_read_attribute_int32_t,    \
+                uint32_t*: hdf5wrap_read_attribute_uint32_t,  \
+                int64_t*: hdf5wrap_read_attribute_int64_t,    \
+                uint64_t*: hdf5wrap_read_attribute_uint64_t,  \
+                float*: hdf5wrap_read_attribute_float,        \
+                double*: hdf5wrap_read_attribute_double,      \
                 char**: hdf5wrap_read_attribute_string        \
                 )(F,G,N,V)
 

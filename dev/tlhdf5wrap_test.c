@@ -4,20 +4,167 @@
 #include "tlhdf5wrap.h"
 #include "tlhdf5wrap_types.h"
 
+#include <string.h>
+/* generic print functions taken from:
+
+http://www.robertgamble.net/2012/01/c11-generic-selections.html
+
+and altered to use the standard int types.
+
+ */
+#define printf_dec_format(x) _Generic((x),              \
+                                      char: "%c",       \
+                                      int8_t: "%hhd",   \
+                                      uint8_t: "%hhu",  \
+                                      int16_t: "%hd",   \
+                                      uint16_t: "%hu",  \
+                                      int32_t: "%d",    \
+                                      uint32_t: "%u",   \
+                                      int64_t: "%ld",   \
+                                      uint64_t: "%lu",  \
+                                      float: "%f",      \
+                                      double: "%f",     \
+                                      char *: "%s",     \
+                                      void *: "%p")
+
+#define print(x) printf(printf_dec_format(x), x)
+#define printnl(x) printf(printf_dec_format(x), x), printf("\n");
+
+#define STR_VALUE(arg)      #arg
+#define TYPE_NAME(name) STR_VALUE(name)
+
+
+#define ATTR_TEST(type)                                                 \
+        int attribute_test_ ##type(type x);                             \
+        int attribute_test_ ##type(type x)                              \
+        {                                                               \
+                struct hdf5_data* d = NULL;                             \
+                type r = 0;                                             \
+                RUN(open_hdf5_file(&d,"hdf5testfile.h5"));              \
+                RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/",TYPE_NAME(type),x));  \
+                RUN(HDFWRAP_READ_ATTRIBUTE(d,"/",TYPE_NAME(type), &r)); \
+                ASSERT(r == x,"Attribute read failed - read and written value differ."); \
+                RUN(close_hdf5_file(&d));                               \
+                RUN(open_hdf5_file(&d,"hdf5testfile.h5"));              \
+                RUN(HDFWRAP_READ_ATTRIBUTE(d,"/",TYPE_NAME(type),&r));  \
+                ASSERT(r == x,"Attribute read failed after re-opening file - read and written value differ"); \
+                RUN(close_hdf5_file(&d));                               \
+                printnl(x);                                             \
+                printnl(r);                                             \
+                return OK;                                              \
+        ERROR:                                                          \
+                return FAIL;                                            \
+        }
+
+
+ATTR_TEST(int8_t)
+ATTR_TEST(uint8_t)
+ATTR_TEST(int16_t)
+ATTR_TEST(uint16_t)
+ATTR_TEST(int32_t)
+ATTR_TEST(uint32_t)
+ATTR_TEST(int64_t)
+ATTR_TEST(uint64_t)
+ATTR_TEST(float)
+ATTR_TEST(double)
+
+//#undef ATTR_TEST
+
+static int unknown(void);
+
+#define ATTRIBUTE_ITEST(x) _Generic((x),                                \
+                                    int8_t: attribute_test_int8_t,      \
+                                    uint8_t: attribute_test_uint8_t,    \
+                                    int16_t: attribute_test_int16_t,    \
+                                    uint16_t: attribute_test_uint16_t,  \
+                                    int32_t: attribute_test_int32_t,    \
+                                    uint32_t: attribute_test_uint32_t,  \
+                                    int64_t: attribute_test_int64_t,    \
+                                    uint64_t: attribute_test_uint64_t,  \
+                                    float: attribute_test_float,        \
+                                    double: attribute_test_double      \
+                                    )(x)
+
+int unknown(void)
+{
+        ERROR_MSG("unknown data type");
+        return OK;
+ERROR:
+        return FAIL;
+}
+
+
+
+
+
 int main(int argc, char *argv[])
 {
         struct hdf5_data* d = NULL;
+        int** test = NULL;
+
+        LOG_MSG("Running attribute tests.");
+
+        int8_t i8= -7;
+        uint8_t ui8= 7;
+        int16_t i16= 15;
+        uint16_t ui16 = 15;
+        int32_t i32 = -31;
+        uint32_t ui32= 31;
+        int64_t i64= -63 ;
+        uint64_t ui64= 63;
+        float flt = 0.123f;
+        double dbl = 0.1234;
+        char* string = "otto";
+        char* string_read = NULL;
+        LOG_MSG("writing int8_t attribute.");
+        ATTRIBUTE_ITEST(i8);
+        LOG_MSG("writing uint8_t attribute.");
+        ATTRIBUTE_ITEST(ui8);
+        LOG_MSG("writing int16_t attribute.");
+        ATTRIBUTE_ITEST(i16);
+        LOG_MSG("writing uint16_t attribute.");
+        ATTRIBUTE_ITEST(ui16);
+        LOG_MSG("writing int32_t attribute.");
+        ATTRIBUTE_ITEST(i32);
+        LOG_MSG("writing uint32_t attribute.");
+        ATTRIBUTE_ITEST(ui32);
+        LOG_MSG("writing int64_t attribute.");
+        ATTRIBUTE_ITEST(i64);
+        LOG_MSG("writing uint64_t attribute.");
+        ATTRIBUTE_ITEST(ui64);
+        LOG_MSG("writing float attribute.");
+        ATTRIBUTE_ITEST(flt);
+        LOG_MSG("writing double attribute.");
+        ATTRIBUTE_ITEST(dbl);
+
+        LOG_MSG("writing string attribute.");
+
+        RUN(open_hdf5_file(&d,"hdf5testfile.h5"));
+        RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/",TYPE_NAME(type),string));
+        RUN(HDFWRAP_READ_ATTRIBUTE(d,"/",TYPE_NAME(type), &string_read));
+        if(strcmp(string,string_read)){
+                printnl(string);
+                printnl(string_read);
+                ERROR_MSG("Strings differ!");
+        }
+        RUN(close_hdf5_file(&d));
+        MFREE(string_read);
+        string_read = NULL;
+        RUN(open_hdf5_file(&d,"hdf5testfile.h5"));
+        RUN(HDFWRAP_READ_ATTRIBUTE(d,"/",TYPE_NAME(type),&string_read));
+        if(strcmp(string,string_read)){
+                printnl(string);
+                printnl(string_read);
+                ERROR_MSG("Strings differ!");
+        }
+        RUN(close_hdf5_file(&d));
+        printnl(string);
+        printnl(string_read);
+        MFREE(string_read);
+
 
         RUN(open_hdf5_file(&d,"hdf5testfile.h5"));
 
-        RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/","fourty four",44));
-        RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/","otto","otto"));
-        RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/","pi",3.14));
-
-        RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/group10/subsectionA","otto","otto"));
-
-        RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/g1/g2/g4","pi",3.14));
-        RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/g1/g2/g4","piINT",314));
 
         //RUN(hdf5wrap)
         int16_t sint = 23;
@@ -36,7 +183,7 @@ int main(int argc, char *argv[])
 
 
 
-        int** test = NULL;
+
         int i,j,c;
         RUN(galloc(&test,10,10));
         c = 0;
@@ -73,8 +220,6 @@ int main(int argc, char *argv[])
         }
         RUN(HDFWRAP_WRITE_DATA(d,"/floaty/here","FLOAT2D", g));
         RUN(HDFWRAP_WRITE_DATA(d,"/floaty/there","FLOAT2D", g));
-        RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/floaty/here","FLT_ATTR", "This is a float matrix"));
-        //RUN(add_dataset_int(d,"/","INT2D", g));
 
         int** donkey = NULL;
 
@@ -91,12 +236,6 @@ int main(int argc, char *argv[])
         }
 
 
-        char* string = NULL;
-        RUN(HDFWRAP_READ_ATTRIBUTE(d,"/floaty/here","FLT_ATTR", &string));
-        LOG_MSG("atrribute : %s",string);
-
-        MFREE(string);
-        string  = NULL;
 
 
         gfree(donkey);
@@ -132,14 +271,6 @@ int main(int argc, char *argv[])
         LOG_MSG("Read %c %d", test_char, test_char2);
 
 
-        //int x_int;
-        //double x_d;
-
-        //RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/g1/g2/g4","pi",3.14));
-        //hdf5_read_attributes_test(d,"/g1/g2/g4","pi",&x_int);
-        //hdf5_read_attributes_test(d,"/g1/g2/g4","piINT",&x_int);
-        //hdf5_read_attributes_test(d,"/g1/g2/g4","pi",&x_d);
-        //hdf5_read_attributes_test(d,"/g1/g2/g4","piINT",&x_d);
 
 
         RUN(close_hdf5_file(&d));
@@ -147,7 +278,9 @@ int main(int argc, char *argv[])
         gfree(test);
         return EXIT_SUCCESS;
 ERROR:
-        gfree(test);
+        if(test){
+                gfree(test);
+        }
         close_hdf5_file(&d);
         return EXIT_FAILURE;
 }

@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-int main(int argc, char *argv[])
+int main(void)
 {
         double** ga = NULL;
         int* blah = NULL;
