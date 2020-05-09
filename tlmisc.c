@@ -25,7 +25,7 @@ int make_cmd_line(char** command, const int argc,char* const argv[])
         char* cmd = NULL;
         int i,j,c;
 
-        RUN(galloc(cmd,16384));
+        RUN(galloc(&cmd,16384));
 
         c = 0;
         for(i =0 ; i < argc;i++){
