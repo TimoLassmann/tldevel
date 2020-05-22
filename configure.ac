@@ -1,4 +1,4 @@
-AC_INIT([tldevel], [1.2.4])
+AC_INIT([tldevel], [1.2.5])
 AC_CONFIG_AUX_DIR([.])
 AM_INIT_AUTOMAKE
 AC_PROG_CC
