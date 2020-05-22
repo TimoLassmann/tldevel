@@ -502,7 +502,7 @@ READ_ARRAY(double)
                                                                         \
                 hdf5_data->data = NULL;                                 \
                                                                         \
-                RUN(galloc(p, hdf5_data->dim[0],hdf5_data->dim[1]));    \
+                RUN(galloc(&p, hdf5_data->dim[0]));                      \
                 HDFWRAP_START_GALLOC(p,&ptr);                           \
                 hdf5_data->status = H5Dread(hdf5_data->dataset, hdf5_data->datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT,ptr); \
                                                                         \

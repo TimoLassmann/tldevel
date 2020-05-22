@@ -9,6 +9,7 @@ AM_CFLAGS = -I$(top_srcdir)/ -I${top_builddir}
 
 TESTLIST = \
 tldevel_test \
+tlmisc_test \
 rng_test \
 checkpoint_test \
 rbtree_test \
@@ -38,6 +39,11 @@ demo_SOURCES= demo.c
 esl_stopwatch_test_SOURCES = eslStopWatchTest.c
 esl_stopwatch_test_CPPFLAGS = $(AM_CPPFLAGS)
 esl_stopwatch_test_LDADD = ../libtldevel.la
+
+tlmisc_test_SOURCES = tlmisc_test.c
+tlmisc_test_CPPFLAGS = $(AM_CPPFLAGS)
+tlmisc_test_LDADD = ../libtldevel.la
+
 
 hdf5_test_SOURCES = tlhdf5wrap_test.c
 hdf5_test_CPPFLAGS = $(AM_CPPFLAGS)
