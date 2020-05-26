@@ -6,6 +6,8 @@
 #include "tlmisc.h"
 #include "tldevel.h"
 
+#define MAX_CMD_LEN 16384
+
 int my_file_exists(const char* name)
 {
         struct stat buf;
@@ -93,27 +95,50 @@ ERROR:
 int make_cmd_line(char** command, const int argc,char* const argv[])
 {
         char* cmd = NULL;
-        int i,j,c;
+        int i,j,c,g;
+        int alloc_len = 16;
 
-        RUN(galloc(&cmd,16384));
-        for(i =0 ; i < 16384;i++){
+
+        int old_len;
+        RUN(galloc(&cmd,alloc_len));
+        for(i =0 ; i < alloc_len;i++){
                 cmd[i] = 0;
         }
         c = 0;
         for(i =0 ; i < argc;i++){
+                //fprintf(stdout,"%s\n", argv[i]);
                 for(j = 0; j < (int) strlen(argv[i]);j++){
                         if(c == 16384-1){
                                 break;
                         }
                         cmd[c] = argv[i][j];
                         c++;
+                        if(c == alloc_len){
+                                old_len = alloc_len;
+                                alloc_len = alloc_len + alloc_len /2;
+                                RUN(galloc(&cmd,alloc_len));
+                                for(g = old_len; g < alloc_len;g++){
+                                        cmd[g] = 0;
+                                }
+                        }
 
+                }
+                if(c >= MAX_CMD_LEN){
+                        ERROR_MSG("Command line too long! Allocated: %d", alloc_len);
                 }
                 if(c == 16384-1){
                         break;
                 }
                 cmd[c] = ' ';
                 c++;
+                if(c == alloc_len){
+                        old_len = alloc_len;
+                        alloc_len = alloc_len + alloc_len /2;
+                        RUN(galloc(&cmd,alloc_len));
+                        for(g = old_len; g < alloc_len;g++){
+                                cmd[g] = 0;
+                        }
+                }
 
 
         }
