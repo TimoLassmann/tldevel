@@ -96,7 +96,9 @@ int make_cmd_line(char** command, const int argc,char* const argv[])
         int i,j,c;
 
         RUN(galloc(&cmd,16384));
-
+        for(i =0 ; i < 16384;i++){
+                cmd[i] = 0;
+        }
         c = 0;
         for(i =0 ; i < argc;i++){
                 for(j = 0; j < (int) strlen(argv[i]);j++){
