@@ -30,6 +30,8 @@ struct tl_seq_buffer{
 
 
 #define TL_SEQ_MAX_NAME_LEN 128
+#define TL_SEQ_BUFFER_PROTEIN 20
+#define TL_SEQ_BUFFER_DNA 4
 
 EXTERN int detect_format(struct tl_seq_buffer* sb);
 

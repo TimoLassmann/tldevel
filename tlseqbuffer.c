@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <ctype.h>
+
 #include "tldevel.h"
 
 
@@ -40,7 +42,7 @@ int detect_format(struct tl_seq_buffer* sb)
 
         uint8_t query[256];
         int diff[4];
-        char DNA_letters[]= "acgtACGTnN";
+        char DNA_letters[]= "ACGTUN";
         char protein_letters[] = "ACDEFGHIKLMNPQRSTVWY";
         char Illumina15[] = "BCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghi";
         char Illumina18[] = "!\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJ";
@@ -127,19 +129,51 @@ int detect_format(struct tl_seq_buffer* sb)
                         query[j] = 0;
                 }
                 for(j = 0 ; j < len;j++){
-                        query[(int)seq[j]] = 1;
-                }
+                        query[toupper((int) seq[j])] = 1;
 
+                }
+                //for(j = 0 ; j < 256;j++){
+                //fprintf(stdout,"%d (%d %d)\n", query[j], DNA[j], protein[j]);
+                //}
                 for(j = 0; j < 256;j++){
-                        if(query[j]){
+                        //if(query[j]){
                                 if(query[j] != DNA[j]){
                                         diff[0]++;
                                 }
                                 if(query[j] != protein[j]){
                                         diff[1]++;
                                 }
+                                //}
+                }
+                //fprintf(stdout,"\n%d %d\n", diff[0],diff[1]);
+                //exit(0);
+                c = -1;
+                min = INT32_MAX;
+                for(j = 0; j < 2;j++){
+                        if(diff[j] < min){
+                                min = diff[j];
+
                         }
                 }
+                for(j = 0; j < 2;j++){
+                        if(diff[j] == min){
+                                c = j;
+                                switch (c) {
+                                case 0:
+                                        res.dna_line++;
+                                        break;
+                                case 1:
+                                        res.protein_line++;
+                                        break;
+                                default:
+                                        break;
+                                }
+
+                        }
+
+                }
+
+
                 for(j = 0 ; j < 256;j++){
                         query[j] = 0;
                 }
@@ -158,22 +192,16 @@ int detect_format(struct tl_seq_buffer* sb)
                 }
                 c = -1;
                 min = INT32_MAX;
-                for(j = 0; j < 4;j++){
+                for(j = 2; j < 4;j++){
                         if(diff[j] < min){
                                 min = diff[j];
 
                         }
                 }
-                for(j = 0; j < 4;j++){
+                for(j = 2; j < 4;j++){
                         if(diff[j] == min){
                                 c = j;
                                 switch (c) {
-                                case 0:
-                                        res.dna_line++;
-                                        break;
-                                case 1:
-                                        res.protein_line++;
-                                        break;
                                 case 2:
                                         res.illumina_15_line++;
                                         break;
@@ -189,6 +217,13 @@ int detect_format(struct tl_seq_buffer* sb)
                 }
 
 
+        }
+
+        if(res.dna_line > res.protein_line){
+
+                sb->L = TL_SEQ_BUFFER_DNA;
+        }else{
+                sb->L = TL_SEQ_BUFFER_PROTEIN;
         }
         if(res.illumina18_name > res.illumina15_name){
                 if(res.illumina_18_line > res.illumina_15_line){

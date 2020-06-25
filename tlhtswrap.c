@@ -346,6 +346,7 @@ int tlseq_to_bam_t(struct tl_seq *seq, bam1_t *b)
                 kroundup32(b->m_data);
                 b->data = (uint8_t*)realloc(b->data, b->m_data);
         }
+
         b->core.tid = -1;
         b->core.pos = -1;
         b->core.mtid = -1;

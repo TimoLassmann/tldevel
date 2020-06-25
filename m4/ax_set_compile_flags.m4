@@ -19,11 +19,11 @@ if test "$enable_debugging" != "no"; then
 AC_DEFINE(DEBUG,1,[Defines debugging .])
 
 ADD_DEBUG_COMPILE_WARNINGS
-CFLAGS="-ggdb -std=gnu11"
+CFLAGS="-ggdb -std=gnu11 ${CFLAGS}"
 CFLAGS="${CFLAGS} ${TLDEVEL_CFLAGS}"
 else
 ADD_PRODUCTION_COMPILE_WARNINGS
-CFLAGS="-O3 -std=gnu11"
+CFLAGS="-O3 -std=gnu11 ${CFLAGS}"
 CFLAGS="${CFLAGS} ${TLDEVEL_CFLAGS}"
 DEBUG=0
 fi
@@ -57,7 +57,7 @@ AC_DEFUN([ADD_DEBUG_COMPILE_WARNINGS],
   AX_CHECK_COMPILE_FLAG([-Wuninitialized],[TLDEVEL_CFLAGS="${TLDEVEL_CFLAGS} -Wuninitialized"],,)
   AX_CHECK_COMPILE_FLAG([-Wunsafe-loop-optimizations],[TLDEVEL_CFLAGS="${TLDEVEL_CFLAGS} -Wunsafe-loop-optimizations"],,)
   AX_CHECK_COMPILE_FLAG([-Wextra],[TLDEVEL_CFLAGS="${TLDEVEL_CFLAGS} -Wextra"],,)
-  AX_CHECK_COMPILE_FLAG([-Wfloat-equal],[TLDEVEL_CFLAGS="${TLDEVEL_CFLAGS} -Wfloat-equal"],,)
+  # AX_CHECK_COMPILE_FLAG([-Wfloat-equal],[TLDEVEL_CFLAGS="${TLDEVEL_CFLAGS} -Wfloat-equal"],,)
 
   AX_CHECK_COMPILE_FLAG([-ffunction-sections],[TLDEVEL_CFLAGS="${TLDEVEL_CFLAGS} -ffunction-sections"],,)
   AX_CHECK_COMPILE_FLAG([-fdata-sections],[TLDEVEL_CFLAGS="${TLDEVEL_CFLAGS} -fdata-sections"],,)
