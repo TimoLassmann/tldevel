@@ -221,7 +221,7 @@ int create_nonambiguous_protein(struct alphabet* a)
           RAVNFMKAAVQASPIPCHVDMGMGVGGIPMLETPPVDAVTRASKAMVEVAGVDGIOIGVG   <- there is an 'O' here DGI..O..IG
           DPLGMPISHIMASGMTGIRAAGDLVARMQFSKNMRIGEAKEYVAKKLNVDVMDLADEHVM
           RELREELDIGVITSVPGAAKGIAAKMNIEKLLDIKINSCNLFRKQIQ
-        /*
+        */
         a->to_internal[(int) 'O'] = code;
         a->r_type = code;
         a->r_options = 20;
