@@ -353,13 +353,13 @@ int alloc_tl_seq(struct tl_seq** sequence)
         struct tl_seq* s = NULL;
         int i;
         MMALLOC(s, sizeof(struct tl_seq));
-        s->malloc_len = 128;
+        s->malloc_len = 1024;
         s->len = 0;
         s->seq = NULL;
         s->qual = NULL;
         s->name = NULL;
         s->aux = NULL;
-        MMALLOC(s->seq, sizeof(char)* s->malloc_len);
+        MMALLOC(s->seq, sizeof(uint8_t)* s->malloc_len);
         MMALLOC(s->qual, sizeof(char) * s->malloc_len);
         MMALLOC(s->name, sizeof(char) * TL_SEQ_MAX_NAME_LEN);
         for(i = 0; i < s->malloc_len;i++){
@@ -379,7 +379,7 @@ int resize_tl_seq(struct tl_seq* s)
         o = s->malloc_len;
         s->malloc_len = s->malloc_len + s->malloc_len / 2;
         //LOG_MSG("New len: %d", s->malloc_len);
-        MREALLOC(s->seq, sizeof(char)* s->malloc_len);
+        MREALLOC(s->seq, sizeof(uint8_t)* s->malloc_len);
         MREALLOC(s->qual, sizeof(char) * s->malloc_len);
         for(i = o; i < s->malloc_len;i++){
                 s->qual[i] = 'J';

@@ -134,6 +134,7 @@ int read_fasta_fastq_file(struct file_handler* fh, struct tl_seq_buffer** seq_bu
         kseq_t *ks;
         int l;
         int i;
+        int max_len;
         //int j;
         //int c;
         char* tmp;
@@ -196,6 +197,15 @@ int read_fasta_fastq_file(struct file_handler* fh, struct tl_seq_buffer** seq_bu
                         break;
                 }
         }
+
+        max_len = -1;
+        for(i = 0; i < sb->num_seq;i++){
+                if(sb->sequences[i]->len > max_len){
+                        max_len = sb->sequences[i]->len;
+                }
+                LOG_MSG("MAX: %d",max_len);
+        }
+        sb->max_len = max_len;
 
         if(sb->base_quality_offset == 0){
                 RUN(detect_format(sb));
