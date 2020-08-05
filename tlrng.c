@@ -2,9 +2,9 @@
 #include <time.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <math.h>
+/* #include <math.h> */
 
-
+#define M_PI        3.14159265358979323846
 
 #define M_2PI 2.0*M_PI
 
@@ -30,13 +30,41 @@ See <http://creativecommons.org/publicdomain/zero/1.0/>. */
 /* Sebastiano Vigna (vigna@acm.org) */
 /* David Blackman */
 
+/* code for sampling from varius distributions was taken from  */
+
+/* Copyright 2005 Robert Kern (robert.kern@gmail.com)
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+
 /* And code bits from  */
 /* the easel library (by Sean Eddy) */
+
 
 struct rng_state{
         uint64_t s[4];
         uint8_t gen;
         double z1;
+        int has_gauss; /* !=0: gauss contains a gaussian deviate */
+        double gauss;
 };
 
 
@@ -47,6 +75,12 @@ void long_jump(struct rng_state* s);
 
 static uint64_t choose_arbitrary_seed(void);
 static uint32_t jenkins_mix3(uint32_t a, uint32_t b, uint32_t c);
+
+
+static double tl_standard_gamma(struct rng_state* rng, double shape);
+static double tl_standard_exponential(struct rng_state* rng);
+static double tl_gauss(struct rng_state* rng);
+
 
 double tl_random_double(struct rng_state* rng)
 {
@@ -87,6 +121,96 @@ double tl_random_gaussian(struct rng_state* rng, double mu, double sigma)
         return z0 * sigma + mu;
 }
 
+double tl_random_gamma(struct rng_state* rng, double shape, double scale)
+{
+        return scale * tl_standard_gamma(rng, shape);
+}
+
+double tl_standard_gamma(struct rng_state* rng, double shape)
+{
+        double b, c;
+        double U, V, X, Y;
+
+        if (shape == 1.0)
+        {
+                return tl_standard_exponential(rng);
+        }
+        else if (shape < 1.0)
+        {
+                for (;;)
+                {
+                        U = tl_random_double(rng);
+                        V = tl_standard_exponential(rng);
+                        if (U <= 1.0 - shape)
+                        {
+                                X = pow(U, 1./shape);
+                                if (X <= V)
+                                {
+                                        return X;
+                                }
+                        }
+                        else
+                        {
+                                Y = -log((1-U)/shape);
+                                X = pow(1.0 - shape + shape*Y, 1./shape);
+                                if (X <= (V + Y))
+                                {
+                                        return X;
+                                }
+                        }
+                }
+        }
+        else
+        {
+                b = shape - 1./3.;
+                c = 1./sqrt(9*b);
+                for (;;)
+                {
+                        do
+                        {
+                                X = tl_gauss(rng);
+                                V = 1.0 + c*X;
+                        } while (V <= 0.0);
+
+                        V = V*V*V;
+                        U = tl_random_double(rng);
+                        if (U < 1.0 - 0.0331*(X*X)*(X*X)) return (b*V);
+                        if (log(U) < 0.5*X*X + b*(1. - V + log(V))) return (b*V);
+                }
+        }
+}
+
+double tl_standard_exponential(struct rng_state* rng)
+{
+    /* We use -log(1-U) since U is [0, 1) */
+        return -log(1.0 - tl_random_double(rng));
+}
+
+double tl_gauss(struct rng_state* rng)
+{
+        if (rng->has_gauss) {
+                const double tmp = rng->gauss;
+                rng->gauss = 0;
+                rng->has_gauss = 0;
+                return tmp;
+        } else {
+                double f, x1, x2, r2;
+
+                do {
+                        x1 = 2.0*tl_random_double(rng) - 1.0;
+                        x2 = 2.0*tl_random_double(rng) - 1.0;
+                        r2 = x1*x1 + x2*x2;
+                }
+                while (r2 >= 1.0 || r2 == 0.0);
+
+                /* Box-Muller transform */
+                f = sqrt(-2.0*log(r2)/r2);
+                /* Keep for next call */
+                rng->gauss = f*x1;
+                rng->has_gauss = 1;
+                return f*x2;
+        }
+}
 
 
 struct rng_state* init_rng(uint64_t seed)
@@ -98,6 +222,9 @@ struct rng_state* init_rng(uint64_t seed)
         MMALLOC(s, sizeof(struct rng_state));
         s->gen = 0;
         s->z1 = 0.0f;
+        s->gauss = 0.0;
+        s->has_gauss = 0;
+
         if(!seed){
                 seed = choose_arbitrary_seed();
         }
@@ -151,6 +278,9 @@ struct rng_state* init_rng_from_rng(struct rng_state* rng)
                 s->s[i] = rng->s[i];
                 s->gen = 0;
                 s->z1 = 0.0;
+                s->gauss = rng->gauss;
+                s->has_gauss = rng->has_gauss;
+
         }
         jump(rng);
         return s;

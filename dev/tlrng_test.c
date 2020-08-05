@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
         struct rng_state* rng_second = NULL;
         double* values = NULL;
         int num_val = 1000000;
-        int i;
+        int i,j;
         RUNP(rng = init_rng(0));
         RUNP(rng_second = init_rng_from_rng(rng));
         for(i = 0; i < 10;i++){
@@ -33,6 +33,24 @@ int main(int argc, char *argv[])
         }
 
         printHistogram(values,num_val);
+        LOG_MSG("Gamma");
+
+        for(i = 0; i < 100;i+=5){
+                mean = 0.0;
+                for(j = 0; j < 10;j++){
+                        values[j] = tl_random_gamma(rng, (double) i + 0.01,1.0);
+                        mean+=values[j];
+                }
+                for(j = 0; j < 10;j++){
+                        values[j] /= mean;
+                }
+                for(j = 0; j < 10;j++){
+                        fprintf(stdout,"%0.2f ",values[j]);
+                }
+                fprintf(stdout,"\n");
+        }
+
+
         MFREE(values);
 
         free_rng(rng);
