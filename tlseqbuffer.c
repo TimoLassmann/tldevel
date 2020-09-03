@@ -290,6 +290,7 @@ int alloc_tl_seq_buffer(struct tl_seq_buffer** seq_buf, int size)
         sb->offset = 0;
         sb->base_quality_offset = 0;
         sb->sequences = NULL;
+        sb->data = NULL;
 
         MMALLOC(sb->sequences, sizeof(struct tl_seq*) * sb->malloc_num);
         for(i = 0; i < sb->malloc_num;i++){
@@ -358,7 +359,7 @@ int alloc_tl_seq(struct tl_seq** sequence)
         s->seq = NULL;
         s->qual = NULL;
         s->name = NULL;
-        s->aux = NULL;
+        s->data = NULL;
         MMALLOC(s->seq, sizeof(uint8_t)* s->malloc_len);
         MMALLOC(s->qual, sizeof(char) * s->malloc_len);
         MMALLOC(s->name, sizeof(char) * TL_SEQ_MAX_NAME_LEN);

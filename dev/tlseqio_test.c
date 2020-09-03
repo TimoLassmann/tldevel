@@ -8,6 +8,7 @@ int main(int argc, char *argv[])
         struct file_handler* f_out = NULL;
         struct file_handler* f_out_bam = NULL;
         struct tl_seq_buffer* sb = NULL;
+        char* aux; 
         int i;
         if(argc > 1){
                 RUN(open_fasta_fastq_file(&f, argv[1], TLSEQIO_READ));
@@ -21,20 +22,17 @@ int main(int argc, char *argv[])
                 //int total_r = 0;
                 //int total_w = 0;
                 while(1){
-
                         RUN(read_fasta_fastq_file(f, &sb, 1000));
-
                         detect_format(sb);
                         //total_r+= sb->num_seq;
                         LOG_MSG("Finished reading chunk: found %d ",sb->num_seq);
                         for(i = 0; i < sb->num_seq;i++){
-
-                                sb->sequences[i]->aux = NULL;
-                                MMALLOC(sb->sequences[i]->aux,sizeof(char) * 1024);
-                                snprintf(sb->sequences[i]->aux,1024,"FP:Z:CACG BC:Z:ACAGTG FP:Z:GGGG");
+                                aux = NULL;
+                                MMALLOC(aux,sizeof(char) * 1024);
+                                snprintf(aux,1024,"FP:Z:CACG BC:Z:ACAGTG FP:Z:GGGG");
+                                sb->sequences[i]->data = aux;
 
                         }
-
 
                         if(sb->num_seq == 0){
                                 break;
@@ -47,7 +45,9 @@ int main(int argc, char *argv[])
                         RUN(write_seq_buf(sb,f_out_bam));
                             //#endif
                         for(i = 0; i < sb->num_seq;i++){
-                                MFREE(sb->sequences[i]->aux);
+                                aux = sb->sequences[i]->data;
+                                sb->sequences[i]->data = NULL;
+                                MFREE(aux);
                         }
 
                 }

@@ -231,9 +231,10 @@ ERROR:
 
 int write_fasta_fastq(struct tl_seq_buffer* sb, struct file_handler* fh)
 {
-
+        char* aux;
         int i,r;
         htsFile* fp_out;
+        
         ssize_t bytes;
 
         ASSERT(sb != NULL, "No sequence buffer");
@@ -246,9 +247,10 @@ int write_fasta_fastq(struct tl_seq_buffer* sb, struct file_handler* fh)
                 fp_out->line.l = 0;
                 r |= kputc('@', &fp_out->line) < 0;
                 r |= kputs(sb->sequences[i]->name, &fp_out->line) < 0;
-                if(sb->sequences[i]->aux){
+                if(sb->sequences[i]->data){
+                        aux = sb->sequences[i]->data;
                         r |= kputc(' ', &fp_out->line) < 0;
-                        r |= kputs(sb->sequences[i]->aux, &fp_out->line) < 0;
+                        r |= kputs(aux, &fp_out->line) < 0;
                 }
                 r |= kputc('\n', &fp_out->line) < 0;
                 r |= kputs(sb->sequences[i]->seq, &fp_out->line) < 0;
@@ -346,7 +348,7 @@ int tlseq_to_bam_t(struct tl_seq *seq, bam1_t *b)
 {
         int len;
         int seq_l = seq->len; // seq length after trim the barcode
-
+        char* aux; 
         //LOG_MSG("LEN:%d\n",seq->len);
         len = strnlen(seq->name, TL_SEQ_MAX_NAME_LEN);
         b->l_data = len + 1 + (int)(1.5 * seq_l + (seq_l % 2 != 0)); // +1 includes the tailing '\0'
@@ -381,8 +383,9 @@ int tlseq_to_bam_t(struct tl_seq *seq, bam1_t *b)
                 s[i] = seq->qual[i]-33;
         }
 
-        if(seq->aux){
-                len = strlen(seq->aux);
+        if(seq->data){
+                aux = seq->data;
+                len = strlen(aux);
                 int j = 0;
                 //int c;
                 char tag[2];
@@ -390,18 +393,18 @@ int tlseq_to_bam_t(struct tl_seq *seq, bam1_t *b)
                 int aux_len;
                 uint8_t data[256];
                 for(i = 0;i < len;i++){
-                        tag[0] = seq->aux[i+0];
-                        tag[1] = seq->aux[i+1];
-                        ASSERT(seq->aux[i+2] == ':', "Tag is not formatted correctly: %s",seq->aux);
-                        type = seq->aux[i+3];
-                        ASSERT(seq->aux[i+4] == ':', "Tag is not formatted correctly: %s",seq->aux);
+                        tag[0] = aux[i+0];
+                        tag[1] = aux[i+1];
+                        ASSERT(aux[i+2] == ':', "Tag is not formatted correctly: %s",aux);
+                        type = aux[i+3];
+                        ASSERT(aux[i+4] == ':', "Tag is not formatted correctly: %s",aux);
                         aux_len = 0;
                         for(j = i+5; j < len;j++){
-                                if(seq->aux[j] == ' '){
+                                if(aux[j] == ' '){
 
                                         break;
                                 }
-                                data[aux_len] = (uint8_t)seq->aux[j];
+                                data[aux_len] = (uint8_t)aux[j];
                                 aux_len++;
                                 if(aux_len == 256){
                                         ERROR_MSG("No space left in aux");

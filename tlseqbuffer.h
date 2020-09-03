@@ -12,13 +12,14 @@ struct tl_seq{
         char* seq;
         char* name;
         char* qual;
-        char* aux;
+        void* data;
         int malloc_len;
         int len;
 };
 
 struct tl_seq_buffer{
         struct tl_seq** sequences;
+        void* data;
         int malloc_num;
         int offset;
         int base_quality_offset;
