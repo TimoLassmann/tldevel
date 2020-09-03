@@ -203,7 +203,7 @@ int read_fasta_fastq_file(struct file_handler* fh, struct tl_seq_buffer** seq_bu
                 if(sb->sequences[i]->len > max_len){
                         max_len = sb->sequences[i]->len;
                 }
-                LOG_MSG("MAX: %d",max_len);
+                //LOG_MSG("MAX: %d",max_len);
         }
         sb->max_len = max_len;
 

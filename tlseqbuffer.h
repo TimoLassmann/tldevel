@@ -1,6 +1,7 @@
 #ifndef TLSEQBUFFER_H
 #define TLSEQBUFFER_H
 
+#include <inttypes.h>
 
 #ifdef TLSEQBUFFER_IMPORT
 #define EXTERN
@@ -9,7 +10,7 @@
 #endif
 
 struct tl_seq{
-        char* seq;
+        uint8_t * seq;
         char* name;
         char* qual;
         void* data;
