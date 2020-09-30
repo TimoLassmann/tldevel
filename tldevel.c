@@ -279,12 +279,11 @@ void log_message( const char *format, ...)
 
 int get_time(char* time_ptr, int size)
 {
-        struct tm *ptr;
+        /* struct tm *ptr; */
         struct tm local_time;
         time_t current = time(NULL);
         //ptr = localtime(&current);
         //if(!strftime(time_ptr, size, "[%F %H:%M:%S] ", ptr))ERROR_MSG("write failed");
-
         if((localtime_r(&current,&local_time)) == NULL){
                 ERROR_MSG("could not get local time");
         }
