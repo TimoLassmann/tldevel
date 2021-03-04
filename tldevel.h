@@ -182,7 +182,6 @@ FUNC_DEF(double)
 
 EXTERN int galloc_unknown_type_error (void* p, ...);
 EXTERN int galloc_too_few_arg_error (void* p);
-
 #define p1(X) _Generic((X),                               \
                        default: galloc_too_few_arg_error  \
                 )(X)

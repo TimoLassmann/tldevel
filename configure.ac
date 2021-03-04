@@ -1,5 +1,4 @@
-
-AC_INIT([tldevel], [1.2.8])
+AC_INIT([tldevel], [1.2.9])
 AC_CONFIG_AUX_DIR([.])
 AM_INIT_AUTOMAKE
 AC_PROG_CC
@@ -222,4 +221,3 @@ AS_IF([test "$with_hdf5" = "no"],[
    AC_MSG_NOTICE([---------------------------------------------------------])
    AC_MSG_NOTICE([])
 ])
-

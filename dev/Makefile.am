@@ -1,4 +1,3 @@
-
 ACLOCAL_AMFLAGS = -I m4
 AM_LDFLAGS = @DEAD_STRIP@
 AM_LDFLAGS += -Wno-undef
@@ -22,8 +21,8 @@ demo \
 kstring_test \
 khash_test \
 ksa_test \
-esl_stopwatch_test
-
+esl_stopwatch_test \
+ava_test
 
 if ENABLE_HDF5
 TESTLIST+= hdf5_test
@@ -103,7 +102,12 @@ minhash_test_SOURCES = tlminhash_test.c
 minhash_test_CPPFLAGS = $(AM_CPPFLAGS)
 minhash_test_LDADD = ../libtldevel.la
 
+ava_test_SOURCES = \
+../alignedvec_alloc.c
+ava_test_CPPFLAGS = $(AM_CPPFLAGS) -DAVATEST
+ava_test_LDADD = ../libtldevel.la
+
+
 CLEANFILES = \
 	MAIN_0.chk \
-  hdf5testfile.h5
-
+	hdf5testfile.h5
