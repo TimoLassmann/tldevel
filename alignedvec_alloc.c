@@ -5,41 +5,38 @@
 #include "alignedvec_alloc.h"
 
 
-#define CEIL64(a) do {                                                  \
-                int tmp_ceil_64 = ((a) >> 3) << 3;                      \
-                (a) = ((a) > tmp_ceil_64 )? tmp_ceil_64 + 64 : tmp_ceil_64; \
-        } while (0)
 
 #define ALIGNMENT 128
 
 static inline int ceil64(int a){
-        int tmp_ceil_64 = (a >> 3) << 3;
+        int tmp_ceil_64 = (a >> 6) << 6;
         return a > tmp_ceil_64? tmp_ceil_64 + 64 : tmp_ceil_64;
 }
 
-#define AVALLOC_1D_ARRAY(type)                                  \
-        int avalloc_1D_size_##type (type **array, int dim1) {   \
-        size_t size;                                            \
-        void* tmp = NULL;                                       \
-        int i;                                                  \
-        dim1 = ceil64(dim1);                                    \
-        size = dim1 * sizeof(**array);                          \
-        if(size == 0){                                          \
-                goto ERROR;                                     \
-        }                                                       \
-        if (((tmp) = aligned_alloc(ALIGNMENT, size)) == NULL) { \
-                goto ERROR;                                     \
-        }                                                       \
-        *array = tmp;                                           \
-        /* Zero out */                                          \
-        for(i = 0; i < dim1;i++){                               \
-                array[i] = 0;                                   \
-        }                                                       \
-        return 0;                                               \
-        ERROR:                                                  \
-        avafree(*array);                                        \
-        return 1;                                               \
+#define AVALLOC_1D_ARRAY(type)                                          \
+        int avalloc_1D_size_##type (type **array, int dim1) {           \
+                size_t size;                                            \
+                type* tmp = NULL;                                       \
+                int i;                                                  \
+                dim1 = ceil64(dim1);                                    \
+                size = dim1 * sizeof(**array);                          \
+                if(size == 0){                                          \
+                        goto ERROR;                                     \
+                }                                                       \
+                if (((tmp) = aligned_alloc(ALIGNMENT, size)) == NULL) { \
+                        goto ERROR;                                     \
+                }                                                       \
+                /* Zero out */                                          \
+                for(i = 0; i < dim1;i++){                               \
+                        tmp[i] = 0;                                     \
+                }                                                       \
+                *array = tmp;                                           \
+                return 0;                                               \
+        ERROR:                                                          \
+                avafree(*array);                                        \
+                return 1;                                               \
         }
+
 AVALLOC_1D_ARRAY(char)
         AVALLOC_1D_ARRAY(int8_t)
         AVALLOC_1D_ARRAY(uint8_t)
@@ -181,25 +178,41 @@ int main(void)
 {
         double** g = NULL;
         int i;
-        int j;
+
+
         avalloc(&g,10,10);
 
-        for(i = 0;i < 64;i++){
-                for(j = 0; j < 64;j++){
-                        fprintf(stdout,"%f ", g[i][j]);
-                }
-                fprintf(stdout,"\n");
-        }
+        /* for(i = 0;i < 64;i++){ */
+        /*         for(j = 0; j < 64;j++){ */
+        /*                 fprintf(stdout,"%f ", g[i][j]); */
+        /*         } */
+        /*         fprintf(stdout,"\n"); */
+        /* } */
         fprintf(stdout,"Aligned? %p %d (this is the ava alignment )\n", (void*) g, (int) ( (uint64_t)g %128));
         double*f = NULL;
         for(i = 0;i < 10;i++){
                 f = malloc(sizeof(double) * 1000);
                 fprintf(stdout,"Aligned? %p %d (default malloc)\n", (void*) f, (int) ( (uint64_t)f  %128));
-
+                fprintf(stdout,"DONKEY");
                 free(f);
         }
 
+        fprintf(stdout,"DONKEY  b free\n");
         avafree(g);
+        fprintf(stdout,"DONKEY a free\n");
+
+        f = NULL;
+        /* double* f = NULL; */
+        fprintf(stdout,"f ptr: %p\n",(void*) f);
+        avalloc(&f,10);
+
+        fprintf(stdout,"f ptr: %p\n",(void*) f);
+        for(i = 0;i < 10;i++){
+                fprintf(stdout,"%f ", f[i]);
+        }
+
+
+        avafree(f);
         return 0;
 }
 
