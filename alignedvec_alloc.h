@@ -34,10 +34,10 @@ AVALLOC_FUNC_DEF(double)
 EXTERN int avalloc_unknown_type_error (void* p, ...);
 EXTERN int avalloc_too_few_arg_error (void* p);
 
-#define p1(X) _Generic((X),                               \
+#define AVA_p1(X) _Generic((X),                               \
                        default: avalloc_too_few_arg_error \
                 )(X)
-#define p2(X,Y) _Generic((X),                                     \
+#define AVA_p2(X,Y) _Generic((X),                                     \
                          char**        : avalloc_1D_size_char,       \
                          int8_t**      : avalloc_1D_size_int8_t,     \
                          uint8_t**     : avalloc_1D_size_uint8_t,    \
@@ -52,7 +52,7 @@ EXTERN int avalloc_too_few_arg_error (void* p);
                          default       : avalloc_unknown_type_error  \
                 )(X,Y)
 
-#define p3(X,Y,Z) _Generic((X),                                     \
+#define AVA_p3(X,Y,Z) _Generic((X),                                     \
                            char***     : avalloc_2D_size_char,      \
                            int8_t***   : avalloc_2D_size_int8_t,    \
                            uint8_t***  : avalloc_2D_size_uint8_t,   \
@@ -70,9 +70,9 @@ EXTERN int avalloc_too_few_arg_error (void* p);
 #define _ARG3(_0, _1, _2, _3, ...) _3
 #define NARG3(...) _ARG3(__VA_ARGS__,3, 2, 1, 0)
 
-#define _AVALLOC_ARGS_1( a) p1(a)
-#define _AVALLOC_ARGS_2( a, b) p2(a,b)
-#define _AVALLOC_ARGS_3( a, b, c ) p3(a,b,c)
+#define _AVALLOC_ARGS_1( a) AVA_p1(a)
+#define _AVALLOC_ARGS_2( a, b) AVA_p2(a,b)
+#define _AVALLOC_ARGS_3( a, b, c ) AVA_p3(a,b,c)
 
 #define __AVALLOC_ARGS( N, ...) _AVALLOC_ARGS_ ## N ( __VA_ARGS__)
 #define _AVALLOC_ARGS( N, ...) __AVALLOC_ARGS( N, __VA_ARGS__)
