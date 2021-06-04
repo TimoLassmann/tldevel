@@ -1,5 +1,3 @@
-
-
 #include <sys/stat.h>
 
 #include <string.h>
@@ -7,7 +5,7 @@
 #define TLMISC_IMPORT
 #include "tlmisc.h"
 #include "tldevel.h"
-
+#include "tlalloc.h"
 #define MAX_CMD_LEN 16384
 
 int my_file_exists(const char* name)

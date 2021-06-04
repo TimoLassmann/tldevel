@@ -5,8 +5,8 @@ ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST= README.org autogen.sh version.sh VERSION ax_with_tldevel.m4
 
-AM_LDFLAGS = @DEAD_STRIP@
-AM_LDFLAGS += -Wno-undef
+# AM_LDFLAGS = @DEAD_STRIP@
+# AM_LDFLAGS += -Wno-undef -static
 
 noinst_LTLIBRARIES =  libtldevel.la
 #noinst_LIBRARIES = libtldevel.a
@@ -52,7 +52,9 @@ $(KSTRING_SOURCES) \
 $(KHASH_SOURCES) \
 $(KSA_SOURCES) \
 $(ESL_TIMER_SOURCES) \
-$(ALNVECALLOCSOURCES)
+$(ALNVECALLOCSOURCES) \
+tlalloc.c
+
 if ENABLE_HTS
 libtldevel_la_SOURCES += $(TLHTSWRAPSOURCES)
 else

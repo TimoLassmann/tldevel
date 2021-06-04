@@ -17,6 +17,8 @@ AC_CONFIG_MACRO_DIRS([m4])
 m4_include([m4/ax_check_zlib.m4])
 m4_include([m4/ax_check_compile_flag.m4])
 m4_include([m4/ax_lib_hdf5.m4])
+
+m4_include([m4/ax_with_htslib.m4])
 m4_include([m4/tldevel_set_compile_flags.m4])
 
 AX_ENABLE_DEBUG
@@ -99,45 +101,45 @@ AC_CHECK_FUNCS([strtol])
 AC_CHECK_FUNCS([gethrtime])
 AC_CHECK_FUNCS([gettimeofday])
 
-AC_ARG_WITH([htsdir],
-  [AS_HELP_STRING([--with-htsdir=DIR],
-    [use the HTSlib source tree or installation in DIR]),
-    ],
-  [], [with_htsdir=no])
+dnl AC_ARG_WITH([htsdir],
+dnl   [AS_HELP_STRING([--with-htsdir=DIR],
+dnl     [use the HTSlib source tree or installation in DIR]),
+dnl     ],
+dnl   [], [with_htsdir=no])
 
-AS_IF([test "$with_htsdir" = "no"],[
-   AC_CHECK_HEADER([htslib/sam.h],
-      [AC_CHECK_LIB(hts, hts_version, [ax_cv_htslib=yes], [ax_cv_htslib=no])],
-      [ax_cv_htslib=no], [;])
+dnl AS_IF([test "$with_htsdir" = "no"],[
+dnl    AC_CHECK_HEADER([htslib/sam.h],
+dnl       [AC_CHECK_LIB(hts, hts_version, [ax_cv_htslib=yes], [ax_cv_htslib=no])],
+dnl       [ax_cv_htslib=no], [;])
 
-   AM_CONDITIONAL([ENABLE_HTS], [test "$ax_cv_htslib" = "yes"])
+dnl    AM_CONDITIONAL([ENABLE_HTS], [test "$ax_cv_htslib" = "yes"])
 
-   AS_IF([test "$ax_cv_htslib" = "yes"],[
-      LIBS="-lhts $LIBS"
-      AC_DEFINE([HAVE_HTS], [1],[Define to 1 if you have `z' library (-lz)])
-   ])
-],[
+dnl    AS_IF([test "$ax_cv_htslib" = "yes"],[
+dnl       LIBS="-lhts $LIBS"
+dnl       AC_DEFINE([HAVE_HTS], [1],[Define to 1 if you have `z' library (-lz)])
+dnl    ])
+dnl ],[
 
-  HTSDIR=$with_htsdir
-  if test -f "$HTSDIR/hts.c" && test -f "$HTSDIR/htslib/hts.h"; then
-    ax_cv_local_htslib=yes
-    else
-    ax_cv_local_htslib=no
-  fi
+dnl   HTSDIR=$with_htsdir
+dnl   if test -f "$HTSDIR/hts.c" && test -f "$HTSDIR/htslib/hts.h"; then
+dnl     ax_cv_local_htslib=yes
+dnl     else
+dnl     ax_cv_local_htslib=no
+dnl   fi
 
-   AS_IF([test "$ax_cv_local_htslib" = "no"],
-      [AC_MSG_ERROR([Local hts library was not found here: $HTSDIR  ])],
-   [
-   CPPFLAGS="$CPPFLAGS -I${HTSDIR}/htslib"
-   LDFLAGS="$LDFLAGS -L${HTSDIR}"
-   LIBS="-lhts $LIBS"
-   ]
-   )
+dnl    AS_IF([test "$ax_cv_local_htslib" = "no"],
+dnl       [AC_MSG_ERROR([Local hts library was not found here: $HTSDIR  ])],
+dnl    [
+dnl    CPPFLAGS="$CPPFLAGS -I${HTSDIR}/htslib"
+dnl    LDFLAGS="$LDFLAGS -L${HTSDIR}"
+dnl    LIBS="-lhts $LIBS"
+dnl    ]
+dnl    )
 
-   AM_CONDITIONAL([ENABLE_HTS], [test "$ax_cv_local_htslib" = "yes"])
-])
+dnl    AM_CONDITIONAL([ENABLE_HTS], [test "$ax_cv_local_htslib" = "yes"])
+dnl ])
 
-
+AM_CONDITIONAL([ENABLE_HTS], [test "$ax_cv_local_htslib" = "yes"])
 # non-standard stuff
 
 
@@ -166,6 +168,9 @@ AC_SUBST([UNAME_INFO]) UNAME_INFO=`uname -n`
 AC_SUBST([COMPILER]) COMPILER=`$CC --version | head -n 1`
 
 
+
+LDFLAGS="$LDFLAGS $DEAD_STRIP -Wno-undef -static"
+LIBS="$LIBS"
 
 dnl ac_configure_args="$ac_configure_args PACKAGE_VERSION=$PACKAGE_VERSION   PACKAGE_NAME=$PACKAGE_NAME"
 

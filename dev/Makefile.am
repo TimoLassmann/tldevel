@@ -22,7 +22,8 @@ kstring_test \
 khash_test \
 ksa_test \
 esl_stopwatch_test \
-ava_test
+tl_alloc_test
+
 
 if ENABLE_HDF5
 TESTLIST+= hdf5_test
@@ -102,11 +103,11 @@ minhash_test_SOURCES = tlminhash_test.c
 minhash_test_CPPFLAGS = $(AM_CPPFLAGS)
 minhash_test_LDADD = ../libtldevel.la
 
-ava_test_SOURCES = \
-../alignedvec_alloc.c
-ava_test_CPPFLAGS = $(AM_CPPFLAGS) -DAVATEST
-ava_test_LDADD = ../libtldevel.la
 
+tl_alloc_test_SOURCES = \
+tlalloc_test.c
+tl_alloc_test_CPPFLAGS = $(AM_CPPFLAGS)
+tl_alloc_test_LDADD = ../libtldevel.la
 
 CLEANFILES = \
 	MAIN_0.chk \
