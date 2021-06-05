@@ -49,8 +49,8 @@ EXTERN int hdf5wrap_search(struct hdf5_data* hdf5_data,char* target, char** loca
 
 #define ADD_DATA_DEF(type)                                              \
         EXTERN int hdf5wrap_add_0D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type data); \
-EXTERN int hdf5wrap_add_1D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type* data); \
-EXTERN int hdf5wrap_add_2D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type** data);
+        EXTERN int hdf5wrap_add_1D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type* data); \
+        EXTERN int hdf5wrap_add_2D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type** data);
 
 ADD_DATA_DEF(char)
 ADD_DATA_DEF(int8_t)
@@ -107,7 +107,7 @@ ADD_DATA_DEF(double)
 #define READ_ARRAY(type)                                              \
         EXTERN int hdf5wrap_read_0D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type* data); \
         EXTERN int hdf5wrap_read_1D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type** data); \
-EXTERN int hdf5wrap_read_2D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type*** data);
+        EXTERN int hdf5wrap_read_2D_dataset_ ##type (struct hdf5_data* hdf5_data, char* group, char* name, type*** data);
 
 
 READ_ARRAY(char)

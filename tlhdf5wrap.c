@@ -1,4 +1,3 @@
-
 #include <hdf5.h>
 #include <string.h>
 
@@ -31,7 +30,6 @@ static int hdf5wrap_close_group(struct hdf5_data* hdf5_data);
 
 HDFWRAP_WRITE_ATTRIBUTE
 HDFWRAP_READ_ATTRIBUTE
-
 
  */
 
@@ -110,12 +108,12 @@ static int startof_galloc_unknown(void* x, void** ptr);
 /* These functions determine the native hdf5 data type from the C data type  */
 
 /*
-  H5T_NATIVE_INT 	int
-  H5T_NATIVE_UINT 	unsigned
-  H5T_NATIVE_LONG 	long
-  H5T_NATIVE_ULONG 	unsigned long
-H5T_NATIVE_LLONG 	long long
-H5T_NATIVE_ULLONG 	unsigned long long
+  H5T_NATIVE_INT    int
+  H5T_NATIVE_UINT   unsigned
+  H5T_NATIVE_LONG   long
+  H5T_NATIVE_ULONG  unsigned long
+H5T_NATIVE_LLONG    long long
+H5T_NATIVE_ULLONG   unsigned long long
 
 
 
@@ -826,7 +824,6 @@ int close_hdf5_file(struct hdf5_data** h)
         struct hdf5_data* hdf5_data = NULL;
 
         hdf5_data  = *h;
-
 
         if(hdf5_data){
                 if(H5Fclose(hdf5_data->file) < 0) ERROR_MSG("Close failed");

@@ -227,7 +227,7 @@ ALLOC_1D_ARRAY(double)
                         type** a = *array;                              \
                         for(i = 0; i < MACRO_MIN(dim1,o1); i++){        \
                                 for (j = 0; j < MACRO_MIN(dim2,o2);j++){ \
-                                        ptr_t[i][j] = a[i][j];     \
+                                        ptr_t[i][j] = a[i][j];          \
                                 }                                       \
                         }                                               \
                         gfree(*array);                                  \

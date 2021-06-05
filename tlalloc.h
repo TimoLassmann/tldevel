@@ -213,11 +213,7 @@ EXTERN int galloc_too_few_arg_error (void* p);
                           double***: free_2d_array_double       \
                 )(&X)
 
-
-
-
 #undef TLALLOC_IMPORT
 #undef EXTERN
-
 
 #endif
