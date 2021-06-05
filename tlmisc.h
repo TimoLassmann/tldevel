@@ -1,8 +1,6 @@
 #ifndef TLMISC_H
 #define TLMISC_H
 
-
-
 #ifdef TLMISC_IMPORT
 #define EXTERN
 #else

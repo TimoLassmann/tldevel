@@ -1,4 +1,3 @@
-
 #include "tldevel.h"
 
 #include <stdint.h>
@@ -26,7 +25,8 @@ int make_bitvector(struct bitvec** bv, int num_elem)
         MMALLOC(bitvec, sizeof(struct bitvec));
         bitvec->size = num_elem;
         bitvec->arr = NULL;
-        MMALLOC(bitvec->arr, sizeof(int) *((num_elem / 32) + 1));
+
+        MMALLOC(bitvec->arr, sizeof(uint32_t) *((num_elem / 32) + 1));
         RUN(clear_bitvector(bitvec));
         //RUN(clear_bitvector(x, num_elem));
         *bv = bitvec;

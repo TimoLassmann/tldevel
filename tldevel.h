@@ -35,7 +35,6 @@
 #define TOSTRING(x) STRINGIFY(x)
 #define AT __FILE__ " line " TOSTRING(__LINE__)
 
-
 #define ERROR_MSG(...) do {                     \
                 error(AT, __VA_ARGS__ );        \
                 goto ERROR;                     \
@@ -91,20 +90,6 @@ EXTERN int nearly_equal_double(double a, double b);
                                 float: nearly_equal_float,  \
                                 double: nearly_equal_double \
                 )(X,Y)
-
-
-
-
-/* Functions to declare and use a timer */
-/*
-#define DECLARE_TIMER(n) struct timespec ts1_##n; struct timespec ts2_##n;
-#define START_TIMER(n) clock_gettime(CLOCK_MONOTONIC_RAW, &ts1_##n);
-#define STOP_TIMER(n) clock_gettime(CLOCK_MONOTONIC_RAW, &ts2_##n);
-#define GET_TIMING(n) (double)(ts2_##n.tv_sec - ts1_##n.tv_sec) + ((double)  ts2_##n.tv_nsec - ts1_##n.tv_nsec) / 1000000000.0
-*/
-/* Memory functions  */
-
-/* functions  */
 
 EXTERN void error(const char *location, const char *format, ...);
 EXTERN void warning(const char *location, const char *format, ...);

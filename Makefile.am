@@ -29,7 +29,7 @@ TLSEQIOSOURCES = tlseqio.h tlseqbuffer.h tlseqio.c tlseqbuffer.c
 TLHTSWRAPSOURCES = tlseqio.h tlseqbuffer.h tlhtswrap.c tlseqbuffer.c
 TLHDF5WRAPSOURCES = tlhdf5wrap.h tlhdf5wrap_types.h tlhdf5wrap.c
 
-ALNVECALLOCSOURCES = alignedvec_alloc.h alignedvec_alloc.c
+# ALNVECALLOCSOURCES = alignedvec_alloc.h alignedvec_alloc.c
 
 KSTRING_SOURCES =  kstring.h kstring.c
 KHASH_SOURCES = khash.h
@@ -52,7 +52,6 @@ $(KSTRING_SOURCES) \
 $(KHASH_SOURCES) \
 $(KSA_SOURCES) \
 $(ESL_TIMER_SOURCES) \
-$(ALNVECALLOCSOURCES) \
 tlalloc.c
 
 if ENABLE_HTS

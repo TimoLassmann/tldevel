@@ -17,13 +17,10 @@ static void vlog(FILE* f_ptr,const char *format,  va_list argp);
 static int get_time(char* time_ptr, int size);
 
 
-
 const char* tldevel_version(void)
 {
         return TLDEVEL_VERSION;
 }
-
-
 
 void error(const char *location, const char *format, ...)
 {
