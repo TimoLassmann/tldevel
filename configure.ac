@@ -1,23 +1,17 @@
-AC_INIT([tldevel], [1.2.9])
+AC_INIT([tldevel], [1.3])
 AC_CONFIG_AUX_DIR([.])
 AM_INIT_AUTOMAKE
 AC_PROG_CC
 AC_PROG_CXX
-
 AC_PROG_INSTALL
-
-AM_SILENT_RULES([no])
-
-
+AM_SILENT_RULES([yes])
 
 LT_INIT
 AC_CONFIG_MACRO_DIRS([m4])
 
-
 m4_include([m4/ax_check_zlib.m4])
 m4_include([m4/ax_check_compile_flag.m4])
 m4_include([m4/ax_lib_hdf5.m4])
-
 m4_include([m4/ax_with_htslib.m4])
 m4_include([m4/tldevel_set_compile_flags.m4])
 
@@ -92,15 +86,15 @@ AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 
+
 AC_CHECK_FUNCS([clock_gettime memset pow sqrt getpid])
 AC_CHECK_FUNCS([strstr])
-
-
 AC_CHECK_FUNCS([strdup])
 AC_CHECK_FUNCS([strtol])
 AC_CHECK_FUNCS([gethrtime])
 AC_CHECK_FUNCS([gettimeofday])
-
+AC_CHECK_FUNCS([localtime_r])
+AC_CHECK_FUNCS([aligned_alloc])
 dnl AC_ARG_WITH([htsdir],
 dnl   [AS_HELP_STRING([--with-htsdir=DIR],
 dnl     [use the HTSlib source tree or installation in DIR]),

@@ -49,7 +49,7 @@ struct hdf5_data{
         int rank;
 
         hid_t fapl;
-        hid_t	file;
+        hid_t file;
         hid_t group;
 
         hid_t plist;

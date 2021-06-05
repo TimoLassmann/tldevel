@@ -306,12 +306,13 @@ FREE_1D_ARRAY(double)
 
 #define FREE_2D_ARRAY(type)                                             \
         void free_2d_array_ ##type(type ***array){                      \
-                if(*array){                                             \
-                        if(*array[0]){                                  \
-                                MFREE(*array[0]);                       \
+                type** x = *array;                                      \
+                if(x){                                                  \
+                        if(x[0]){                                       \
+                                MFREE(x[0]);                            \
                         }                                               \
                         int a;                                          \
-                        get_aligned(*array, &a);                        \
+                        get_aligned(x, &a);                             \
                         void* ptr = NULL;                               \
                         if(a){                                          \
                                 ptr = (void*)((uint8_t*)*array- ALIGNMENT); \

@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
-
+#include <time.h>
 
 
 
@@ -53,6 +53,7 @@ int get_time(char* time_ptr, int size)
         time_t current = time(NULL);
         //ptr = localtime(&current);
         //if(!strftime(time_ptr, size, "[%F %H:%M:%S] ", ptr))ERROR_MSG("write failed");
+
         if((localtime_r(&current,&local_time)) == NULL){
                 ERROR_MSG("could not get local time");
         }

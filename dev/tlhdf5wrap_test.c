@@ -1,4 +1,3 @@
-
 #include "tldevel.h"
 
 #include "tlhdf5wrap.h"
@@ -45,6 +44,7 @@ and altered to use the standard int types.
                 RUN(HDFWRAP_READ_ATTRIBUTE(d,"/",TYPE_NAME(type), &r)); \
                 ASSERT(r == x,"Attribute read failed - read and written value differ."); \
                 RUN(close_hdf5_file(&d));                               \
+                d = NULL;                             \
                 RUN(open_hdf5_file(&d,"hdf5testfile.h5"));              \
                 RUN(HDFWRAP_READ_ATTRIBUTE(d,"/",TYPE_NAME(type),&r));  \
                 ASSERT(r == x,"Attribute read failed after re-opening file - read and written value differ"); \
@@ -96,7 +96,6 @@ ERROR:
 
 
 
-
 int main(int argc, char *argv[])
 {
         struct hdf5_data* d = NULL;
@@ -140,6 +139,7 @@ int main(int argc, char *argv[])
         LOG_MSG("writing string attribute.");
 
         RUN(open_hdf5_file(&d,"hdf5testfile.h5"));
+
         RUN(HDFWRAP_WRITE_ATTRIBUTE(d,"/",TYPE_NAME(type),string));
         RUN(HDFWRAP_READ_ATTRIBUTE(d,"/",TYPE_NAME(type), &string_read));
         if(strcmp(string,string_read)){
@@ -185,6 +185,7 @@ int main(int argc, char *argv[])
 
 
         int i,j,c;
+
         RUN(galloc(&test,10,10));
         c = 0;
         for(i = 0;i < 10;i++){
@@ -193,7 +194,7 @@ int main(int argc, char *argv[])
                         c++;
                 }
         }
-        //LOG_MSG("Got here");
+
         RUN(HDFWRAP_WRITE_DATA(d,"/","INT2D", test));
 
         c =1000;
@@ -270,11 +271,14 @@ int main(int argc, char *argv[])
         RUN(HDFWRAP_READ_DATA(d,"/","uint8_t", &test_char2));
         LOG_MSG("Read %c %d", test_char, test_char2);
 
-
+        LOG_MSG("Hmm got here ");
 
 
         RUN(close_hdf5_file(&d));
+        LOG_MSG("Hmm got here ");
+        LOG_MSG("%p %p", g, test);
         gfree(g);
+        LOG_MSG("%p %p", g, test);
         gfree(test);
         return EXIT_SUCCESS;
 ERROR:

@@ -52,6 +52,7 @@ $(KSTRING_SOURCES) \
 $(KHASH_SOURCES) \
 $(KSA_SOURCES) \
 $(ESL_TIMER_SOURCES) \
+tlalloc.h \
 tlalloc.c
 
 if ENABLE_HTS

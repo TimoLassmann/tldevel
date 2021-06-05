@@ -771,7 +771,7 @@ int hdf5wrap_open_group(struct hdf5_data* hdf5_data, char* groupname)
                         }
                 }
         }
-        hdf5_data->status = H5Eset_auto(hdf5_data->status ,NULL, NULL);
+        /* hdf5_data->status = H5Eset_auto(hdf5_data->status ,NULL, NULL); */
         hdf5_data->status = H5Gget_objinfo (hdf5_data->file, groupname, 0, NULL);
 
         if (hdf5_data->status == 0){
@@ -826,7 +826,9 @@ int close_hdf5_file(struct hdf5_data** h)
         hdf5_data  = *h;
 
         if(hdf5_data){
+                /* if(H5Fflush(hdf5_data->file, H5F_SCOPE_LOCAL) < 0) ERROR_MSG("Flushl failed"); */
                 if(H5Fclose(hdf5_data->file) < 0) ERROR_MSG("Close failed");
+                /* H5garbage_collect(); */
                 free_hdf5_data(hdf5_data);
         }
         *h = NULL;
