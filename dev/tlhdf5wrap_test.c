@@ -93,11 +93,70 @@ ERROR:
         return FAIL;
 }
 
+#define ONE_RW_TEST(type)                                               \
+        int one_d_rw_test_ ##type(struct hdf5_data* d)                  \
+        {                                                               \
+                char* group_name = NULL;                                \
+                type* x = NULL;                                         \
+                int dim1 = 0;                                           \
+                int dim2 = 0;                                           \
+                MMALLOC(group_name, sizeof(char) * BUFSIZ);             \
+                snprintf(group_name, BUFSIZ,"%s_1D", TYPE_NAME(type));  \
+                LOG_MSG("%s", group_name);                              \
+                dim1 = 6;                                               \
+                RUN(galloc(&x,dim1));                                   \
+                RUN(HDFWRAP_WRITE_DATA(d,"/1D_rw_test",group_name, x)); \
+                gfree(x);                                               \
+                x = NULL;                                               \
+                RUN(HDFWRAP_READ_DATA(d,"/1D_rw_test",group_name, &x)); \
+                gfree(x);                                               \
+                MFREE(group_name);                                      \
+                return OK;                                              \
+        ERROR:                                                          \
+                return FAIL;                                            \
+        }
 
+ONE_RW_TEST(int8_t)
+ONE_RW_TEST(uint8_t)
+ONE_RW_TEST(int16_t)
+ONE_RW_TEST(uint16_t)
+ONE_RW_TEST(int32_t)
+ONE_RW_TEST(uint32_t)
+ONE_RW_TEST(int64_t)
+ONE_RW_TEST(uint64_t)
+ONE_RW_TEST(float)
+ONE_RW_TEST(double)
 
+#define TESTFILE "hdf5testfile.h5"
+static int rw_test(void);
+
+int rw_test(void)
+{
+        struct hdf5_data* d = NULL;
+        RUN(open_hdf5_file(&d,TESTFILE));
+        one_d_rw_test_uint8_t(d);
+        one_d_rw_test_int8_t(d);
+        one_d_rw_test_uint16_t(d);
+        one_d_rw_test_int16_t(d);
+        one_d_rw_test_uint32_t(d);
+        one_d_rw_test_int32_t(d);
+        one_d_rw_test_uint64_t(d);
+        one_d_rw_test_int64_t(d);
+        one_d_rw_test_float(d);
+        one_d_rw_test_double(d);
+        RUN(close_hdf5_file(&d));
+        return OK;
+ERROR:
+        return FAIL;
+}
 
 int main(int argc, char *argv[])
 {
+        LOG_MSG("Testing RW");
+        rw_test();
+        LOG_MSG("Done");
+
+
         struct hdf5_data* d = NULL;
         int** test = NULL;
 

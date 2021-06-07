@@ -232,15 +232,20 @@ static int set_type_unknown(hid_t* type);
                         if((hdf5_data->status = H5Pset_chunk (hdf5_data->plist, hdf5_data->rank,  hdf5_data->chunk_dim)) < 0 )ERROR_MSG("H5Pset_chunk failed."); \
                                                                         \
                                                                         \
-                        if((hdf5_data->dataset = H5Dcreate(hdf5_data->group, hdf5_data->dataset_name, hdf5_data->datatype, hdf5_data->dataspace,    H5P_DEFAULT, hdf5_data->plist , H5P_DEFAULT)) < 0 )ERROR_MSG("H5Dcreate failed"); \
+                        if((hdf5_data->dataset = H5Dcreate(hdf5_data->group, \
+                                                           hdf5_data->dataset_name, \
+                                                           hdf5_data->datatype, \
+                                                           hdf5_data->dataspace, \
+                                                           H5P_DEFAULT, \
+                                                           hdf5_data->plist, H5P_DEFAULT)) < 0 )ERROR_MSG("H5Dcreate failed"); \
                                                                         \
                         if((hdf5_data->status  = H5Dwrite(hdf5_data->dataset,hdf5_data->native_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)&data)) < 0) ERROR_MSG("H5Dwrite failed"); \
                                                                         \
                         /* closing stuff */                             \
-                        if((hdf5_data->status = H5Sclose(hdf5_data->dataspace)) < 0) ERROR_MSG("H5Sclose failed"); \
                         if((hdf5_data->status = H5Pclose(hdf5_data->plist)) < 0) ERROR_MSG("H5Pclose failed"); \
                         if((hdf5_data->status = H5Tclose(hdf5_data->datatype)) < 0) ERROR_MSG("H5Tclose failed"); \
                         if((hdf5_data->status = H5Dclose(hdf5_data->dataset)) < 0) ERROR_MSG("H5Dclose failed"); \
+                        if((hdf5_data->status = H5Sclose(hdf5_data->dataspace)) < 0) ERROR_MSG("H5Sclose failed"); \
                 }else{                                                  \
                         if((hdf5_data->dataset = H5Dopen(hdf5_data->group,hdf5_data->dataset_name ,H5P_DEFAULT)) == -1)ERROR_MSG("H5Dopen failed\n"); \
                                                                         \
@@ -354,10 +359,15 @@ ADD_ARRAY(double)
         if((hdf5_data->status = H5Pset_chunk (hdf5_data->plist, hdf5_data->rank,  hdf5_data->chunk_dim)) < 0 )ERROR_MSG("H5Pset_chunk failed."); \
                                                                         \
                                                                         \
-        if((hdf5_data->dataset = H5Dcreate(hdf5_data->group, hdf5_data->dataset_name, hdf5_data->datatype, hdf5_data->dataspace,    H5P_DEFAULT, hdf5_data->plist , H5P_DEFAULT)) < 0 )ERROR_MSG("H5Dcreate failed"); \
+        if((hdf5_data->dataset = H5Dcreate(hdf5_data->group,            \
+                                           hdf5_data->dataset_name,     \
+                                           hdf5_data->datatype,         \
+                                           hdf5_data->dataspace,        \
+                                           H5P_DEFAULT,                 \
+                                           hdf5_data->plist, H5P_DEFAULT)) < 0 )ERROR_MSG("H5Dcreate failed"); \
                                                                         \
-           HDFWRAP_START_GALLOC(data,&ptr);                       \
-           if((hdf5_data->status  = H5Dwrite(hdf5_data->dataset,hdf5_data->native_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr)) < 0) ERROR_MSG("H5Dwrite failed"); \
+        HDFWRAP_START_GALLOC(data,&ptr);                                \
+        if((hdf5_data->status  = H5Dwrite(hdf5_data->dataset,hdf5_data->native_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr)) < 0) ERROR_MSG("H5Dwrite failed"); \
                                                                         \
         /* closing stuff */                                             \
         if((hdf5_data->status = H5Sclose(hdf5_data->dataspace)) < 0) ERROR_MSG("H5Sclose failed"); \
@@ -758,7 +768,7 @@ int hdf5wrap_open_group(struct hdf5_data* hdf5_data, char* groupname)
                 if(groupname[i] == '/'){
                         memcpy(buffer, groupname, i);
                         buffer[i] =0;
-                        //fprintf(stdout,"Buffer: %s\n",buffer);
+                        fprintf(stdout,"Buffer: %s\n",buffer);
 
                         //hdf5_data->status = H5Eset_auto(hdf5_data->status ,NULL, NULL);
                         //hdf5_data->status = H5Gget_objinfo (hdf5_data->file, buffer, 0, NULL);
@@ -771,18 +781,25 @@ int hdf5wrap_open_group(struct hdf5_data* hdf5_data, char* groupname)
                         }
                 }
         }
+        /* LOG_MSG("Got here"); */
         /* hdf5_data->status = H5Eset_auto(hdf5_data->status ,NULL, NULL); */
-        hdf5_data->status = H5Gget_objinfo (hdf5_data->file, groupname, 0, NULL);
-
+        /* hdf5_data->status = H5Gget_objinfo (hdf5_data->file, groupname, 0, NULL); */
+        hdf5_data->status = H5Lexists(hdf5_data->file, groupname , H5P_DEFAULT);
         if (hdf5_data->status == 0){
-                //printf ("The group %s exists.\n",groupname );
-                if((hdf5_data->group = H5Gopen(hdf5_data->file,  groupname , H5P_DEFAULT)) == -1)ERROR_MSG("H5Gopen2 failed\n");
-        }else{
-
-                //printf ("The group %s either does NOT exist\n or some other error occurred.\n",groupname);
                 snprintf(hdf5_data->group_name , HDF5GLUE_MAX_NAME_LEN,"%s",groupname);
                 if((hdf5_data->group = H5Gcreate (hdf5_data->file , hdf5_data->group_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0)ERROR_MSG("H5Gcreate failed\n");
+
+                RUN(hdf5wrap_close_group(hdf5_data));
         }
+        /* if (hdf5_data->status == 0){ */
+                /* printf ("The group %s exists.\n",groupname ); */
+        if((hdf5_data->group = H5Gopen(hdf5_data->file,  groupname , H5P_DEFAULT)) == -1)ERROR_MSG("H5Gopen2 failed\n");
+        /* }else{ */
+
+        /*         printf ("The group %s either does NOT exist\n or some other error occurred.\n",groupname); */
+        /*         snprintf(hdf5_data->group_name , HDF5GLUE_MAX_NAME_LEN,"%s",groupname); */
+        /*         if((hdf5_data->group = H5Gcreate (hdf5_data->file , hdf5_data->group_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0)ERROR_MSG("H5Gcreate failed\n"); */
+        /* } */
         return OK;
 ERROR:
         return FAIL;
