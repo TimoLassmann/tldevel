@@ -768,7 +768,7 @@ int hdf5wrap_open_group(struct hdf5_data* hdf5_data, char* groupname)
                 if(groupname[i] == '/'){
                         memcpy(buffer, groupname, i);
                         buffer[i] =0;
-                        fprintf(stdout,"Buffer: %s\n",buffer);
+                        /* fprintf(stdout,"Buffer: %s\n",buffer); */
 
                         //hdf5_data->status = H5Eset_auto(hdf5_data->status ,NULL, NULL);
                         //hdf5_data->status = H5Gget_objinfo (hdf5_data->file, buffer, 0, NULL);
