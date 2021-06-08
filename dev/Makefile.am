@@ -111,4 +111,5 @@ tl_alloc_test_LDADD = ../libtldevel.la
 
 CLEANFILES = \
 	MAIN_0.chk \
-	hdf5testfile.h5
+	hdf5testfile.h5 \
+	tlrng_hdf5.h5

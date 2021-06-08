@@ -1,14 +1,55 @@
-
 #include <stdio.h>
 
 #include "tldevel.h"
 #include "tlrng.h"
 
+#define HDF5_TEST_FILE "tlrng_hdf5.h5"
 
 void printHistogram(double* values, int n);
 
-int main(int argc, char *argv[])
+static int test_rng_write(void);
+int test_rng_write(void)
 {
+        struct rng_state* rng = NULL;
+        int i;
+        double* results = NULL;
+
+        RUN(galloc(&results, 10));
+        RUNP(rng = init_rng(1));
+        RUN(tl_random_write_hdf5(rng,NULL,HDF5_TEST_FILE, "MainGroup"));
+
+        for(i = 0; i < 10;i++){
+                results[i] = tl_random_double(rng);
+                /* fprintf(stdout,"%d ::: %f\n",i, results[i]); */
+        }
+        free_rng(rng);
+        rng = NULL;
+
+        RUN(tl_random_read_hdf5(&rng,NULL,HDF5_TEST_FILE, "MainGroup"));
+
+        for(i = 0; i < 10;i++){
+                fprintf(stdout,"%d ::: %f  (before: %f)\n",i, tl_random_double(rng), results[i]);
+        }
+        free_rng(rng);
+
+        gfree(results);
+
+        return OK;
+ERROR:
+        return FAIL;
+}
+
+
+int main(void)
+{
+        LOG_MSG("Write test");
+
+        RUN(test_rng_write());
+
+        LOG_MSG("Write test done");
+
+
+
         struct rng_state* rng = NULL;
         struct rng_state* rng_second = NULL;
         double* values = NULL;

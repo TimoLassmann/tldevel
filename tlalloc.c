@@ -25,7 +25,6 @@ static inline int ceil64(int a){
 
 static inline void* tl_aligned_alloc(size_t size){
         void* p = NULL;
-
         size = ceil64(size);
 
         if(size == 0){
