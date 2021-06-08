@@ -110,6 +110,16 @@ ERROR:
                 x = NULL;                                               \
                 RUN(HDFWRAP_READ_DATA(d,"/1D_rw_test",group_name, &x)); \
                 gfree(x);                                               \
+                                                                        \
+                x = NULL;                                               \
+                dim1 = 6;                                               \
+                RUN(galloc_aligned(&x,dim1));                                   \
+                RUN(HDFWRAP_WRITE_DATA(d,"/1D_rw_test_aligned",group_name, x)); \
+                gfree(x);                                               \
+                x = NULL;                                               \
+                RUN(HDFWRAP_READ_DATA(d,"/1D_rw_test_aligned",group_name, &x)); \
+                gfree(x);                                               \
+                                                                        \
                 MFREE(group_name);                                      \
                 return OK;                                              \
         ERROR:                                                          \
@@ -211,7 +221,8 @@ int main(int argc, char *argv[])
         string_read = NULL;
         RUN(open_hdf5_file(&d,"hdf5testfile.h5"));
         RUN(HDFWRAP_READ_ATTRIBUTE(d,"/",TYPE_NAME(type),&string_read));
-        if(strcmp(string,string_read)){
+        if(strcmp(string,string_read
+                  )){
                 printnl(string);
                 printnl(string_read);
                 ERROR_MSG("Strings differ!");
