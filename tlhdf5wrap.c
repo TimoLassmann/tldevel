@@ -671,7 +671,6 @@ ERROR:
                 int i;                                                  \
                 char attr_name[HDF5GLUE_MAX_NAME_LEN];                  \
                 RUN(hdf5wrap_open_group(hdf5_data, group));             \
-                hdf5_data->status = H5Oget_info(hdf5_data->group , &oinfo); \
                 for(i = 0; i < (int)oinfo.num_attrs; i++) {             \
                         hdf5_data->attribute_id = H5Aopen_by_idx(hdf5_data->group, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, (hsize_t)i, H5P_DEFAULT, H5P_DEFAULT); \
                         atype = H5Aget_type(hdf5_data->attribute_id);   \
@@ -691,7 +690,6 @@ ERROR:
         ERROR:                                                          \
                 return FAIL;                                            \
         }
-
 
 READ_ATTR(int8_t)
 READ_ATTR(uint8_t)
@@ -716,7 +714,15 @@ int hdf5wrap_read_attribute_string(struct hdf5_data* hdf5_data, char* group,char
         char attr_name[HDF5GLUE_MAX_NAME_LEN];
 
         RUN(hdf5wrap_open_group(hdf5_data, group));
+#if defined(H5Oget_info_vers) && H5Oget_info_vers == 3
+    
+        hdf5_data->status = H5Oget_info(hdf5_data->group , &oinfo,H5O_INFO_NUM_ATTRS);
+        //if(H5Oget_info3(getId(), &oinfo, H5O_INFO_NUM_ATTRS) < 0)
+#else
+        H5O_info_t oinfo;    /* Object info */
         hdf5_data->status = H5Oget_info(hdf5_data->group , &oinfo);
+#endif
+        
         //hdf5_data->num_attr = 0;
         for(i = 0; i < (int)oinfo.num_attrs; i++) {
                 hdf5_data->attribute_id = H5Aopen_by_idx(hdf5_data->group, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, (hsize_t)i, H5P_DEFAULT, H5P_DEFAULT);
@@ -1057,7 +1063,11 @@ herr_t op_func (hid_t loc_id, const char *name, const H5L_info_t *info, void *op
 
         int len_t,len_q;
 
-        status = H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT);
+        #if defined(H5Oget_info_vers) && H5Oget_info_vers == 3
+        status = H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT,H5O_INFO_NUM_ATTRS);
+        #else
+status = H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT);
+        #endif 
         if(status <0){
                 ERROR_MSG(" H5Oget_info_by_name failed." );
         }
