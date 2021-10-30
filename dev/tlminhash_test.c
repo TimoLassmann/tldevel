@@ -6,7 +6,7 @@
 #include "tlminhash.h"
 
 #include "tlbitvec.h"
-
+struct drand48_data;
 struct Boolean_matrix{
         struct bitvec** m;
         int n_row;
@@ -64,7 +64,7 @@ struct Boolean_matrix* init_random_Bmatrix( int columns,int rows, double alpha,s
         for(i = 0; i < bm->n_column;i++){
                 for(j = 0; j < bm->n_row;j++){
                         //r = drand48();
-                        RUN(drand48_r(rd, &r));
+                        /* Run(Drand48(Rd, &R)); */
                         if(r <= alpha){
                                 bit_set(bm->m[i], j);
 
@@ -137,7 +137,7 @@ int main (int argc,char * const argv[])
 
         int num_hash_functions = 200;
         int iter;
-        struct drand48_data randBuffer;
+        //struct drand48_data randBuffer;
         int* index =NULL;
         int S_size = 6;
 
@@ -147,11 +147,11 @@ int main (int argc,char * const argv[])
         }
 
 
-        srand48_r(42, &randBuffer);
+        //srand48_r(42, &randBuffer);
 
         for(iter = 0; iter < trials;iter++){
                 /* S_size is just for simulation - this should be the number of variables... */
-                RUNP(bm = init_random_Bmatrix(S_size,num_samples,alpha, &randBuffer));
+                /* RUNP(bm = init_random_Bmatrix(S_size,num_samples,alpha, &randBuffer)); */
                 //RUN(print_Boolean_matrix(bm));
                 min_h = create_min_hash(bm, num_hash_functions, 0);
                 RUN(jaccard_sim(bm,index, S_size, &sim));

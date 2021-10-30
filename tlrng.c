@@ -3,9 +3,7 @@
 #include <unistd.h>
 /* #include <math.h> */
 
-
-
-#define M_PI        3.14159265358979323846
+#define M_PI 3.14159265358979323846
 
 #define M_2PI 2.0*M_PI
 
@@ -68,6 +66,12 @@ struct rng_state{
         double gauss;
 };
 
+struct rng_dist{
+        struct rng_state* rng;
+        double* p;
+        int* a;
+        int n;
+};
 
 static inline uint64_t rotl(const uint64_t x, int k);
 static uint64_t next(struct rng_state* s);
@@ -82,6 +86,117 @@ static double tl_standard_gamma(struct rng_state* rng, double shape);
 static double tl_standard_exponential(struct rng_state* rng);
 static double tl_gauss(struct rng_state* rng);
 
+int tl_random_sdist_init(struct rng_dist** rng_dist,double* w, int n,int seed)
+{
+        struct rng_dist* d = NULL;
+
+        double* p = NULL;
+        int* s = NULL;
+        int* l = NULL;
+        int n_s = 0;
+        int n_l = 0;
+        double sum;
+        int a;
+        int g;
+        MMALLOC(d, sizeof(struct rng_dist));
+        d->p = NULL;
+        d->a = NULL;
+        d->rng = NULL;
+        d->n = n;
+
+        RUN(galloc(&d->p, d->n));
+        RUN(galloc(&d->a, d->n));
+        RUNP(d->rng = init_rng(seed));
+
+        RUN(galloc(&p,n));
+        RUN(galloc(&s,n));
+        RUN(galloc(&l,n));
+
+        sum = 0.0;
+        for(int i = 0; i < n;i++){
+                if(w[i] < 0){
+                        ERROR_MSG("invalid p : w[i] = %f ", w[i]);
+                }
+                sum += w[i];
+        }
+        ASSERT(sum > 0.0, "Sum is zero.");
+        for(int i = 0; i < n;i++){
+                p[i] = w[i] * (double) n / sum;
+                fprintf(stdout,"%f\n", p[i]);
+        }
+        n_s = 0;
+        n_l = 0;
+
+        for (int i= n-1; i >= 0; --i ){
+                if(p[i] < 1.0){
+                        s[n_s] = i;
+                        n_s++;
+                }else{
+                        l[n_l] = i;
+                        n_l++;
+                }
+        }
+
+        while(n_s && n_l){
+                n_s--;
+                a = s[n_s];
+                n_l--;
+                g = l[n_l];
+
+
+                d->p[a] = p[a];
+                d->a[a] = g;
+                p[g] = p[g] + p[a] - 1.0;
+                if(p[g] < 1.0){
+                        s[n_s] = g;
+                        n_s++;
+                }else{
+                        l[n_l] = g;
+                        n_l++;
+                }
+        }
+
+
+        while(n_l){
+                d->p[l[--n_l]] = 1.0;
+        }
+        while(n_s){
+                d->p[s[--n_s]] = 1.0;
+        }
+        for(int i = 0; i < n;i++){
+                fprintf(stdout,"%f %d\n",d->p[i],d->a[i]);
+        }
+        gfree(p);
+        gfree(s);
+        gfree(l);
+
+        *rng_dist = d;
+        return OK;
+ERROR:
+        gfree(p);
+        gfree(s);
+        gfree(l);
+        return FAIL;
+}
+
+int tl_random_sdist_smpl(struct rng_dist* d)
+{
+        const double r1 = tl_random_double(d->rng);
+        const double r2 = tl_random_double(d->rng);
+        const int i = (int) (d->n * r1);
+        return r2 < d->p[i] ? i : d->a[i];
+}
+
+
+void tl_random_sdist_free(struct rng_dist* d)
+{
+        if(d){
+                gfree(d->p);
+                gfree(d->a);
+                free_rng(d->rng);
+                MFREE(d);
+        }
+}
 
 double tl_random_double(struct rng_state* rng)
 {

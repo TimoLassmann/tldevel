@@ -15,9 +15,15 @@
 
 
 typedef struct rng_state rng_state;
+struct rng_dist;
 
 EXTERN struct rng_state* init_rng(uint64_t seed);
 EXTERN struct rng_state* init_rng_from_rng(struct rng_state* rng);
+
+
+EXTERN int tl_random_sdist_init(struct rng_dist** rng_dist,double* w, int n,int seed);
+EXTERN int tl_random_sdist_smpl(struct rng_dist* d);
+EXTERN void tl_random_sdist_free(struct rng_dist* d);
 
 EXTERN void free_rng(struct rng_state* rng);
 

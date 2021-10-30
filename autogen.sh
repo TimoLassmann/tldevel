@@ -57,8 +57,11 @@ echo "   aclocal:    $(aclocal --version | head -1)"
 echo "   autoconf:   $(autoconf --version | head -1)"
 echo "   autoheader: $(autoheader --version | head -1)"
 echo "   automake:   $(automake --version | head -1)"
-echo "   libtoolize: $(libtoolize --version | head -1)"
-echo
+case `uname` in Darwin*)
+echo "   libtoolize : $(glibtoolize --version | head -1)" ;;
+                 *)
+echo "   libtoolize : $(libtoolize --version | head -1)" ;;
+esac
 
 
 aclocal -I m4 $AL_OPTS

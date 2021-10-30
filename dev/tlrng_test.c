@@ -6,7 +6,7 @@
 #define HDF5_TEST_FILE "tlrng_hdf5.h5"
 
 void printHistogram(double* values, int n);
-
+static int rng_dist_test(void);
 static int test_rng_write(void);
 int test_rng_write(void)
 {
@@ -39,9 +39,49 @@ ERROR:
         return FAIL;
 }
 
+int rng_dist_test(void)
+{
+        double* w = NULL;
+        int* out = NULL;
+        struct rng_dist* d = NULL;
+        double sum;
+        RUN(galloc(&w, 6));
+        RUN(galloc(&out,6));
+        for(int i = 0; i < 6;i++){
+                w[i] = 1.0;
+                out[i] = 0;
+        }
+        w[2] = 2.0;
+
+        sum = 0.0;
+        for(int i = 0; i < 6;i++){
+                sum += w[i];
+        }
+        RUN(tl_random_sdist_init(&d, w, 6, 0));
+        for(int i = 0; i < 10000000;i++){
+                out[tl_random_sdist_smpl(d)]++;
+        }
+
+        for(int i = 0; i < 6;i++){
+                fprintf(stdout,"%3d\t%f\t%f\n",i,(double) out[i] /  10000000.0,w[i]/sum);
+        }
+        tl_random_sdist_free(d);
+        gfree(w);
+        gfree(out);
+        return OK;
+ERROR:
+        gfree(w);
+        gfree(out);
+        return FAIL;
+}
+
 
 int main(void)
 {
+
+        LOG_MSG("Test rngdist");
+        RUN(rng_dist_test());
+        exit(0);
         LOG_MSG("Write test");
 
         RUN(test_rng_write());

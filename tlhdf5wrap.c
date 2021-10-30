@@ -719,7 +719,7 @@ int hdf5wrap_read_attribute_string(struct hdf5_data* hdf5_data, char* group,char
         hdf5_data->status = H5Oget_info(hdf5_data->group , &oinfo,H5O_INFO_NUM_ATTRS);
         //if(H5Oget_info3(getId(), &oinfo, H5O_INFO_NUM_ATTRS) < 0)
 #else
-        H5O_info_t oinfo;    /* Object info */
+        //H5O_info_t oinfo;    /* Object info */
         hdf5_data->status = H5Oget_info(hdf5_data->group , &oinfo);
 #endif
         

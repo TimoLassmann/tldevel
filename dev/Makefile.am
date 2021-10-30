@@ -14,7 +14,6 @@ checkpoint_test \
 rbtree_test \
 logsum_test \
 hash_test \
-minhash_test \
 alphabet_test \
 seqio_test \
 demo \
@@ -24,6 +23,7 @@ ksa_test \
 esl_stopwatch_test \
 tl_alloc_test
 
+# minhash_test
 
 if ENABLE_HDF5
 TESTLIST+= hdf5_test
@@ -99,9 +99,9 @@ hash_test_SOURCES = tlhashtable_test.c
 hash_test_CPPFLAGS = $(AM_CPPFLAGS)
 hash_test_LDADD = ../libtldevel.la
 
-minhash_test_SOURCES = tlminhash_test.c
-minhash_test_CPPFLAGS = $(AM_CPPFLAGS)
-minhash_test_LDADD = ../libtldevel.la
+# minhash_test_SOURCES = tlminhash_test.c
+# minhash_test_CPPFLAGS = $(AM_CPPFLAGS)
+# minhash_test_LDADD = ../libtldevel.la
 
 
 tl_alloc_test_SOURCES = \
