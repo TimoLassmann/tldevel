@@ -81,7 +81,6 @@ void long_jump(struct rng_state* s);
 static uint64_t choose_arbitrary_seed(void);
 static uint32_t jenkins_mix3(uint32_t a, uint32_t b, uint32_t c);
 
-
 static double tl_standard_gamma(struct rng_state* rng, double shape);
 static double tl_standard_exponential(struct rng_state* rng);
 static double tl_gauss(struct rng_state* rng);
