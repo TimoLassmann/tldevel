@@ -1,12 +1,9 @@
-
-
-
 #include "tldevel.h"
 #include "kstring.h"
 
 
 
-int main(int argc, char *argv[])
+int main(void)
 {
         kstring_t s = { 0, 0, NULL };
         char* free_string;
@@ -15,7 +12,7 @@ int main(int argc, char *argv[])
 
 
         int l = kputs(hello,&s);
-
+        fprintf(stdout, "%d\n", l);
 
 
         kputc(' ',&s);

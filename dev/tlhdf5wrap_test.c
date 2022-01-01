@@ -19,8 +19,8 @@ and altered to use the standard int types.
                                       uint16_t: "%hu",  \
                                       int32_t: "%d",    \
                                       uint32_t: "%u",   \
-                                      int64_t: "%ld",   \
-                                      uint64_t: "%lu",  \
+                                      int64_t: "%lld",   \
+                                      uint64_t: "%llu",  \
                                       float: "%f",      \
                                       double: "%f",     \
                                       char *: "%s",     \
@@ -70,7 +70,7 @@ ATTR_TEST(double)
 
 //#undef ATTR_TEST
 
-static int unknown(void);
+int unknown(void);
 
 #define ATTRIBUTE_ITEST(x) _Generic((x),                                \
                                     int8_t: attribute_test_int8_t,      \
@@ -99,7 +99,6 @@ ERROR:
                 char* group_name = NULL;                                \
                 type* x = NULL;                                         \
                 int dim1 = 0;                                           \
-                int dim2 = 0;                                           \
                 MMALLOC(group_name, sizeof(char) * BUFSIZ);             \
                 snprintf(group_name, BUFSIZ,"%s_1D", TYPE_NAME(type));  \
                 LOG_MSG("%s", group_name);                              \
@@ -160,7 +159,7 @@ ERROR:
         return FAIL;
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
         LOG_MSG("Testing RW");
         rw_test();
@@ -185,25 +184,27 @@ int main(int argc, char *argv[])
         char* string = "otto";
         char* string_read = NULL;
         LOG_MSG("writing int8_t attribute.");
-        ATTRIBUTE_ITEST(i8);
+        RUN(ATTRIBUTE_ITEST(i8));
         LOG_MSG("writing uint8_t attribute.");
-        ATTRIBUTE_ITEST(ui8);
+        RUN(ATTRIBUTE_ITEST(ui8));
         LOG_MSG("writing int16_t attribute.");
-        ATTRIBUTE_ITEST(i16);
+        RUN(ATTRIBUTE_ITEST(i16));
         LOG_MSG("writing uint16_t attribute.");
-        ATTRIBUTE_ITEST(ui16);
+        RUN(ATTRIBUTE_ITEST(ui16));
         LOG_MSG("writing int32_t attribute.");
-        ATTRIBUTE_ITEST(i32);
+        RUN(ATTRIBUTE_ITEST(i32));
         LOG_MSG("writing uint32_t attribute.");
-        ATTRIBUTE_ITEST(ui32);
+        RUN(ATTRIBUTE_ITEST(ui32));
         LOG_MSG("writing int64_t attribute.");
-        ATTRIBUTE_ITEST(i64);
+        RUN(ATTRIBUTE_ITEST(i64));
         LOG_MSG("writing uint64_t attribute.");
-        ATTRIBUTE_ITEST(ui64);
+        RUN(ATTRIBUTE_ITEST(ui64));
         LOG_MSG("writing float attribute.");
-        ATTRIBUTE_ITEST(flt);
+        RUN(ATTRIBUTE_ITEST(flt));
         LOG_MSG("writing double attribute.");
-        ATTRIBUTE_ITEST(dbl);
+        RUN(ATTRIBUTE_ITEST(dbl));
+
+
 
         LOG_MSG("writing string attribute.");
 
@@ -313,12 +314,12 @@ int main(int argc, char *argv[])
 
         H5Fflush(d->file,H5F_SCOPE_GLOBAL);
 
-        RUN(hdf5wrap_search(d, "FLOAT2D",&string));
+        //RUN(hdf5wrap_search(d, "FLOAT2D",&string));
 
-        if(string){
-                LOG_MSG("found at %s",string);
-                MFREE(string);
-        }
+        /* if(string){ */
+        /*         LOG_MSG("found at %s",string); */
+        /*         MFREE(string); */
+        /* } */
         RUN(close_hdf5_file(&d));
 
 

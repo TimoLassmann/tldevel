@@ -603,13 +603,24 @@ READ_ARRAY(double)
                 RUN(hdf5wrap_open_group(hdf5_data, group));             \
                 HDFWRAP_SET_TYPE(x,&hdf5_data->native_type);            \
                 if( H5Aexists(hdf5_data->group, name)){                 \
+                        LOG_MSG("EXISTS");                              \
                         attr = H5Aopen(hdf5_data->group,name, H5P_DEFAULT); \
                         hdf5_data->status = H5Awrite(attr,hdf5_data->native_type, &x); \
                         hdf5_data->status = H5Aclose(attr);             \
                 }else{                                                  \
+                        LOG_MSG("NEW");                                 \
                         aid  = H5Screate(H5S_SCALAR);                   \
+                        if(aid < 0){                                    \
+                                ERROR_MSG("H5Screate failed %d", aid);  \
+                        }                                               \
                         attr = H5Acreate(hdf5_data->group,name, hdf5_data->native_type, aid,  H5P_DEFAULT, H5P_DEFAULT); \
+                        if(attr < 0){                                   \
+                                ERROR_MSG("H5Acreate failed %d", attr); \
+                        }                                               \
                         hdf5_data->status = H5Awrite(attr,hdf5_data->native_type, &x); \
+                        if(hdf5_data->status < 0){                      \
+                                ERROR_MSG("H5Awrite failed %d", hdf5_data->status); \
+                        }                                               \
                         hdf5_data->status = H5Sclose(aid);              \
                         hdf5_data->status = H5Aclose(attr);             \
                 }                                                       \
@@ -671,8 +682,12 @@ ERROR:
                 int i;                                                  \
                 char attr_name[HDF5GLUE_MAX_NAME_LEN];                  \
                 RUN(hdf5wrap_open_group(hdf5_data, group));             \
+                hdf5_data->status = H5Oget_info(hdf5_data->group , &oinfo,H5O_INFO_NUM_ATTRS); \
                 for(i = 0; i < (int)oinfo.num_attrs; i++) {             \
                         hdf5_data->attribute_id = H5Aopen_by_idx(hdf5_data->group, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, (hsize_t)i, H5P_DEFAULT, H5P_DEFAULT); \
+                        if(hdf5_data->attribute_id < 1){                \
+                                ERROR_MSG("H5Aopen_by_idx failed with %d",hdf5_data->attribute_id); \
+                        }                                               \
                         atype = H5Aget_type(hdf5_data->attribute_id);   \
                         H5Aget_name(hdf5_data->attribute_id ,HDF5GLUE_MAX_NAME_LEN,attr_name); \
                         if(!strncmp(name,attr_name, HDF5GLUE_MAX_NAME_LEN)){ \
@@ -726,6 +741,9 @@ int hdf5wrap_read_attribute_string(struct hdf5_data* hdf5_data, char* group,char
         //hdf5_data->num_attr = 0;
         for(i = 0; i < (int)oinfo.num_attrs; i++) {
                 hdf5_data->attribute_id = H5Aopen_by_idx(hdf5_data->group, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, (hsize_t)i, H5P_DEFAULT, H5P_DEFAULT);
+                if(hdf5_data->attribute_id < 1){
+                        ERROR_MSG("H5Aopen_by_idx failed with %d",hdf5_data->attribute_id);
+                }
                 atype = H5Aget_type(hdf5_data->attribute_id);
                 H5Aget_name(hdf5_data->attribute_id ,HDF5GLUE_MAX_NAME_LEN,attr_name);
 
@@ -1035,11 +1053,14 @@ static herr_t op_func (hid_t loc_id, const char *name, const H5L_info_t *info, v
 
 int hdf5wrap_search(struct hdf5_data* hdf5_data,char* target, char** location)
 {
+        ERROR_MSG("This function no longer works.");
         char* look[2];
         look[0] = target;
         look[1] = NULL;
 
-        if((hdf5_data->status = H5Lvisit (hdf5_data->file, H5_INDEX_NAME, H5_ITER_NATIVE,  op_func, &look)) < 0) ERROR_MSG("H5Literate failed");
+        hdf5wrap_open_group(hdf5_data, "/");
+
+        if((hdf5_data->status = H5Lvisit (hdf5_data->group, H5_INDEX_NAME, H5_ITER_NATIVE,  op_func, &look)) < 0) ERROR_MSG("H5Literate failed");
 
 
         if(look[1]){
@@ -1064,12 +1085,14 @@ herr_t op_func (hid_t loc_id, const char *name, const H5L_info_t *info, void *op
         int len_t,len_q;
         UNUSED(info);
 #if defined(H5Oget_info_vers) && H5Oget_info_vers == 3
-        status = H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT,H5O_INFO_NUM_ATTRS);
+        LOG_MSG("Version 3");
+        status = H5Oget_info_by_name (loc_id, name, &infobuf, H5O_INFO_BASIC,H5O_INFO_NUM_ATTRS);
 #else
+        LOG_MSG("Version other");
         status = H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT);
 #endif 
         if(status <0){
-                ERROR_MSG(" H5Oget_info_by_name failed." );
+                ERROR_MSG(" H5Oget_info_by_name failed. %d" , status);
         }
 
         switch (infobuf.type){
@@ -1115,6 +1138,7 @@ herr_t op_func (hid_t loc_id, const char *name, const H5L_info_t *info, void *op
         default:
                 break;
         }
+
         return OK;
 ERROR:
         return FAIL;

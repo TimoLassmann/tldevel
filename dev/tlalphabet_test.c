@@ -11,7 +11,7 @@
 
 int print_seq(uint8_t* seq, int len);
 
-int main(int argc, char *argv[])
+int main(void)
 {
         struct alphabet* a = NULL;
         int len = 16;

@@ -65,9 +65,28 @@ set(tllib_SOURCES
   esl_stopwatch.c
 )
 
+set(tllib_HEADERS 
+  tldevel.h
+  tlrng.h
+  tlalloc.h
+  tllogsum.h
+  tlbitvec.h
+  tlrbtree.h
+  tlcheckpoint.h
+  tlmisc.h
+  tlalphabet.h
+  kstring.h
+  khash.h
+  ksa.h 
+  esl_stopwatch.h
+)
+
+
 if(HTSlib_FOUND)
   list(APPEND tllib_SOURCES tlseqio.h tlseqbuffer.h tlseqbuffer.c)
+  option(USE_MYMATH "Use tutorial provided math implementation" ON)
 else ()
+  option(USE_MYMATH "Use tutorial provided math implementation" OFF)
   message(WARNING "htslib was not found!\nTrying to fall back on hand-crafted code depending on zlib.")
   find_package(ZLIB REQUIRED)
   
@@ -92,3 +111,11 @@ add_library(tldevel STATIC ${tllib_SOURCES})
 target_link_libraries(tldevel ${tllib_LIBS})
 
 target_include_directories(tldevel PUBLIC   "${PROJECT_BINARY_DIR}"  )
+
+
+add_subdirectory(dev)
+enable_testing()
+
+install(TARGETS tldevel DESTINATION lib)
+install(FILES ${tllib_HEADERS}  ${PROJECT_BINARY_DIR}/CmakeConfig.h
+  DESTINATION include)

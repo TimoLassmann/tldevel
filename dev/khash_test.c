@@ -16,7 +16,7 @@ KHASH_MAP_INIT_INT(32, int)
 KHASH_MAP_INIT_INT(gg, test)
 
 int main() {
-        int ret, is_missing;
+        int ret;
         int r;
         int i;
 

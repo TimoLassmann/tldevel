@@ -16,6 +16,7 @@ int test_rng_write(void)
 
         RUN(galloc(&results, 10));
         RUNP(rng = init_rng(1));
+
         RUN(tl_random_write_hdf5(rng,NULL,HDF5_TEST_FILE, "MainGroup"));
 
         for(i = 0; i < 10;i++){
@@ -81,7 +82,7 @@ int main(void)
 
         LOG_MSG("Test rngdist");
         RUN(rng_dist_test());
-        exit(0);
+
         LOG_MSG("Write test");
 
         RUN(test_rng_write());
