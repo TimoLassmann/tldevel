@@ -1,4 +1,8 @@
-((c-mode (eval setq company-clang-arguments (append 
-                                                  company-clang-arguments
-                                                  '("-I../../lib_tldevel/")))))
+(
+(c-mode . (
+           (compile-command . "cd ${PWD/%*/build} && cmake .. && make")
+           ))
+)
+
+
 

@@ -28,7 +28,7 @@ int detect_format(struct tl_seq_buffer* sb)
         int x_coordinate_R1= 0;
         int y_coordinate_R1= 0;
 
-        char* seq;
+        uint8_t* seq;
         char* name;
         char* qual;
         int len;

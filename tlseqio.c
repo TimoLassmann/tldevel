@@ -114,13 +114,20 @@ ERROR:
         return FAIL;
 }
 
+#define UNUSED(expr) do { (void)(expr); } while (0)
 int open_sam_bam(struct file_handler** fh, char* filename, int mode)
 {
+        UNUSED(fh);
+        UNUSED(filename);
+        UNUSED(mode);
+
         ERROR_MSG("Reading from sam/bam only supported if tldevel is compiled with hts");
         return OK;
 ERROR:
         return FAIL;
 }
+
+#undef UNUSED
 int read_fasta_fastq_file(struct file_handler* fh, struct tl_seq_buffer** seq_buf, int num)
 {
         struct tl_seq_buffer* sb = NULL;
@@ -214,7 +221,7 @@ ERROR:
 int parse_buf_fasta(struct file_handler* fh, struct tl_seq_buffer* sb,int num)
 {
         char* buf = NULL;
-        char* seq = NULL;
+        uint8_t* seq = NULL;
         int state;
         int pos;
         int len;
@@ -262,7 +269,7 @@ int parse_buf_fasta(struct file_handler* fh, struct tl_seq_buffer* sb,int num)
                 }else{
                         if(state == RS_SEQ){
                                 len = sb->sequences[sb->num_seq]->len;
-                                seq  =sb->sequences[sb->num_seq]->seq;
+                                seq = sb->sequences[sb->num_seq]->seq;
                                 while(1){
                                         if(buf[i] == '\n' || buf[i] == 0){
                                                 seq[len] = 0;
@@ -303,7 +310,7 @@ ERROR:
 int parse_buf_fastq(struct file_handler* fh, struct tl_seq_buffer* sb,int num)
 {
         char* buf = NULL;
-        char* seq = NULL;
+        uint8_t* seq = NULL;
         char* qual;
         int state;
         int pos;

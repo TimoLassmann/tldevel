@@ -13,7 +13,11 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
+#else
+#include "CmakeConfig.h"
 #endif
+
+
 
 #ifdef TLDEVEL_IMPORT
 #define EXTERN

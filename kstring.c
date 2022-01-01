@@ -8,7 +8,7 @@
 int kvsprintf(kstring_t *s, const char *fmt, va_list ap)
 {
 	va_list args;
-	int l;
+	unsigned long int l;
 	va_copy(args, ap);
 	l = vsnprintf(s->s + s->l, s->m - s->l, fmt, args); // This line does not work with glibc 2.0. See `man snprintf'.
 	va_end(args);

@@ -1054,7 +1054,7 @@ ERROR:
 
 }
 
-
+#define UNUSED(expr) do { (void)(expr); } while (0)
 herr_t op_func (hid_t loc_id, const char *name, const H5L_info_t *info, void *operator_data)
 {
         herr_t status;
@@ -1062,12 +1062,12 @@ herr_t op_func (hid_t loc_id, const char *name, const H5L_info_t *info, void *op
         char** look = (char**)operator_data;
 
         int len_t,len_q;
-
-        #if defined(H5Oget_info_vers) && H5Oget_info_vers == 3
+        UNUSED(info);
+#if defined(H5Oget_info_vers) && H5Oget_info_vers == 3
         status = H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT,H5O_INFO_NUM_ATTRS);
-        #else
-status = H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT);
-        #endif 
+#else
+        status = H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT);
+#endif 
         if(status <0){
                 ERROR_MSG(" H5Oget_info_by_name failed." );
         }
@@ -1119,3 +1119,4 @@ status = H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT);
 ERROR:
         return FAIL;
 }
+#undef UNUSED
