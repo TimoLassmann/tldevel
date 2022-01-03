@@ -535,7 +535,7 @@ int detect_fasta_fastq(const char* b, int len, int* type)
         token= strtok(local_b, delim);
 
         while(token != NULL){
-                c = strnlen_s(token, TL_SEQ_MAX_NAME_LEN );
+                c = strnlen(token, TL_SEQ_MAX_NAME_LEN );
 
                 /* tests  */
                 /* is this an illumina 1.8 readname?  */
@@ -935,7 +935,7 @@ int write_fasta_to_buf(struct tl_seq* seq, char* buf, int* index,int* write_ok)
 
         local_i = *index;
         /* length of name; plus one for '>' plus one for newline  */
-        name_len = strnlen_s(seq->name, TL_SEQ_MAX_NAME_LEN);
+        name_len = strnlen(seq->name, TL_SEQ_MAX_NAME_LEN);
         len = name_len +2;
         /* length of sequence + one for newline + len / 70 for internal line breaks  */
         len += seq->len + 1 + seq->len / TL_OUT_LINE_LEN;
@@ -990,7 +990,7 @@ int write_fastq_to_buf(struct tl_seq* seq, char* buf, int* index,int* write_ok)
 
         local_i = *index;
         /* length of name; plus one for '>' plus one for newline  */
-        name_len = strnlen_s(seq->name, TL_SEQ_MAX_NAME_LEN);
+        name_len = strnlen(seq->name, TL_SEQ_MAX_NAME_LEN);
         len = name_len +2;
         /* length of sequence + one for newline*/
         len += seq->len + 1 ;

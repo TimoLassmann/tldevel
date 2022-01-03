@@ -72,7 +72,7 @@ set_target_properties(
   OUTPUT_NAME tldevel
   C_STANDARD 11
   C_STANDARD_REQUIRED ON
-  C_EXTENSIONS OFF)
+  C_EXTENSIONS ON)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${tldevel_SOURCE_DIR}/include )
 target_link_libraries(${PROJECT_NAME} PRIVATE ${tllib_LIBS})
