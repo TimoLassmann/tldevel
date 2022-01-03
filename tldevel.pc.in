@@ -1,0 +1,10 @@
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+
+Name: tldevel 
+Description: A small C library with code fragments used by TL. 
+Version: @tldevel_VERSION@
+
+Requires.private: @TLDEVEL_PRIVATE_DEPS@
+Libs: -L${libdir} -ltldevel
+Cflags: -I${includedir}/tldevel

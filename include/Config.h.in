@@ -1,0 +1,4 @@
+#define PACKAGE_VERSION "tldeve@tldevel_VERSION@"
+
+#cmakedefine HDF5_FOUND
+#cmakedefine HTSlib_FOUND
