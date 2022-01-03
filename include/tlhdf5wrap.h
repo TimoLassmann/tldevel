@@ -235,5 +235,4 @@ EXTERN int hdf5wrap_read_attribute_string(struct hdf5_data* hdf5_data, char* gro
 #undef TLHDF5WRAP_IMPORT
 #undef EXTERN
 
-
 #endif

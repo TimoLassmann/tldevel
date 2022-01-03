@@ -1,121 +1,88 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.20)
 
-project(tldevel LANGUAGES C VERSION 1.3)
+project(tldevel LANGUAGES C VERSION "1.3.0")
 
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-
-if (MSVC)
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+  if (MSVC)
     # warning level 4 and all warnings as errors
     add_compile_options(/W4 /WX)
-else()
+  else()
     # lots of warnings and all warnings as errors
     add_compile_options(-Wall -Wextra -pedantic -Werror)
+  endif()
 endif()
 
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake_modules")
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
 
-# set(gcc_like_cxx "$<COMPILE_LANG_AND_ID:CXX,ARMClang,AppleClang,Clang,GNU>")
-# set(msvc_cxx "$<COMPILE_LANG_AND_ID:CXX,MSVC>")
+include(GNUInstallDirs)
 
-# target_compile_options(tutorial_compiler_flags INTERFACE
-#   "$<${gcc_like_cxx}:$<BUILD_INTERFACE:-Wall;-Wextra;-Wshadow;-Wformat=2;-Wunused>>"
-#   "$<${msvc_cxx}:$<BUILD_INTERFACE:-W3>>"
-#   )
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")    
+endif()
 
-# if(APPLE)
-#   add_compile_options(-dead_strip)
-# elseif(UNIX)
-#   add_compile_options(-Wl,--gc-sections -Wl,--as-needed)  
-# endif()
+option(BUILD_SHARED_LIBS "Build all libraries as shared" OFF)
 
+
+
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 find_package(HTSlib)
-  
-find_package(HDF5 REQUIRED COMPONENTS C HL)
+find_package(HDF5 COMPONENTS C HL)
 
-configure_file(CmakeConfig.h.in CmakeConfig.h)
-
-set(tllib_SOURCES
-  tldevel.h
-  tldevel.c
-  tlrng.h
-  tlrng.c
-  tlalloc.h
-  tlalloc.c
-  tllogsum.h
-  tllogsum.c
-  tlbitvec.h
-  tlbitvec.c
-  tlrbtree.h
-  tlrbtree.c
-  tlcheckpoint.h
-  tlcheckpoint.c
-  tlmisc.h
-  tlmisc.c
-  tlalphabet.h
-  tlalphabet.c
-  kstring.h
-  kstring.c
-  khash.h
-  ksa.h 
-  ksa.c
-  esl_stopwatch.h
-  esl_stopwatch.c
-)
-
-set(tllib_HEADERS 
-  tldevel.h
-  tlrng.h
-  tlalloc.h
-  tllogsum.h
-  tlbitvec.h
-  tlrbtree.h
-  tlcheckpoint.h
-  tlmisc.h
-  tlalphabet.h
-  kstring.h
-  khash.h
-  ksa.h 
-  esl_stopwatch.h
-)
+add_subdirectory(src)
 
 
-if(HTSlib_FOUND)
-  list(APPEND tllib_SOURCES tlseqio.h tlseqbuffer.h tlseqbuffer.c)
-  option(USE_MYMATH "Use tutorial provided math implementation" ON)
-else ()
-  option(USE_MYMATH "Use tutorial provided math implementation" OFF)
-  message(WARNING "htslib was not found!\nTrying to fall back on hand-crafted code depending on zlib.")
-  find_package(ZLIB REQUIRED)
-  
-  if(ZLIB_FOUND)
-    list(APPEND tllib_SOURCES tlseqio.h tlseqbuffer.h tlseqio.c tlseqbuffer.c)   
-  else()
-    message(WARNING "Neither zlib or htslib was found.\n\ntldevel will be compiled without seqio support!\n")
-  endif()
-  
-endif()
-set(tllib_LIBS)
+#add_subdirectory(dev)
 
-if(HDF5_FOUND)  
-  list(APPEND tllib_SOURCES tlhdf5wrap.h tlhdf5wrap.c)
-  list(APPEND tllib_LIBS PRIVATE HDF5::HDF5)
-endif()
-  
-
-add_library(tldevel STATIC ${tllib_SOURCES})
-#add_dependencies(htslib zlib)
-
-target_link_libraries(tldevel ${tllib_LIBS})
-
-target_include_directories(tldevel PUBLIC   "${PROJECT_BINARY_DIR}"  )
-
-
+include(CTest)
 add_subdirectory(dev)
-enable_testing()
 
-install(TARGETS tldevel DESTINATION lib)
-install(FILES ${tllib_HEADERS}  ${PROJECT_BINARY_DIR}/CmakeConfig.h
-  DESTINATION include)
+
+# Install ################## #################################################
+install(TARGETS tldevel
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib)
+
+file(GLOB HEADER_FILES  ${PROJECT_SOURCE_DIR}/include/*.h)
+
+install(FILES ${HEADER_FILES} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tldevel)
+
+
+# pkg-config
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/tldevel.pc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/tldevel-1.pc
+    @ONLY)
+install(
+    FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/tldevel-1.pc
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+    COMPONENT Development)
+  
+# Package Generator  #######################################################
+set(CPACK_PACKAGE_VENDOR "Vendor name")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Some summary")
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.org")
+set(CPACK_SOURCE_GENERATOR "TGZ;ZIP")
+set(CPACK_SOURCE_IGNORE_FILES
+    /.git
+    /dist
+    /GPATH
+    /GTAGS
+    /GRTAGS
+    /.*build.*
+    /.dir-locals.el
+    /\\\\.DS_Store
+)
+include (CPack)
+
+

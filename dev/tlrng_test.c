@@ -2,9 +2,12 @@
 
 #include "tldevel.h"
 #include "tlrng.h"
+#include "Config.h"
 
+#ifdef HDF5_FOUND
 #define HDF5_TEST_FILE "tlrng_hdf5.h5"
-
+#include "tlrng_hdf5.h"
+#endif
 void printHistogram(double* values, int n);
 static int rng_dist_test(void);
 static int test_rng_write(void);
@@ -17,16 +20,20 @@ int test_rng_write(void)
         RUN(galloc(&results, 10));
         RUNP(rng = init_rng(1));
 
+#ifdef HDF5_FOUND
         RUN(tl_random_write_hdf5(rng,NULL,HDF5_TEST_FILE, "MainGroup"));
-
+#endif
         for(i = 0; i < 10;i++){
                 results[i] = tl_random_double(rng);
                 /* fprintf(stdout,"%d ::: %f\n",i, results[i]); */
         }
         free_rng(rng);
         rng = NULL;
-
+#ifdef HDF5_FOUND
         RUN(tl_random_read_hdf5(&rng,NULL,HDF5_TEST_FILE, "MainGroup"));
+#else
+        RUNP(rng = init_rng(1));
+#endif
 
         for(i = 0; i < 10;i++){
                 fprintf(stdout,"%d ::: %f  (before: %f)\n",i, tl_random_double(rng), results[i]);

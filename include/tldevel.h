@@ -14,7 +14,8 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #else
-#include "CmakeConfig.h"
+/* CMAKE config file  */
+#include "Config.h"
 #endif
 
 
