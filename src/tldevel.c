@@ -49,15 +49,15 @@ void log_message( const char *format, ...)
 int get_time(char* time_ptr, int size)
 {
         /* struct tm *ptr; */
-        struct tm local_time;
+        /* struct tm local_time; */
         time_t current = time(NULL);
         //ptr = localtime(&current);
         //if(!strftime(time_ptr, size, "[%F %H:%M:%S] ", ptr))ERROR_MSG("write failed");
 
-        if((localtime(&current,&local_time)) == NULL){
-                ERROR_MSG("could not get local time");
-        }
-
+        /* if((localtime(&current,&local_time)) == NULL){ */
+        /*         ERROR_MSG("could not get local time"); */
+        /* } */
+        struct tm local_time = localtime(&current);
         if(!strftime(time_ptr, size, "[%F %H:%M:%S] ", &local_time))ERROR_MSG("write failed");
         return OK;
 ERROR:
