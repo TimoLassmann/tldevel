@@ -1150,18 +1150,18 @@ ERROR:
 int my_H5Oget_info_by_name(hid_t loc_id, const char *name, H5O_info_t *info)
 {
         int status;
-        H5O_info_t infobuf;
+        //H5O_info_t infobuf;
 #if defined(H5Oget_info_vers) && H5Oget_info_vers == 3
         LOG_MSG("Version 3");
-        status = H5Oget_info_by_name (loc_id, name, &infobuf, H5O_INFO_BASIC,H5O_INFO_NUM_ATTRS);
+        status = H5Oget_info_by_name (loc_id, name, info, H5O_INFO_BASIC,H5O_INFO_NUM_ATTRS);
 #else
         LOG_MSG("Version other");
-        status = H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT);
+        status = H5Oget_info_by_name (loc_id, name, info, H5P_DEFAULT);
 #endif
         if(status <0){
                 ERROR_MSG(" H5Oget_info_by_name failed. %d" , status);
         }
-        info = &infobuf;
+        //info = &infobuf;
         return OK;
 ERROR:
         return FAIL;
