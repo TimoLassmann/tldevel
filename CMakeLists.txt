@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.1)
 
 project(tldevel LANGUAGES C VERSION "1.3.0")
 

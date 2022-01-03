@@ -4,6 +4,7 @@
 #include "tlhdf5wrap_types.h"
 
 #include <string.h>
+#include <inttypes.h>
 /* generic print functions taken from:
 
 http://www.robertgamble.net/2012/01/c11-generic-selections.html
@@ -19,8 +20,8 @@ and altered to use the standard int types.
                                       uint16_t: "%hu",  \
                                       int32_t: "%d",    \
                                       uint32_t: "%u",   \
-                                      int64_t: "%lld",   \
-                                      uint64_t: "%llu",  \
+                                      int64_t: "%"PRId64,   \
+                                      uint64_t:"%"PRIu64,  \
                                       float: "%f",      \
                                       double: "%f",     \
                                       char *: "%s",     \
