@@ -54,10 +54,10 @@ int get_time(char* time_ptr, int size)
         //ptr = localtime(&current);
         //if(!strftime(time_ptr, size, "[%F %H:%M:%S] ", ptr))ERROR_MSG("write failed");
 
-        if((localtime_r(&current,&local_time)) == NULL){
-                ERROR_MSG("could not get local time");
-        }
-
+        /* if((localtime_r(&current,&local_time)) == NULL){ */
+        /*         ERROR_MSG("could not get local time"); */
+        /* } */
+        localtime_r(&current,&local_time);
         if(!strftime(time_ptr, size, "[%F %H:%M:%S] ", &local_time))ERROR_MSG("write failed");
         return OK;
 ERROR:
