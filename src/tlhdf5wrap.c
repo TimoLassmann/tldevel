@@ -11,6 +11,9 @@
 
 #include "tlhdf5wrap_types.h"
 
+
+static int my_H5Oget_info_by_name(hid_t loc_id, const char *name, H5O_info_t *info);
+static int my_H5Oget_info(hid_t group, H5O_info_t *info);
 /* important intermediate functions */
 
 /* open / close groups - these are called by all MACROS:
@@ -674,7 +677,7 @@ ERROR:
         return FAIL;
 }
 
-#if defined(H5Oget_info_vers) && H5Oget_info_vers == 3
+
 #define READ_ATTR(type)                                                 \
         int hdf5wrap_read_attribute_ ##type (struct hdf5_data* hdf5_data, char* group,char* name, type* x) \
         {                                                               \
@@ -683,7 +686,7 @@ ERROR:
                 int i;                                                  \
                 char attr_name[HDF5GLUE_MAX_NAME_LEN];                  \
                 RUN(hdf5wrap_open_group(hdf5_data, group));             \
-                hdf5_data->status = H5Oget_info(hdf5_data->group , &oinfo,H5O_INFO_NUM_ATTRS); \
+                RUN(my_H5Oget_info(hdf5_data->group, &oinfo));          \
                 for(i = 0; i < (int)oinfo.num_attrs; i++) {             \
                         hdf5_data->attribute_id = H5Aopen_by_idx(hdf5_data->group, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, (hsize_t)i, H5P_DEFAULT, H5P_DEFAULT); \
                         if(hdf5_data->attribute_id < 1){                \
@@ -706,39 +709,6 @@ ERROR:
         ERROR:                                                          \
                 return FAIL;                                            \
         }
-#else
-#define READ_ATTR(type)                                                 \
-        int hdf5wrap_read_attribute_ ##type (struct hdf5_data* hdf5_data, char* group,char* name, type* x) \
-        {                                                               \
-                H5O_info_t oinfo;                                       \
-                hid_t atype;                                            \
-                int i;                                                  \
-                char attr_name[HDF5GLUE_MAX_NAME_LEN];                  \
-                RUN(hdf5wrap_open_group(hdf5_data, group));             \
-                hdf5_data->status = H5Oget_info(hdf5_data->group , &oinfo); \
-                for(i = 0; i < (int)oinfo.num_attrs; i++) {             \
-                        hdf5_data->attribute_id = H5Aopen_by_idx(hdf5_data->group, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, (hsize_t)i, H5P_DEFAULT, H5P_DEFAULT); \
-                        if(hdf5_data->attribute_id < 1){                \
-                                ERROR_MSG("H5Aopen_by_idx failed with %d",hdf5_data->attribute_id); \
-                        }                                               \
-                        atype = H5Aget_type(hdf5_data->attribute_id);   \
-                        H5Aget_name(hdf5_data->attribute_id ,HDF5GLUE_MAX_NAME_LEN,attr_name); \
-                        if(!strncmp(name,attr_name, HDF5GLUE_MAX_NAME_LEN)){ \
-                                HDFWRAP_SET_TYPE(x,&hdf5_data->native_type); \
-                                if(H5Tequal(hdf5_data->native_type, atype)){ \
-                                        hdf5_data->status = H5Aread(hdf5_data->attribute_id, hdf5_data->native_type, x); \
-                                }else{                                  \
-                                        ERROR_MSG("Type mismatch");     \
-                                }                                       \
-                        }                                               \
-                        hdf5_data->status   = H5Aclose(hdf5_data->attribute_id); \
-                        hdf5_data->status   = H5Tclose(atype);          \
-                }                                                       \
-                return OK;                                              \
-        ERROR:                                                          \
-                return FAIL;                                            \
-        }
-#endif
 
 READ_ATTR(int8_t)
 READ_ATTR(uint8_t)
@@ -1112,23 +1082,20 @@ ERROR:
 #define UNUSED(expr) do { (void)(expr); } while (0)
 herr_t op_func (hid_t loc_id, const char *name, const H5L_info_t *info, void *operator_data)
 {
-        herr_t status;
+        /* herr_t status; */
         H5O_info_t infobuf;
         char** look = (char**)operator_data;
 
         int len_t,len_q;
         UNUSED(info);
-#if defined(H5Oget_info_vers) && H5Oget_info_vers == 3
-        LOG_MSG("Version 3");
-        status = H5Oget_info_by_name (loc_id, name, &infobuf, H5O_INFO_BASIC,H5O_INFO_NUM_ATTRS);
-#else
-        LOG_MSG("Version other");
-        status = H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT);
-#endif 
-        if(status <0){
-                ERROR_MSG(" H5Oget_info_by_name failed. %d" , status);
-        }
-
+        RUN(my_H5Oget_info_by_name(loc_id, name, &infobuf));
+/* #if defined(H5Oget_info_vers) && H5Oget_info_vers == 3 */
+/*         LOG_MSG("Version 3"); */
+/*         status = H5Oget_info_by_name (loc_id, name, &infobuf, H5O_INFO_BASIC,H5O_INFO_NUM_ATTRS); */
+/* #else */
+/*         LOG_MSG("Version other"); */
+/*         status = H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT); */
+/* #endif  */
         switch (infobuf.type){
         case H5O_TYPE_GROUP:
                 len_t = strnlen(name, HDF5GLUE_MAX_NAME_LEN);
@@ -1178,3 +1145,42 @@ ERROR:
         return FAIL;
 }
 #undef UNUSED
+
+
+int my_H5Oget_info_by_name(hid_t loc_id, const char *name, H5O_info_t *info)
+{
+        int status;
+        H5O_info_t infobuf;
+#if defined(H5Oget_info_vers) && H5Oget_info_vers == 3
+        LOG_MSG("Version 3");
+        status = H5Oget_info_by_name (loc_id, name, &infobuf, H5O_INFO_BASIC,H5O_INFO_NUM_ATTRS);
+#else
+        LOG_MSG("Version other");
+        status = H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT);
+#endif
+        if(status <0){
+                ERROR_MSG(" H5Oget_info_by_name failed. %d" , status);
+        }
+        info = &infobuf;
+        return OK;
+ERROR:
+        return FAIL;
+}
+
+int my_H5Oget_info(hid_t group, H5O_info_t *info)
+{
+        int status;
+        //H5O_info_t oinfo;
+#if defined(H5Oget_info_vers) && H5Oget_info_vers == 3
+        status = H5Oget_info(group , info,H5O_INFO_NUM_ATTRS);
+#else
+        status = H5Oget_info(group , info);
+#endif
+        if(status < 0){
+                ERROR_MSG(" H5Oget_info_by_name failed. %d" , status);
+        }
+        //info = &oinfo;
+        return OK;
+ERROR:
+        return FAIL;
+}
