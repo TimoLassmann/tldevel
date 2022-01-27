@@ -54,6 +54,9 @@ else ()
 endif()
 set(tllib_LIBS)
 
+set(INCLUDE_LIST
+  ${tldevel_SOURCE_DIR}/include)
+
 if(HDF5_FOUND)
   list(APPEND HEADER_LIST
     "${tldevel_SOURCE_DIR}/include/tlrng_hdf5.h"
@@ -61,7 +64,9 @@ if(HDF5_FOUND)
     "${tldevel_SOURCE_DIR}/include/tlhdf5wrap_types.h")
   
   list(APPEND tllib_SOURCES tlhdf5wrap.c tlrng_hdf5.c)
-  list(APPEND tllib_LIBS PRIVATE HDF5::HDF5)
+  #list(APPEND tllib_LIBS PRIVATE HDF5_C_LIBRARIES)
+  list(APPEND INCLUDE_LIST ${HDF5_C_INCLUDE_DIRS})
+#  target_include_directories(${PROJECT_NAME} INTERFACE ${HDF5_C_INCLUDE_DIRS})
 endif()
 
 add_library(${PROJECT_NAME} STATIC ${tllib_SOURCES} ${HEADER_LIST})
@@ -74,5 +79,5 @@ set_target_properties(
   C_STANDARD_REQUIRED ON
   C_EXTENSIONS ON)
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${tldevel_SOURCE_DIR}/include )
-target_link_libraries(${PROJECT_NAME} PRIVATE ${tllib_LIBS})
+target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_LIST})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${tllib_LIBS} m)
