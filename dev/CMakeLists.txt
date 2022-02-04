@@ -2,7 +2,6 @@
 
 add_executable(esl_stopwatch_test eslStopWatchTest.c)
 target_link_libraries(esl_stopwatch_test PRIVATE  tldevel)
-target_compile_features(esl_stopwatch_test PRIVATE c_std_17)
 add_test(
     NAME esl_stopwatch_test
     COMMAND esl_stopwatch_test
@@ -56,7 +55,7 @@ add_test(
 if(HDF5_FOUND)  
   add_executable(hdf5_test tlhdf5wrap_test.c)
   target_link_libraries(hdf5_test PRIVATE tldevel)
-  target_link_libraries(hdf5_test PRIVATE HDF5::HDF5)
+  target_link_libraries(hdf5_test PRIVATE ${HDF5_LIBRARIES})
   add_test(
     NAME hdf5_test
     COMMAND hdf5_test
@@ -71,5 +70,5 @@ add_test(
   COMMAND tlrng_test
   )
 if(HDF5_FOUND)
-  target_link_libraries(tlrng_test PRIVATE HDF5::HDF5)
+  target_link_libraries(tlrng_test PRIVATE ${HDF5_LIBRARIES})
 endif()

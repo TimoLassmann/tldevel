@@ -61,18 +61,24 @@ if(HDF5_FOUND)
     "${tldevel_SOURCE_DIR}/include/tlhdf5wrap_types.h")
   
   list(APPEND tllib_SOURCES tlhdf5wrap.c tlrng_hdf5.c)
-  list(APPEND tllib_LIBS PRIVATE HDF5::HDF5)
+  #list(APPEND tllib_LIBS PRIVATE HDF5::HDF5)
+
+  # target_include_directories(my_target INTERFACE ${HDF5_INCLUDE_DIRS})
+  #   target_compile_definitions(my_target INTERFACE ${HDF5_DEFINITIONS})
+  #   target_link_libraries(my_target INTERFACE ${HDF5_LIBRARIES})
+
 endif()
 
-add_library(${PROJECT_NAME} STATIC ${tllib_SOURCES} ${HEADER_LIST})
+add_library(tldevel STATIC ${tllib_SOURCES} ${HEADER_LIST})
 
 set_target_properties(
-  ${PROJECT_NAME} PROPERTIES
+  tldevel PROPERTIES
   SOVERSION ${tldevel_VERSION}
   OUTPUT_NAME tldevel
   C_STANDARD 11
   C_STANDARD_REQUIRED ON
   C_EXTENSIONS ON)
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${tldevel_SOURCE_DIR}/include )
-target_link_libraries(${PROJECT_NAME} PRIVATE ${tllib_LIBS})
+target_include_directories(tldevel PUBLIC ${tldevel_SOURCE_DIR}/include ${HDF5_INCLUDE_DIRS} )
+target_compile_definitions(tldevel INTERFACE ${HDF5_DEFINITIONS})
+target_link_libraries(tldevel PRIVATE ${HDF5_LIBRARIES})
