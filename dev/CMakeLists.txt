@@ -55,11 +55,14 @@ add_test(
 if(HDF5_FOUND)  
   add_executable(hdf5_test tlhdf5wrap_test.c)
   target_link_libraries(hdf5_test PRIVATE tldevel)
-  target_link_libraries(hdf5_test PRIVATE ${HDF5_LIBRARIES})
+
+  target_link_libraries(hdf5_test PRIVATE ${HDF5_C_LIBRARIES})
+  target_include_directories(hdf5_test PUBLIC ${HDF5_C_INCLUDE_DIRS})
+  
   add_test(
     NAME hdf5_test
     COMMAND hdf5_test
-    )  
+    )
 endif()
 
 
@@ -70,5 +73,8 @@ add_test(
   COMMAND tlrng_test
   )
 if(HDF5_FOUND)
-  target_link_libraries(tlrng_test PRIVATE ${HDF5_LIBRARIES})
+
+  target_link_libraries(tlrng_test PRIVATE ${HDF5_C_LIBRARIES})
+  target_include_directories(tlrng_test PUBLIC ${HDF5_C_INCLUDE_DIRS})
+
 endif()
