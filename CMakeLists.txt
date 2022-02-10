@@ -13,6 +13,12 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   endif()
 endif()
 
+set(CMAKE_C_CLANG_TIDY
+    clang-tidy;
+    -header-filter=.;
+    -checks=*;)
+
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
